@@ -1,6 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'screens/splash/splash.dart';
+import 'screens/account/login.dart';
+import 'screens/account/signup/usertype.dart';
+import 'screens/account/signup/consumer_signup.dart';
+import 'screens/account/signup/retailer_signup.dart';
+import 'screens/account/signup/farmer_signup.dart';
+import 'screens/account/signup/consumer_signup_success.dart';
+import 'screens/account/signup/retailer_signup_success.dart';
+import 'screens/account/signup/farmer_signup_success.dart';
+import 'screens/account/find/account_find.dart';
+import 'screens/account/find/id_found.dart';
+import 'screens/account/find/temp_password.dart';
+import 'screens/account/find/account_not_found.dart';
 
 void main() {
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.white, // ← 상태바 배경 흰색
+      statusBarIconBrightness: Brightness.dark, // ← 아이콘은 어두운색
+      statusBarBrightness: Brightness.light, // ← iOS 대응용
+    ),
+  );
+
   runApp(const MyApp());
 }
 
@@ -11,70 +33,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
-      ),
-      home: SplashScreen(),
-      routes: {'/home': (_) => MyHomePage(title: 'Flutter Demo Home Page')},
-    );
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    Future.delayed(Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/home');
-    });
-
-    return Scaffold(
-      body: Center(child: Image.asset('assets/splash/splash.png')),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      theme: ThemeData(scaffoldBackgroundColor: Colors.white),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/signup/usertype': (context) => const UserTypeScreen(),
+        '/signup/consumer': (context) => const ConsumerSignupScreen(),
+        '/signup/retailer': (context) => const RetailerSignupScreen(),
+        '/signup/farmer': (context) => const FarmerSignupScreen(),
+        '/signup/consumer/success':
+            (context) => const ConsumerSignupSuccessScreen(),
+        '/signup/retailer/success':
+            (context) => const RetailerSignupSuccessScreen(),
+        '/signup/farmer/success':
+            (context) => const FarmerSignupSuccessScreen(),
+        '/account/find': (context) => const AccountFind(),
+        '/account/find/idfound': (context) => const IdFoundScreen(),
+        '/account/find/temppw': (context) => const TempPasswordSentScreen(),
+        '/account/find/notfound': (context) => const AccountNotFound(),
+      },
     );
   }
 }

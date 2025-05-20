@@ -24,6 +24,14 @@ flutter:
   uses-material-design: true
   assets:
     - assets/splash/splash.png
+    - assets/notch/morning.png
+    - assets/notch/morning_right_up_cloud.png
+    - assets/notch/morning_left_down_cloud.png
+    - assets/mascot/login_mascot.png
+    - assets/icons/goback.png
+    - assets/icons/consumer.png
+    - assets/icons/retailer.png
+    - assets/icons/farmer.png
 
 flutter_native_splash:
   color: "#ffffff"
