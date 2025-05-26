@@ -2,8 +2,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-class ConsumerSignupScreen extends StatelessWidget {
+class ConsumerSignupScreen extends StatefulWidget {
   const ConsumerSignupScreen({super.key});
+
+  @override
+  State<ConsumerSignupScreen> createState() => _ConsumerSignupScreenState();
+}
+
+class _ConsumerSignupScreenState extends State<ConsumerSignupScreen> {
+  bool _agreedToTerms = false;
+
+  Future<void> _showTermsDialog() async {
+    // showDialog 의 리턴 타입을 bool 로 명시
+    final agreed = await showDialog<bool>(
+      context: context,
+      builder: (context) => const TermsDialog(),
+    );
+    // null 이 아니고 true 면 체크박스 활성화
+    if (agreed == true) {
+      setState(() {
+        _agreedToTerms = true;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +74,32 @@ class ConsumerSignupScreen extends StatelessWidget {
               'assets/notch/morning_left_down_cloud.png',
               fit: BoxFit.cover,
               alignment: Alignment.topRight,
+            ),
+          ),
+
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    // TODO: 로고 터치 시 동작
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -124,16 +171,18 @@ class ConsumerSignupScreen extends StatelessWidget {
                           const SizedBox(height: 12),
 
                           // ✅ 약관 동의 체크박스 (임시 비활성)
-                          Row(
-                            children: [
-                              Checkbox(value: false, onChanged: (_) {}),
-                              const Expanded(
-                                child: Text(
-                                  '모든 약관에 동의합니다.',
-                                  style: TextStyle(fontSize: 14),
+                          GestureDetector(
+                            onTap: _showTermsDialog,
+                            child: Row(
+                              children: [
+                                // onChanged: null 로 읽기 전용
+                                Checkbox(
+                                  value: _agreedToTerms,
+                                  onChanged: null,
                                 ),
-                              ),
-                            ],
+                                const Text('모든 약관에 동의합니다.'),
+                              ],
+                            ),
                           ),
 
                           const SizedBox(height: 20),
@@ -262,6 +311,103 @@ class _IdCheckField extends StatelessWidget {
           style: TextStyle(fontSize: 12, color: Colors.grey),
         ),
       ],
+    );
+  }
+}
+
+class TermsDialog extends StatelessWidget {
+  const TermsDialog({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SizedBox(
+        width: 320,
+        height: 480,
+        child: Column(
+          children: [
+            // 1) 타이틀 (옵션)
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 16,
+                left: 20,
+                right: 20,
+                bottom: 8,
+              ),
+              child: Text(
+                '약관 제목',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+
+            // 2) 스크롤 가능한 약관 내용
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: SingleChildScrollView(
+                  child: Text(
+                    // 여기에 실제 약관 텍스트를 넣으세요
+                    '약관 내용약관 내용약관 내용약관 내용약관 내용약관 내용'
+                    '약관 내용약관 내용약관 내용약관 내용약관 내용약관 내용'
+                    '약관 내용약관 내용약관 내용약관 내용약관 내용약관 내용',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+              ),
+            ),
+
+            // 3) 하단 버튼 (닫기 / 동의)
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.grey[300],
+                      foregroundColor: Colors.black87,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(16),
+                        ),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(false);
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text('닫기'),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(16),
+                        ),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop(true);
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text('동의'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

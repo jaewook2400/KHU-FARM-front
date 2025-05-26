@@ -73,6 +73,32 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
             ),
           ),
 
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    // TODO: 로고 터치 시 동작
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // 콘텐츠
           Align(
             alignment: Alignment.center,
@@ -184,25 +210,6 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                                   ),
                         ),
                       ),
-                      // Center(
-                      //   child: Container(
-                      //     width: double.infinity,
-                      //     padding: const EdgeInsets.symmetric(vertical: 14),
-                      //     decoration: BoxDecoration(
-                      //       border: Border.all(color: Colors.grey.shade300),
-                      //       borderRadius: BorderRadius.circular(30),
-                      //     ),
-                      //     child: const Center(
-                      //       child:  Text(
-                      //         '회원 유형을 선택하세요.',
-                      //         style: TextStyle(
-                      //           fontSize: 14,
-                      //           color: Colors.grey,
-                      //         ),
-                      //       ),
-                      //     ),
-                      //   ),
-                      // ),
                       const SizedBox(height: 40),
                     ],
                   ),

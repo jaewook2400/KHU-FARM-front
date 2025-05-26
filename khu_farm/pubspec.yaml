@@ -32,6 +32,16 @@ flutter:
     - assets/icons/consumer.png
     - assets/icons/retailer.png
     - assets/icons/farmer.png
+    - assets/mascot/main_mascot.png
+    - assets/bottom_navigator/unselect/daily.png
+    - assets/bottom_navigator/unselect/stock.png
+    - assets/bottom_navigator/unselect/harvest.png
+    - assets/bottom_navigator/unselect/laicos.png
+    - assets/bottom_navigator/unselect/mypage.png
+    - assets/weather/cloud_sun.png
+    - assets/top_icons/notice.png
+    - assets/top_icons/dibs.png
+    - assets/top_icons/cart.png
 
 flutter_native_splash:
   color: "#ffffff"

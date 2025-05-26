@@ -55,6 +55,32 @@ class AccountNotFound extends StatelessWidget {
             ),
           ),
 
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    // TODO: 로고 터치 시 동작
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // 콘텐츠
           Padding(
             padding: EdgeInsets.only(

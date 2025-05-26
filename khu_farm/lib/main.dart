@@ -13,6 +13,7 @@ import 'screens/account/find/account_find.dart';
 import 'screens/account/find/id_found.dart';
 import 'screens/account/find/temp_password.dart';
 import 'screens/account/find/account_not_found.dart';
+import 'screens/consumer/main_screen.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
         '/account/find/idfound': (context) => const IdFoundScreen(),
         '/account/find/temppw': (context) => const TempPasswordSentScreen(),
         '/account/find/notfound': (context) => const AccountNotFound(),
+        '/consumer/main': (context) => const ConsumerMainScreen(),
       },
     );
   }

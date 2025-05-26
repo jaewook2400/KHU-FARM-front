@@ -67,6 +67,32 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    // TODO: 로고 터치 시 동작
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // 콘텐츠
           Align(
             alignment: Alignment.center,
@@ -107,7 +133,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const TextField(
+                      TextField(
+                        controller: _idController,
                         decoration: InputDecoration(
                           hintText: '아이디를 입력하세요.',
                           border: OutlineInputBorder(
@@ -129,7 +156,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const TextField(
+                      TextField(
+                        controller: _pwController,
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: '비밀번호를 입력하세요.',
@@ -153,9 +181,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             final id = _idController.text.trim();
                             final pw = _pwController.text.trim();
 
-                            setState(() {
-                              _showError = id.isEmpty || pw.isEmpty;
-                            });
+                            if (id.isEmpty || pw.isEmpty) {
+                              setState(() {
+                                _showError = true;
+                              });
+                            } else {
+                              setState(() {
+                                _showError = false;
+                              });
+                              // 검증 통과 → 메인 화면으로 이동
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/consumer/main',
+                              );
+                            }
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6FCF4B),
