@@ -38,10 +38,16 @@ flutter:
     - assets/bottom_navigator/unselect/harvest.png
     - assets/bottom_navigator/unselect/laicos.png
     - assets/bottom_navigator/unselect/mypage.png
+    - assets/bottom_navigator/select/daily.png
+    - assets/bottom_navigator/select/stock.png
+    - assets/bottom_navigator/select/harvest.png
+    - assets/bottom_navigator/select/laicos.png
+    - assets/bottom_navigator/select/mypage.png
     - assets/weather/cloud_sun.png
     - assets/top_icons/notice.png
     - assets/top_icons/dibs.png
     - assets/top_icons/cart.png
+    - assets/top_icons/notice_selected_morning.png
 
 flutter_native_splash:
   color: "#ffffff"

@@ -76,9 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
-                  onTap: () {
-                    // TODO: 로고 터치 시 동작
-                  },
+                  onTap: () {},
                   child: const Text(
                     'KHU:FARM',
                     textAlign: TextAlign.center,

@@ -14,6 +14,22 @@ import 'screens/account/find/id_found.dart';
 import 'screens/account/find/temp_password.dart';
 import 'screens/account/find/account_not_found.dart';
 import 'screens/consumer/main_screen.dart';
+import 'screens/consumer/notification_list.dart';
+import 'screens/consumer/notification_detail.dart';
+import 'screens/consumer/daily.dart';
+import 'screens/consumer/harvest.dart';
+import 'screens/consumer/laicos.dart';
+import 'screens/consumer/mypage/mypage.dart';
+import 'screens/consumer/mypage/info/info_list.dart';
+import 'screens/consumer/mypage/info/edit_profile.dart';
+import 'screens/consumer/mypage/info/edit_pw.dart';
+import 'screens/consumer/mypage/info/edit_address.dart';
+import 'screens/consumer/mypage/info/add_address.dart';
+import 'screens/consumer/mypage/info/account_cancellation.dart';
+import 'screens/consumer/mypage/info/account_cancelled.dart';
+import 'screens/consumer/mypage/csc/personal_inquiry/personal_inquiry_list.dart';
+import 'screens/consumer/mypage/csc/personal_inquiry/add_inquiry.dart';
+import 'screens/consumer/mypage/csc/faq/faq_list.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
@@ -33,7 +49,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'KHU:FARM',
       theme: ThemeData(scaffoldBackgroundColor: Colors.white),
       initialRoute: '/',
       routes: {
@@ -54,6 +70,31 @@ class MyApp extends StatelessWidget {
         '/account/find/temppw': (context) => const TempPasswordSentScreen(),
         '/account/find/notfound': (context) => const AccountNotFound(),
         '/consumer/main': (context) => const ConsumerMainScreen(),
+        '/consumer/notification/list':
+            (context) => const ConsumerNotificationListScreen(),
+        '/consumer/daily': (context) => const ConsumerDailyScreen(),
+        '/consumer/harvest': (context) => const ConsumerHarvestScreen(),
+        '/consumer/laicos': (context) => const ConsumerLaicosScreen(),
+        '/consumer/mypage': (context) => const ConsumerMypageScreen(),
+        '/consumer/mypage/info': (context) => const ConsumerInfoListScreen(),
+        '/consumer/mypage/info/edit/profile':
+            (context) => const ConsumerEditProfileScreen(),
+        '/consumer/mypage/info/edit/pw':
+            (context) => const ConsumerEditPwScreen(),
+        '/consumer/mypage/info/edit/address':
+            (context) => const ConsumerEditAddressScreen(),
+        '/consumer/mypage/info/edit/address/add':
+            (context) => const ConsumerAddAddressScreen(),
+        '/consumer/mypage/info/cancel':
+            (context) => const ConsumerAccountCancellationScreen(),
+        '/consumer/mypage/info/cancel/success':
+            (context) => const ConsumerAccountCancelledScreen(),
+        '/consumer/mypage/inquiry/personal':
+            (context) => const ConsumerPersonalInquiryListScreen(),
+        '/consumer/mypage/inquiry/personal/add':
+            (context) => const ConsumerAddInquiryScreen(),
+        '/consumer/mypage/inquiry/faq':
+            (context) => const ConsumerFAQListScreen(),
       },
     );
   }

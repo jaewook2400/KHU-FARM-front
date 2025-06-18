@@ -29,41 +29,48 @@ class _ConsumerMainScreenState extends State<ConsumerMainScreen> {
 
       bottomNavigationBar: Container(
         color: const Color(0xFFB6832B),
-        padding: EdgeInsets.only(
-          top: 20, // ↑ 여기 top padding을 늘렸습니다
-          bottom: MediaQuery.of(context).padding.bottom,
-        ),
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/daily.png',
               onTap: () {
-                // TODO: Stock 화면으로 이동
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/stock.png',
-              onTap: () {
-                // TODO: Stock 화면으로 이동
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/consumer/daily',
+                  ModalRoute.withName("/consumer/main"),
+                );
               },
             ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/harvest.png',
               onTap: () {
-                // TODO: Stock 화면으로 이동
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/consumer/harvest',
+                  ModalRoute.withName("/consumer/main"),
+                );
               },
             ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/laicos.png',
               onTap: () {
-                // TODO: Stock 화면으로 이동
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/consumer/laicos',
+                  ModalRoute.withName("/consumer/main"),
+                );
               },
             ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {
-                // TODO: Stock 화면으로 이동
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/consumer/mypage',
+                  ModalRoute.withName("/consumer/main"),
+                );
               },
             ),
           ],
@@ -115,7 +122,11 @@ class _ConsumerMainScreenState extends State<ConsumerMainScreen> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    // TODO: 로고 터치 시 동작
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/consumer/main',
+                      (route) => false,
+                    );
                   },
                   child: const Text(
                     'KHU:FARM',
@@ -131,7 +142,10 @@ class _ConsumerMainScreenState extends State<ConsumerMainScreen> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        // TODO: 알림 화면으로
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/notification/list',
+                        );
                       },
                       child: Image.asset(
                         'assets/top_icons/notice.png',
