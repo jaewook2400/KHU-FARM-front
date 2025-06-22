@@ -83,7 +83,12 @@ class ConsumerPersonalInquiryListScreen extends StatelessWidget {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/notification/list',
+                        );
+                      },
                       child: Image.asset(
                         'assets/top_icons/notice.png',
                         width: 24,
