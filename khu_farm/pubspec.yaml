@@ -13,6 +13,10 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  flutter_lints: ^5.0.0
+  flutter_native_splash: ^2.4.6
+  table_calendar: ^3.0.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -32,6 +36,9 @@ flutter:
     - assets/icons/consumer.png
     - assets/icons/retailer.png
     - assets/icons/farmer.png
+    - assets/icons/apple.png
+    - assets/icons/mandarin.png
+    - assets/icons/strawberry.png
     - assets/mascot/main_mascot.png
     - assets/bottom_navigator/unselect/daily.png
     - assets/bottom_navigator/unselect/stock.png
@@ -48,6 +55,10 @@ flutter:
     - assets/top_icons/dibs.png
     - assets/top_icons/cart.png
     - assets/top_icons/notice_selected_morning.png
+    - assets/harvest/seed.png
+    - assets/harvest/stem.png
+    - assets/harvest/fruit.png
+    - assets/chat/chatbot_icon.png
 
 flutter_native_splash:
   color: "#ffffff"
