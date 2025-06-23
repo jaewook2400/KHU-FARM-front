@@ -59,6 +59,7 @@ flutter:
     - assets/harvest/stem.png
     - assets/harvest/fruit.png
     - assets/chat/chatbot_icon.png
+    - assets/farm/temp_farm.jpg
 
 flutter_native_splash:
   color: "#ffffff"

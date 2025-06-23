@@ -16,6 +16,9 @@ import 'screens/account/find/account_not_found.dart';
 import 'screens/consumer/main_screen.dart';
 import 'screens/consumer/notification_list.dart';
 import 'screens/consumer/daily/daily.dart';
+import 'package:khu_farm/screens/consumer/daily/apple.dart';
+import 'package:khu_farm/screens/consumer/daily/mandarin.dart';
+import 'package:khu_farm/screens/consumer/daily/strawberry.dart';
 import 'screens/consumer/harvest/harvest.dart';
 import 'screens/consumer/laicos.dart';
 import 'screens/consumer/mypage/mypage.dart';
@@ -72,6 +75,10 @@ class MyApp extends StatelessWidget {
         '/consumer/notification/list':
             (context) => const ConsumerNotificationListScreen(),
         '/consumer/daily': (context) => const ConsumerDailyScreen(),
+        '/consumer/daily/apple': (context) => const ConsumerAppleScreen(),
+        '/consumer/daily/mandarin': (context) => const ConsumerMandarinScreen(),
+        '/consumer/daily/strawberry':
+            (context) => const ConsumerStrawberryScreen(),
         '/consumer/harvest': (context) => const ConsumerHarvestScreen(),
         '/consumer/laicos': (context) => const ConsumerLaicosScreen(),
         '/consumer/mypage': (context) => const ConsumerMypageScreen(),

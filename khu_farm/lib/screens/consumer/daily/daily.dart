@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:khu_farm/screens/consumer/daily/product_detail.dart';
 
 class ConsumerDailyScreen extends StatelessWidget {
   const ConsumerDailyScreen({super.key});
@@ -201,15 +202,39 @@ class ConsumerDailyScreen extends StatelessWidget {
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: const [
-                                _CategoryIcon(
-                                  iconPath: 'assets/icons/apple.png',
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/consumer/daily/apple',
+                                    );
+                                  },
+                                  child: _CategoryIcon(
+                                    iconPath: 'assets/icons/apple.png',
+                                  ),
                                 ),
-                                _CategoryIcon(
-                                  iconPath: 'assets/icons/mandarin.png',
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/consumer/daily/mandarin',
+                                    );
+                                  },
+                                  child: _CategoryIcon(
+                                    iconPath: 'assets/icons/mandarin.png',
+                                  ),
                                 ),
-                                _CategoryIcon(
-                                  iconPath: 'assets/icons/strawberry.png',
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushNamed(
+                                      context,
+                                      '/consumer/daily/strawberry',
+                                    );
+                                  },
+                                  child: _CategoryIcon(
+                                    iconPath: 'assets/icons/strawberry.png',
+                                  ),
                                 ),
                               ],
                             ),
@@ -241,8 +266,9 @@ class ConsumerDailyScreen extends StatelessWidget {
                             ),
                             Expanded(
                               child: ListView(
-                                children: const [
-                                  _ProductListItem(
+                                children: [
+                                  _buildProductItem(
+                                    context,
                                     imagePath: 'assets/mascot/login_mascot.png',
                                     producer: '한우리영농조합법인',
                                     title: '못난이 꿀사과 가정용 특가',
@@ -250,7 +276,8 @@ class ConsumerDailyScreen extends StatelessWidget {
                                     unit: '/5kg',
                                     liked: false,
                                   ),
-                                  _ProductListItem(
+                                  _buildProductItem(
+                                    context,
                                     imagePath: 'assets/mascot/login_mascot.png',
                                     producer: '새은귤농원',
                                     title: '감귤 못난이 10kg 꿀맛 과즙 팡팡',
@@ -258,7 +285,8 @@ class ConsumerDailyScreen extends StatelessWidget {
                                     unit: '/5kg',
                                     liked: true,
                                   ),
-                                  _ProductListItem(
+                                  _buildProductItem(
+                                    context,
                                     imagePath: 'assets/mascot/login_mascot.png',
                                     producer: '우리농원딸농산물센터',
                                     title: '감귤 못난이 10kg 과즙 팡팡',
@@ -273,7 +301,62 @@ class ConsumerDailyScreen extends StatelessWidget {
                         ),
 
                         // 농가별 탭
-                        const Center(child: Text('농가별 콘텐츠')),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // 검색 필드
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade300),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const TextField(
+                                decoration: InputDecoration(
+                                  prefixIcon: Icon(Icons.search),
+                                  hintText: '검색하기',
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 16,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // 농가 리스트
+                            Expanded(
+                              child: ListView(
+                                children: const [
+                                  _FarmListItem(
+                                    imagePath: 'assets/farm/temp_farm.jpg',
+                                    producer: '한우리영농조합법인',
+                                    subtitle: '싱싱한 사과를 기르는 조합',
+                                    liked: false,
+                                  ),
+                                  _FarmListItem(
+                                    imagePath: 'assets/farm/temp_farm.jpg',
+                                    producer: '맑은귤농원',
+                                    subtitle: '맛있는 귤을 재배하는 농원',
+                                    liked: true,
+                                  ),
+                                  _FarmListItem(
+                                    imagePath: 'assets/farm/temp_farm.jpg',
+                                    producer: '우리농산물센터',
+                                    subtitle: '신선한 딸기를 전달하는 센터',
+                                    liked: false,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -284,8 +367,8 @@ class ConsumerDailyScreen extends StatelessWidget {
 
           // 채팅 모달 버튼 (고정)
           Positioned(
-            bottom: screenWidth * 0.05,
-            right: screenWidth * 0.05,
+            bottom: screenWidth * 0.02,
+            right: screenWidth * 0.02,
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -312,6 +395,43 @@ class ConsumerDailyScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProductItem(
+    BuildContext context, {
+    required String imagePath,
+    required String producer,
+    required String title,
+    required String price,
+    required String unit,
+    required bool liked,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => ProductDetailScreen(
+                  imagePath: imagePath,
+                  title: title,
+                  producer: producer,
+                  price: price,
+                  unit: unit,
+                  liked: liked,
+                ),
+          ),
+        );
+      },
+      child: _ProductListItem(
+        imagePath: imagePath,
+        producer: producer,
+        title: title,
+        price: price,
+        unit: unit,
+        liked: liked,
       ),
     );
   }
@@ -445,6 +565,94 @@ class _ProductListItem extends StatelessWidget {
                 Text(
                   unit,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FarmListItem extends StatelessWidget {
+  final String imagePath;
+  final String producer;
+  final String subtitle;
+  final bool liked;
+
+  const _FarmListItem({
+    required this.imagePath,
+    required this.producer,
+    required this.subtitle,
+    this.liked = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            child: Image.asset(
+              imagePath,
+              width: double.infinity,
+              height: 180,
+              fit: BoxFit.cover,
+            ),
+          ),
+          // Favorite icon top-right
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Icon(
+              liked ? Icons.favorite : Icons.favorite_border,
+              color: liked ? Colors.red : Colors.white,
+            ),
+          ),
+          // Text and icon at bottom
+          Positioned(
+            bottom: 12,
+            left: 12,
+            right: 12,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      producer,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                    ),
+                  ],
+                ),
+                Icon(
+                  liked ? Icons.favorite : Icons.favorite_border,
+                  color: liked ? Colors.red : Colors.black,
                 ),
               ],
             ),
