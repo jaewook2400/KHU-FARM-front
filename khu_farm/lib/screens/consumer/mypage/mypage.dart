@@ -147,7 +147,7 @@ class ConsumerMypageScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 찜 화면으로
+                        Navigator.pushNamed(context, '/consumer/dib/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -158,7 +158,7 @@ class ConsumerMypageScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 장바구니 화면으로
+                        Navigator.pushNamed(context, '/consumer/cart/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',
