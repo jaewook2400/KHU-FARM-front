@@ -48,78 +48,6 @@ class ConsumerCartScreen extends StatelessWidget {
         quantity: 1,
         selected: true,
       ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
-      CartItem(
-        title: '사과 꿀맛 과즙폭발 세척',
-        producer: '정직한 농장',
-        price: '15,000원',
-        unit: '5kg',
-        imagePath: 'assets/mascot/login_mascot.png',
-        quantity: 2,
-        selected: true,
-      ),
     ];
 
     return Scaffold(
@@ -260,7 +188,7 @@ class ConsumerCartScreen extends StatelessWidget {
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -287,43 +215,23 @@ class ConsumerCartScreen extends StatelessWidget {
                               ],
                             ),
                             child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Column(
-                                  children: [
-                                    Checkbox(
-                                      value: item.selected,
-                                      onChanged: (_) {},
-                                    ),
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          onPressed: () {},
-                                          icon: const Icon(Icons.remove),
-                                        ),
-                                        Text(item.quantity.toString()),
-                                        IconButton(
-                                          onPressed: () {},
-                                          icon: const Icon(Icons.add),
-                                        ),
-                                      ],
-                                    ),
-                                    const Text('박스'),
-                                  ],
-                                ),
-                                const SizedBox(width: 8),
+                                // 정보 (좌측 영역)
                                 Expanded(
+                                  flex: 6,
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
+                                      Checkbox(value: item.selected, onChanged: (_) {}),
                                       Text(
                                         item.title,
                                         style: const TextStyle(
                                           fontSize: 14,
-                                          fontWeight: FontWeight.bold,
+                                          fontWeight: FontWeight.w800,
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      const SizedBox(height: 2),
                                       Text(
                                         item.producer,
                                         style: const TextStyle(
@@ -331,28 +239,83 @@ class ConsumerCartScreen extends StatelessWidget {
                                           color: Colors.grey,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        '${item.price} / ${item.unit}',
-                                        style: const TextStyle(fontSize: 14),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        children: [
+                                          Container(
+                                            width: 28,
+                                            height: 28,
+                                            decoration: BoxDecoration(
+                                              border: Border.all(color: Colors.grey),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Icon(Icons.remove, size: 16),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(item.quantity.toString(),
+                                              style: const TextStyle(fontSize: 14)),
+                                          const SizedBox(width: 4),
+                                          Container(
+                                            width: 28,
+                                            height: 28,
+                                            decoration: BoxDecoration(
+                                              border: Border.all(color: Colors.grey),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Icon(Icons.add, size: 16),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const Text('박스', style: TextStyle(fontSize: 12)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('${item.quantity}박스',
+                                              style: const TextStyle(fontSize: 12)),
+                                          Row(
+                                            children: [
+                                              Text(item.price,
+                                                  style: const TextStyle(
+                                                      fontSize: 14, fontWeight: FontWeight.bold)),
+                                              Text(' / ${item.unit}',
+                                                  style: const TextStyle(fontSize: 14)),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
                                 ),
+
                                 const SizedBox(width: 8),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.asset(
-                                    item.imagePath,
-                                    width: 80,
-                                    height: 80,
-                                    fit: BoxFit.cover,
+
+                                // 이미지 (우측 영역)
+                                Expanded(
+                                  flex: 4,
+                                  child: Align(
+                                    alignment: Alignment.center,
+                                    child: LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        return ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Image.asset(
+                                            item.imagePath,
+                                            width: constraints.maxWidth, // flex 비율에 맞는 최대 width
+                                            height: constraints.maxWidth, // 정사각형 형태 유지
+                                            fit: BoxFit.cover,
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           );
                         }).toList(),
+
                         const Divider(thickness: 1.0, height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

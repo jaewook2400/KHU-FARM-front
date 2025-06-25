@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:khu_farm/screens/consumer/daily/product_detail.dart';
+import 'package:khu_farm/screens/chatbot.dart';
 
 class ConsumerDailyScreen extends StatelessWidget {
   const ConsumerDailyScreen({super.key});
@@ -384,7 +385,7 @@ class ConsumerDailyScreen extends StatelessWidget {
               ),
               child: GestureDetector(
                 onTap: () {
-                  // TODO: 챗봇 모달 열기
+                  showChatbotModal(context);
                 },
                 child: Image.asset(
                   'assets/chat/chatbot_icon.png',
