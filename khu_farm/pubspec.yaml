@@ -52,9 +52,11 @@ flutter:
     - assets/bottom_navigator/select/mypage.png
     - assets/weather/cloud_sun.png
     - assets/top_icons/notice.png
-    - assets/top_icons/dibs.png
-    - assets/top_icons/cart.png
     - assets/top_icons/notice_selected_morning.png
+    - assets/top_icons/dibs.png
+    - assets/top_icons/dibs_selected_morning.png
+    - assets/top_icons/cart.png
+    - assets/top_icons/cart_selected_morning.png
     - assets/harvest/seed.png
     - assets/harvest/stem.png
     - assets/harvest/fruit.png

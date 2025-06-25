@@ -15,6 +15,8 @@ import 'screens/account/find/temp_password.dart';
 import 'screens/account/find/account_not_found.dart';
 import 'screens/consumer/main_screen.dart';
 import 'screens/consumer/notification_list.dart';
+import 'screens/consumer/dibs_list.dart';
+import 'screens/consumer/cart.dart';
 import 'screens/consumer/daily/daily.dart';
 import 'package:khu_farm/screens/consumer/daily/apple.dart';
 import 'package:khu_farm/screens/consumer/daily/mandarin.dart';
@@ -74,6 +76,8 @@ class MyApp extends StatelessWidget {
         '/consumer/main': (context) => const ConsumerMainScreen(),
         '/consumer/notification/list':
             (context) => const ConsumerNotificationListScreen(),
+        '/consumer/dib/list': (context) => const ConsumerDibsScreen(),
+        '/consumer/cart/list': (context) => const ConsumerCartScreen(),
         '/consumer/daily': (context) => const ConsumerDailyScreen(),
         '/consumer/daily/apple': (context) => const ConsumerAppleScreen(),
         '/consumer/daily/mandarin': (context) => const ConsumerMandarinScreen(),
