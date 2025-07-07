@@ -100,7 +100,7 @@ class ConsumerInfoListScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 찜 화면으로
+                        Navigator.pushNamed(context, '/consumer/dib/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -111,7 +111,7 @@ class ConsumerInfoListScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 장바구니 화면으로
+                        Navigator.pushNamed(context, '/consumer/cart/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',
@@ -189,8 +189,12 @@ class ConsumerInfoListScreen extends StatelessWidget {
                       ),
                       _OptionItem(
                         label: '로그아웃',
-                        onTap: () {
-                          // TODO: 로그아웃 처리
+                        onTap: ()  {
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => _LogoutConfirmDialog(),
+                          );
                         },
                       ),
                     ],
@@ -227,6 +231,158 @@ class _OptionItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LogoutConfirmDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Material(
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+          padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                right: 8,
+                top: 51, // 기존 40에서 더 아래로 내려 조정
+                child: Image.asset(
+                  'assets/mascot/login_mascot.png',
+                  width: 50,
+                  height: 50,
+                ),
+              ),
+              // 콘텐츠
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 16),
+                  const Text(
+                    '정말 로그아웃 하시겠습니까?',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 50), // 마스코트 공간 확보
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (_) => _LogoutSuccessDialog(),
+                          );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6FCF4B),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text('예',
+                        style: TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF6FCF4B)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        '아니요',
+                        style: TextStyle(color: Color(0xFF6FCF4B)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LogoutSuccessDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Material(
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  right: 8,
+                  top: 13,
+                  child: Image.asset(
+                    'assets/mascot/login_mascot.png',
+                    width: 50,
+                    height: 50,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('로그아웃 되었습니다.'),
+                    const SizedBox(height: 30),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushNamedAndRemoveUntil(
+                            context,
+                            '/login',
+                            (route) => false,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6FCF4B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text('닫기',
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

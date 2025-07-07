@@ -15,6 +15,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _showError = false;
 
+  final Map<String, Map<String, String>> userAccounts = {
+    'user': {'password': 'user', 'route': '/consumer/main'},
+    'retailer': {'password': 'retailer', 'route': '/retailer/main'},
+    // 'farmer': {'password': 'farmer', 'route': '/farmer/main'},
+    'admin': {'password': 'admin', 'route': '/admin/daily'},
+  };
+
   @override
   Widget build(BuildContext context) {
     // 상태바 투명
@@ -179,19 +186,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             final id = _idController.text.trim();
                             final pw = _pwController.text.trim();
 
-                            if (id.isEmpty || pw.isEmpty) {
-                              setState(() {
-                                _showError = true;
-                              });
+                            if (userAccounts.containsKey(id) &&
+                                userAccounts[id]!['password'] == pw) {
+                              final route = userAccounts[id]!['route']!;
+                              setState(() => _showError = false);
+                              Navigator.pushReplacementNamed(context, route);
                             } else {
-                              setState(() {
-                                _showError = false;
-                              });
-                              // 검증 통과 → 메인 화면으로 이동
-                              Navigator.pushReplacementNamed(
-                                context,
-                                '/consumer/main',
-                              );
+                              setState(() => _showError = true);
                             }
                           },
                           style: ElevatedButton.styleFrom(

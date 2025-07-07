@@ -34,6 +34,9 @@ import 'screens/consumer/mypage/info/account_cancelled.dart';
 import 'screens/consumer/mypage/csc/personal_inquiry/personal_inquiry_list.dart';
 import 'screens/consumer/mypage/csc/personal_inquiry/add_inquiry.dart';
 import 'screens/consumer/mypage/csc/faq/faq_list.dart';
+import 'screens/retailer/main_screen.dart';
+import 'screens/administrator/main_screen.dart';
+import 'screens/administrator/daily/daily.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(
@@ -105,6 +108,9 @@ class MyApp extends StatelessWidget {
             (context) => const ConsumerAddInquiryScreen(),
         '/consumer/mypage/inquiry/faq':
             (context) => const ConsumerFAQListScreen(),
+        '/retailer/main': (context) => const RetailerMainScreen(),
+        '/admin/main': (context) => const AdministratorMainScreen(),
+        '/admin/daily': (context) => const AdministratorDailyScreen(),
       },
     );
   }
