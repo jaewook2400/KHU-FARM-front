@@ -1,6 +1,5 @@
-// 📄 lib/screens/splash_screen.dart
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:khu_farm/auth_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,20 +12,40 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+    _attemptAutoLogin();
+  }
 
-    Timer(const Duration(seconds: 2), () {
+  Future<void> _attemptAutoLogin() async {
+    final userData = await AuthService.tryAutoLogin();
+
+    if (userData != null) {
+      final userType = userData['userType'];
+      String route = '/login';
+      switch (userType) {
+        case 'ROLE_INDIVIDUAL':
+          route = '/consumer/main';
+          break;
+        case 'ROLE_BUSINESS':
+          route = '/retailer/main';
+          break;
+        case 'ROLE_FARMER':
+          route = '/farmer/main';
+          break;
+        case 'ADMIN':
+          route = '/admin/daily';
+          break;
+      }
+
+      Navigator.pushReplacementNamed(context, route);
+    } else {
       Navigator.pushReplacementNamed(context, '/login');
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/');
-    });
-
-    return Scaffold(
-      body: Center(child: Image.asset('assets/splash/splash.png')),
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 }

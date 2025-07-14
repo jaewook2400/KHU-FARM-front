@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'screens/splash/splash.dart';
 import 'screens/account/login.dart';
 import 'screens/account/signup/usertype.dart';
@@ -35,10 +37,17 @@ import 'screens/consumer/mypage/csc/personal_inquiry/personal_inquiry_list.dart'
 import 'screens/consumer/mypage/csc/personal_inquiry/add_inquiry.dart';
 import 'screens/consumer/mypage/csc/faq/faq_list.dart';
 import 'screens/retailer/main_screen.dart';
+import 'screens/farmer/main_screen.dart';
+import 'screens/farmer/mypage/mypage.dart';
+import 'screens/farmer/mypage/manage/manage_list.dart';
+import 'screens/farmer/mypage/manage/add_product.dart';
+import 'screens/farmer/mypage/manage/add_product_detail.dart';
+import 'screens/farmer/mypage/manage/add_product_preview.dart';
 import 'screens/administrator/main_screen.dart';
 import 'screens/administrator/daily/daily.dart';
 
-void main() {
+
+void main() async {
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.white, // ← 상태바 배경 흰색
@@ -56,6 +65,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        quill.FlutterQuillLocalizations.delegate, // ✅ 추가
+      ],
+      supportedLocales: const [
+        Locale('en'), // 영어
+        Locale('ko'), // 한국어
+      ],
       title: 'KHU:FARM',
       theme: ThemeData(scaffoldBackgroundColor: Colors.white),
       initialRoute: '/',
@@ -109,6 +128,12 @@ class MyApp extends StatelessWidget {
         '/consumer/mypage/inquiry/faq':
             (context) => const ConsumerFAQListScreen(),
         '/retailer/main': (context) => const RetailerMainScreen(),
+        '/farmer/main': (context) => const FarmerMainScreen(),
+        '/farmer/mypage': (context) => const FarmerMypageScreen(),
+        '/farmer/mypage/manage': (context) => const FarmerManageListScreen(),
+        '/farmer/mypage/manage/product/add': (context) => FarmerAddProductScreen(),
+        '/farmer/mypage/manage/product/add/detail': (context) => FarmerAddProductDetailScreen(),
+        '/farmer/mypage/manage/product/add/preview': (context) => FarmerAddProductPreviewScreen(),
         '/admin/main': (context) => const AdministratorMainScreen(),
         '/admin/daily': (context) => const AdministratorDailyScreen(),
       },
