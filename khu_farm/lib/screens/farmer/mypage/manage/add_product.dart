@@ -11,8 +11,8 @@ class FarmerAddProductScreen extends StatefulWidget {
 }
 
 class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
-  String? selectedCategory;
-  String selectedType = 'daily'; // 'daily' or 'stock'
+  int? selectedCategory;
+  int? selectedType; // 'daily' or 'stock'
   String? _horizontalImagePath;
   String? _squareImagePath;
 
@@ -219,17 +219,18 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                       ],
                     ),
                     child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
+                      child: DropdownButton<int>(
                         hint: const Text('분류를 선택해 주세요.'),
                         value: selectedCategory,
                         isExpanded: true,
                         onChanged: (value) => setState(() => selectedCategory = value),
-                        items: categoryList
-                            .map((cat) => DropdownMenuItem<String>(
-                                  value: cat,
-                                  child: Text(cat),
-                                ))
-                            .toList(),
+                        items: [
+                          for (var i = 0; i < categoryList.length; i++)
+                            DropdownMenuItem<int>(
+                              value: i + 1,                       // index + 1
+                              child: Text(categoryList[i]),
+                            )
+                        ],
                       ),
                     ),
                   ),
@@ -238,9 +239,9 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildToggleButton('Daily(소매)', 'daily'),
+                      _buildToggleButton('Daily(소매)', 2),
                       const SizedBox(width: 10),
-                      _buildToggleButton('Stock(도매)', 'stock'),
+                      _buildToggleButton('Stock(도매)', 1),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -332,8 +333,8 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                         arguments: {
                             'category': selectedCategory,
                             'type': selectedType,
-                            // 'horizontalImagePath': _horizontalImagePath,
-                            // 'squareImagePath': _squareImagePath,
+                            'horizontalImagePath': _horizontalImagePath,
+                            'squareImagePath': _squareImagePath,
                             'title': _titleController.text,
                             'price': _priceController.text,
                             'weight': _weightController.text,
@@ -358,7 +359,7 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
     );
   }
 
-  Widget _buildToggleButton(String label, String type) {
+  Widget _buildToggleButton(String label, int type) {
     final selected = selectedType == type;
     return GestureDetector(
       onTap: () => setState(() => selectedType = type),

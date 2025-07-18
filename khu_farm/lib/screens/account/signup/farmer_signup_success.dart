@@ -65,7 +65,11 @@ class FarmerSignupSuccessScreen extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: () {
-                    // TODO: 로고 터치 시 동작
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
                   },
                   child: const Text(
                     'KHU:FARM',

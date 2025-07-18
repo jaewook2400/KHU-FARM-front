@@ -113,14 +113,29 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
           // 상단 로고
           Positioned(
             top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
             left: screenWidth * 0.05,
             right: screenWidth * 0.05,
-            height: screenHeight * 0.04,
-            child: const Row(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'KHU:FARM',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -38,6 +38,14 @@ import 'screens/consumer/mypage/csc/personal_inquiry/add_inquiry.dart';
 import 'screens/consumer/mypage/csc/faq/faq_list.dart';
 import 'screens/retailer/main_screen.dart';
 import 'screens/farmer/main_screen.dart';
+import 'screens/farmer/daily/daily.dart';
+import 'screens/farmer/daily/daily_fruit.dart';
+import 'screens/farmer/stock/stock.dart';
+import 'screens/farmer/stock/stock_fruit.dart';
+import 'package:khu_farm/screens/farmer/cart.dart';
+import 'package:khu_farm/screens/farmer/dibs_list.dart';
+import 'package:khu_farm/screens/farmer/notification_list.dart';
+import 'screens/farmer/harvest/harvest.dart';
 import 'screens/farmer/mypage/mypage.dart';
 import 'screens/farmer/mypage/manage/manage_list.dart';
 import 'screens/farmer/mypage/manage/add_product.dart';
@@ -45,7 +53,6 @@ import 'screens/farmer/mypage/manage/add_product_detail.dart';
 import 'screens/farmer/mypage/manage/add_product_preview.dart';
 import 'screens/administrator/main_screen.dart';
 import 'screens/administrator/daily/daily.dart';
-
 
 void main() async {
   SystemChrome.setSystemUIOverlayStyle(
@@ -129,6 +136,15 @@ class MyApp extends StatelessWidget {
             (context) => const ConsumerFAQListScreen(),
         '/retailer/main': (context) => const RetailerMainScreen(),
         '/farmer/main': (context) => const FarmerMainScreen(),
+        '/farmer/notification/list':
+            (context) => const FarmerNotificationListScreen(),
+        '/farmer/dib/list': (context) => const FarmerDibsScreen(),
+        '/farmer/cart/list': (context) => const FarmerCartScreen(),
+        '/farmer/daily': (context) => const FarmerDailyScreen(),
+        '/farmer/daily/fruit': (context) => const FarmerDailyFruitScreen(),
+        '/farmer/stock': (context) => const FarmerStockScreen(),
+        '/farmer/stock/fruit': (context) => const FarmerStockFruitScreen(),
+        '/farmer/harvest': (context) => const FarmerHarvestScreen(),
         '/farmer/mypage': (context) => const FarmerMypageScreen(),
         '/farmer/mypage/manage': (context) => const FarmerManageListScreen(),
         '/farmer/mypage/manage/product/add': (context) => FarmerAddProductScreen(),

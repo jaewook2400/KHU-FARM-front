@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart' as quill_ext;
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:khu_farm/storage_service.dart';
+import 'package:khu_farm/constants.dart';
 
 class FarmerAddProductDetailScreen extends StatefulWidget {
   const FarmerAddProductDetailScreen({super.key});
@@ -45,7 +45,7 @@ class _FarmerAddProductDetailScreenState
       return;
     }
 
-    final Uri uri = Uri.parse('http://10.0.2.2:8080/image/upload');
+    final Uri uri = Uri.parse('$baseUrl/image/upload');
     final request = http.MultipartRequest('POST', uri)
       ..headers['Authorization'] = 'Bearer $token'
       ..files.add(
@@ -60,15 +60,14 @@ class _FarmerAddProductDetailScreenState
     if (streamed.statusCode == 200) {
       final String body = await streamed.stream.bytesToString();
       final Map<String, dynamic> data = jsonDecode(body);
-      final String serverPath = data['result'] as String;
-      final String fullUrl = 'http://10.0.2.2:8080/$serverPath';
+      final String imagePath = data['result'] as String;
 
       final int index = _controller.selection.baseOffset;
       final int length = _controller.selection.extentOffset - index;
       _controller.replaceText(
         index,
         length,
-        quill.BlockEmbed.image(fullUrl),
+        quill.BlockEmbed.image(imagePath),
         null,
       );
       _controller.updateSelection(
@@ -101,37 +100,97 @@ class _FarmerAddProductDetailScreenState
             top: 0,
             left: 0,
             right: 0,
-            height: statusBarHeight + 40,
-            child:
-                Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
+            height: statusBarHeight + screenHeight * 0.06,
+            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
           ),
 
-          // 상단 아이콘 row
+          // 우상단 이미지
+          Positioned(
+            top: 0,
+            right: 0,
+            height: statusBarHeight * 1.2,
+            child: Image.asset(
+              'assets/notch/morning_right_up_cloud.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topRight,
+            ),
+          ),
+
+          // 좌하단 이미지
           Positioned(
             top: statusBarHeight,
+            left: 0,
+            height: screenHeight * 0.06,
+            child: Image.asset(
+              'assets/notch/morning_left_down_cloud.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topRight,
+            ),
+          ),
+
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
             left: screenWidth * 0.05,
             right: screenWidth * 0.05,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'KHU:FARM',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/farmer/main',
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
                 Row(
                   children: [
-                    Image.asset('assets/top_icons/notice.png',
-                        width: 24, height: 24),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/farmer/notification/list',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/notice.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    Image.asset('assets/top_icons/dibs.png',
-                        width: 24, height: 24),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/farmer/dib/list');
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/dibs.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
                     const SizedBox(width: 12),
-                    Image.asset('assets/top_icons/cart.png',
-                        width: 24, height: 24),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/farmer/cart/list');
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/cart.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
                   ],
                 ),
               ],

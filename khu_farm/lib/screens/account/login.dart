@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:khu_farm/storage_service.dart';
+import 'package:khu_farm/constants.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final uri = Uri.parse('http://10.0.2.2:8080/auth/login'); // ← 실제 API 주소로 교체하세요.
+    final uri = Uri.parse('$baseUrl/auth/login'); // ← 실제 API 주소로 교체하세요.
     final response = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -39,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     final data = jsonDecode(utf8.decode(response.bodyBytes));
-    print('$data');
     if (data['isSuccess'] == true) {
       final accessToken = data['result']['accessToken'];
       final refreshToken = "";
@@ -127,6 +127,30 @@ class _LoginScreenState extends State<LoginScreen> {
               'assets/notch/morning_left_down_cloud.png',
               fit: BoxFit.cover,
               alignment: Alignment.topRight,
+            ),
+          ),
+
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {},
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -220,7 +244,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         child: const Text(
                           '로그인',
-                          style: TextStyle(fontSize: 16),
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white
+                          ),
                         ),
                       ),
                     ),
