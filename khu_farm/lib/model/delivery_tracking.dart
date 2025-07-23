@@ -21,6 +21,12 @@ class DeliveryProgress {
       description: json['description'] ?? '',
     );
   }
+
+  // 👇 DeliveryProgress의 toString() 메서드
+  @override
+  String toString() {
+    return 'DeliveryProgress(time: $time, statusText: $statusText, locationName: $locationName, description: $description)';
+  }
 }
 
 class DeliveryTrackingData {
@@ -40,7 +46,8 @@ class DeliveryTrackingData {
 
   factory DeliveryTrackingData.fromJson(Map<String, dynamic> json) {
     var progressList = json['progresses'] as List;
-    List<DeliveryProgress> progresses = progressList.map((i) => DeliveryProgress.fromJson(i)).toList();
+    List<DeliveryProgress> progresses =
+        progressList.map((i) => DeliveryProgress.fromJson(i)).toList();
 
     return DeliveryTrackingData(
       carrierName: json['carrier']?['name'] ?? 'N/A',
@@ -49,5 +56,11 @@ class DeliveryTrackingData {
       currentStateText: json['state']?['text'] ?? '알 수 없음',
       progresses: progresses,
     );
+  }
+  
+  // 👇 DeliveryTrackingData의 toString() 메서드
+  @override
+  String toString() {
+    return 'DeliveryTrackingData(carrierName: $carrierName, fromName: $fromName, toName: $toName, currentStateText: $currentStateText, progresses: $progresses)';
   }
 }

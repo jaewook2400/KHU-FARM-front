@@ -28,11 +28,11 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
     // Use WidgetsBinding to safely access arguments in initState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final order = ModalRoute.of(context)!.settings.arguments as SellerOrder;
-      _fetchTrackingInfo(order.orderId);
+      _fetchTrackingInfo(order.orderDetailId);
     });
   }
 
-  Future<void> _fetchTrackingInfo(int orderId) async {
+  Future<void> _fetchTrackingInfo(int orderDetailId) async {
     setState(() => _isLoading = true);
     final accessToken = await StorageService.getAccessToken();
     if (accessToken == null) {
@@ -43,9 +43,8 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
 
     try {
       // API call to get tracking info
-      final getUri = Uri.parse('$baseUrl/delivery/$orderId/tracking');
+      final getUri = Uri.parse('$baseUrl/delivery/$orderDetailId/tracking');
       final getResponse = await http.get(getUri, headers: headers);
-      print(getResponse.statusCode);
 
       if (getResponse.statusCode == 200) {
         final data = json.decode(utf8.decode(getResponse.bodyBytes));
@@ -202,7 +201,6 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ← 내 정보 타이틀
                 Row(
                   children: [
                     GestureDetector(
@@ -228,9 +226,6 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                        horizontal:
-                            MediaQuery.of(context).size.width * 0.08),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -239,7 +234,7 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
                         _isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : _trackingData != null
-                                ? _buildDeliveryStatus(_trackingData!)
+                                ? _buildDeliveryStatus(_trackingData!, order)
                                 : const Center(
                                     child: Text('배송 정보를 조회할 수 없습니다.')),
                       ],
@@ -313,71 +308,96 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
   }
 
   // Helper widget for the delivery status stepper
-  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData) {
-    // 각 배송 단계에 대한 상태 문자열 리스트
+  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder sellerOrder) {
     const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
-    
-    // 현재 상태 텍스트를 statusMap에서 찾아보고, 없으면 '알 수 없음'으로 처리
-    final currentStatusInfo = statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
-    
-    // 현재 상태가 몇 번째 단계인지 확인 (없으면 -1)
-    int currentStep = stepStatuses.indexOf(currentStatusInfo.displayName);
+    final currentStatusInfo =
+        statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
+    int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+
+    final invoiceFullText = '운송장 번호 : ${sellerOrder.deliveryCompany} ${sellerOrder.deliveryNumber} (눌러서 복사)';
 
     return Column(
       children: [
-        _buildStep(title: '결제 완료', isDone: true), // 결제는 항상 완료된 상태로 가정
+        _buildStep(title: '결제 완료', isActive: currentStep == 0),
         _buildStepConnector(),
-        _buildStep(title: '배송 준비중', isDone: currentStep >= 3, isActive: currentStep == 3),
+
+        _buildStep(title: '배송 준비중', isActive: currentStep == 1),
         _buildStepConnector(),
-        _buildStep(
-          title: '배송중',
-          isDone: currentStep >= 4,
-          isActive: currentStep == 4,
-          subText: '운송장 번호 : ${trackingData.carrierName} ${trackingData.progresses.isNotEmpty ? trackingData.progresses.first.description : ''} (눌러서 복사)',
-        ),
+
+        _buildStep(title: '배송중', isActive: currentStep == 2),
+        
+        // '배송중' 단계 이거나 그 이후 단계일 때 운송장 번호 표시
+        if (currentStep >= 2)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: sellerOrder.deliveryNumber!));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
+                );
+              },
+              child: Text(
+                invoiceFullText,
+                textAlign: TextAlign.center,
+                // 변경된 부분: '배송중' 단계가 활성화(currentStep == 2)일 때만 초록색, 아니면 회색
+                style: TextStyle(
+                  fontSize: 12,
+                  color: currentStep == 2 ? const Color(0xFF6FCF4B) : Colors.grey,
+                ),
+              ),
+            ),
+          ),
         _buildStepConnector(),
-        _buildStep(title: '배송 완료', isDone: currentStep >= 5, isActive: currentStep == 5),
+
+        _buildStep(title: '배달 완료', isActive: currentStep == 3),
       ],
     );
   }
 
-  // Helper widget for a single step in the stepper
-  Widget _buildStep(
-      {required String title, String? subText, bool isDone = false, bool isActive = false}) {
-    final Color activeColor = isDone ? const Color(0xFF6FCF4B) : Colors.grey.shade300;
+  Widget _buildStep({required String title, bool isActive = false}) {
+    final Color borderColor;
+    final Color fontColor;
+    final Color backgroundColor;
+
+    if (isActive) {
+      borderColor = const Color(0xFF6FCF4B);
+      fontColor = const Color(0xFF6FCF4B);
+      backgroundColor = Colors.white;
+    } else {
+      borderColor = Colors.grey;
+      fontColor = Colors.grey;
+      backgroundColor = Colors.white;
+    }
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green.shade50 : Colors.white,
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: activeColor),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(title,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDone ? Colors.black : Colors.grey)),
-          if (subText != null) ...[
-            const SizedBox(height: 4),
-            Text(subText,
-                style: const TextStyle(fontSize: 12, color: Colors.green)),
-          ]
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: fontColor,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // Helper widget for the connector between steps
   Widget _buildStepConnector() {
     return Container(
-      height: 24,
+      height: 32, // 간격 조정
       alignment: Alignment.center,
-      child: const Icon(Icons.arrow_downward,
-          color: Colors.grey, size: 16),
+      child: const Icon(Icons.arrow_downward, color: Colors.grey, size: 20),
     );
   }
 }

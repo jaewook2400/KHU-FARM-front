@@ -44,7 +44,6 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> orderJson = data['result']['content'];
-          print(orderJson);
           setState(() {
             _orders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
           });

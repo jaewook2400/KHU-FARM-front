@@ -2,13 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/model/seller_order.dart';
 import 'package:khu_farm/model/delivery_tracking.dart';
 import 'package:khu_farm/model/order_status.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
-import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
 
 class FarmerManageOrderDetailScreen extends StatefulWidget {
@@ -27,11 +25,11 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final order = ModalRoute.of(context)!.settings.arguments as SellerOrder;
-      _fetchTrackingInfo(order.orderId);
+      _fetchTrackingInfo(order.orderDetailId);
     });
   }
 
-  Future<void> _fetchTrackingInfo(int orderId) async {
+  Future<void> _fetchTrackingInfo(int orderDetailId) async {
     setState(() => _isLoading = true);
     final accessToken = await StorageService.getAccessToken();
     if (accessToken == null) {
@@ -41,12 +39,8 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
     final headers = {'Authorization': 'Bearer $accessToken'};
 
     try {
-      // 1단계: PATCH API 호출 (필요한 경우)
-      final patchUri = Uri.parse('$baseUrl/delivery/$orderId');
-      await http.patch(patchUri, headers: headers);
-
       // 2단계: GET API 호출
-      final getUri = Uri.parse('$baseUrl/delivery/$orderId/tracking');
+      final getUri = Uri.parse('$baseUrl/delivery/$orderDetailId/tracking');
       final getResponse = await http.get(getUri, headers: headers);
 
       if (getResponse.statusCode == 200) {
@@ -85,16 +79,6 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
     final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
-
-    String formattedDate = '';
-    try {
-      if (order.createdAt.isNotEmpty) {
-        formattedDate =
-            DateFormat('yyyy.MM.dd').format(DateTime.parse(order.createdAt));
-      }
-    } catch (e) {
-      formattedDate = order.createdAt.split('T').first;
-    }
     
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -238,20 +222,10 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
                 // Main Content Area
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(
-                        horizontal: MediaQuery.of(context).size.width * 0.08),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoCard(order),
-                        const SizedBox(height: 32),
-                        _isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : _trackingData != null
-                                ? _buildDeliveryStatus(_trackingData!)
-                                : const Center(
-                                    child: Text('배송 정보를 조회할 수 없습니다.')),
-                        const SizedBox(height: 120),
+                        _buildOrderDetails(order),
                       ],
                     ),
                   ),
@@ -314,106 +288,37 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
     );
   }
 
-  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData) {
-    // 각 배송 단계에 대한 상태 문자열 리스트
-    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
-    
-    // 현재 상태 텍스트를 statusMap에서 찾아보고, 없으면 '알 수 없음'으로 처리
-    final currentStatusInfo = statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
-    
-    // 현재 상태가 몇 번째 단계인지 확인 (없으면 -1)
-    int currentStep = stepStatuses.indexOf(currentStatusInfo.displayName);
-
-    return Column(
-      children: [
-        _buildStep(title: '결제 완료', isDone: true), // 결제는 항상 완료된 상태로 가정
-        _buildStepConnector(),
-        _buildStep(title: '배송 준비중', isDone: currentStep >= 3, isActive: currentStep == 3),
-        _buildStepConnector(),
-        _buildStep(
-          title: '배송중',
-          isDone: currentStep >= 4,
-          isActive: currentStep == 4,
-          subText: '운송장 번호 : ${trackingData.carrierName} ${trackingData.progresses.isNotEmpty ? trackingData.progresses.first.description : ''} (눌러서 복사)',
-        ),
-        _buildStepConnector(),
-        _buildStep(title: '배송 완료', isDone: currentStep >= 5, isActive: currentStep == 5),
-      ],
-    );
-  }
-
-  /// Helper widget for a single step in the stepper
-  Widget _buildStep(
-      {required String title, String? subText, bool isDone = false, bool isActive = false}) {
-    final Color activeColor = isDone ? const Color(0xFF6FCF4B) : Colors.grey.shade300;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      decoration: BoxDecoration(
-        color: isActive ? Colors.green.shade50 : Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: activeColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDone ? Colors.black : Colors.grey)),
-          if (subText != null) ...[
-            const SizedBox(height: 4),
-            Text(subText,
-                style: const TextStyle(fontSize: 12, color: Colors.green)),
-          ]
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard(SellerOrder order) {
-    final DeliveryStatus status = statusMap[order.status] ?? statusMap['알 수 없음']!;
-    // --- 여기까지 ---
-
+  Widget _buildOrderDetails(SellerOrder order) {
+    final DeliveryStatus status =
+        statusMap[order.status] ?? statusMap['알 수 없음']!;
     String formattedDate = '';
     try {
       if (order.createdAt.isNotEmpty) {
-        formattedDate = DateFormat('yyyy.MM.dd').format(DateTime.parse(order.createdAt));
+        formattedDate =
+            DateFormat('yyyy.MM.dd').format(DateTime.parse(order.createdAt));
       }
     } catch (e) {
       formattedDate = order.createdAt.split('T').first;
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-      ),
-      child: Column(
-        children: [
-          _buildInfoRow('이름', order.recipient,
-              trailing: _statusChip(status.displayName, status.color)),
-          _buildInfoRow('전화번호', order.phoneNumber),
-          _buildInfoRow('주문일자', formattedDate),
-          _buildInfoRow('주문번호', order.merchantUid),
-          _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
-          _buildInfoRow('송장번호', order.deliveryNumber ?? '미등록'),
-          _buildInfoRow('택배사', order.deliveryCompany ?? '미등록'),
-          _buildInfoRow('주문자 요청사항', order.orderRequest ?? '없음'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepConnector() {
-    return Container(
-      height: 24,
-      alignment: Alignment.center,
-      child: const Icon(Icons.arrow_downward,
-          color: Colors.grey, size: 16),
+    // 카드 UI가 없는 Column으로 변경
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildInfoRow('이름', order.recipient,
+            trailing: _statusChip(status.displayName, status.color)),
+        _buildInfoRow('전화번호', order.phoneNumber),
+        _buildInfoRow('주문일자', formattedDate),
+        _buildInfoRow('주문번호', order.merchantUid),
+        _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+        _buildInfoRow('송장번호', order.deliveryNumber ?? '미등록'),
+        _buildInfoRow('택배사', order.deliveryCompany ?? '미등록'),
+        _buildInfoRow('주문자 요청사항', order.orderRequest ?? '없음'),
+        const SizedBox(height: 24),
+        // 메모 필드 추가
+        
+        const SizedBox(height: 100), // 하단 버튼과의 여백
+      ],
     );
   }
 

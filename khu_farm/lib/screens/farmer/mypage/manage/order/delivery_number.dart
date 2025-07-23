@@ -62,7 +62,7 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
       'Authorization': 'Bearer $accessToken',
       'Content-Type': 'application/json',
     };
-    final uri = Uri.parse('$baseUrl/delivery/${_order!.orderId}');
+    final uri = Uri.parse('$baseUrl/delivery/${_order!.orderDetailId}');
     final body = jsonEncode({
       "deliveryCompany": _selectedCourierName,
       "deliveryNumber": _trackingNumberController.text,

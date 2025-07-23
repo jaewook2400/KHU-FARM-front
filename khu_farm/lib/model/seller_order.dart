@@ -3,6 +3,7 @@ import 'package:khu_farm/model/order_status.dart';
 
 class SellerOrder {
   final int orderId;
+  final int orderDetailId;
   final String merchantUid;
   final String ordererName;
   final int totalPrice;
@@ -21,6 +22,7 @@ class SellerOrder {
 
   SellerOrder({
     required this.orderId,
+    required this.orderDetailId,
     required this.merchantUid,
     required this.ordererName,
     required this.totalPrice,
@@ -41,6 +43,7 @@ class SellerOrder {
   factory SellerOrder.fromJson(Map<String, dynamic> json) {
     return SellerOrder(
       orderId: json['orderId'] ?? 0,
+      orderDetailId: json['orderDetailId'] ?? 0,
       merchantUid: json['merchantUid'] ?? '',
       ordererName: json['ordererName'] ?? 'N/A',
       totalPrice: json['totalPrice'] ?? 0,
@@ -57,5 +60,28 @@ class SellerOrder {
       createdAt: json['createdAt'] ?? '',
       status: json['deliveryStatus'] ?? '알 수 없음', 
     );
+  }
+
+  @override
+  String toString() {
+    return 'SellerOrder('
+        'orderId: $orderId, '
+        'orderDetailId: $orderDetailId, '
+        'merchantUid: $merchantUid, '
+        'ordererName: $ordererName, '
+        'totalPrice: $totalPrice, '
+        'fruitTitle: $fruitTitle, '
+        'orderCount: $orderCount, '
+        'portCode: $portCode, '
+        'address: $address, '
+        'detailAddress: $detailAddress, '
+        'recipient: $recipient, '
+        'phoneNumber: $phoneNumber, '
+        'deliveryCompany: $deliveryCompany, '
+        'deliveryNumber: $deliveryNumber, '
+        'orderRequest: $orderRequest, '
+        'createdAt: $createdAt, '
+        'status: $status'
+        ')';
   }
 }
