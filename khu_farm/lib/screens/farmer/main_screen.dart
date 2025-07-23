@@ -1,6 +1,9 @@
 // 📄 lib/screens/signup_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:khu_farm/services/storage_service.dart';
+import 'package:khu_farm/model/user_info.dart';
+import 'package:intl/intl.dart';
 
 class FarmerMainScreen extends StatefulWidget {
   const FarmerMainScreen({super.key});
@@ -10,6 +13,23 @@ class FarmerMainScreen extends StatefulWidget {
 }
 
 class _FarmerMainScreenState extends State<FarmerMainScreen> {
+  UserInfo? _userInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final userInfo = await StorageService().getUserInfo();
+    if (mounted) {
+      setState(() {
+        _userInfo = userInfo;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -23,6 +43,12 @@ class _FarmerMainScreenState extends State<FarmerMainScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
+    final formatter = NumberFormat('#,###');
+
+    // Use the fetched user data, with fallback values
+    final String userName = _userInfo?.userName ?? '...';
+    final int totalWeight = _userInfo?.totalPurchaseWeight ?? 0;
+    final String savedAmount = formatter.format(_userInfo?.totalDiscountPrice ?? 0);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -318,8 +344,8 @@ class _FarmerMainScreenState extends State<FarmerMainScreen> {
                             color: const Color(0xFFE84C4C),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: const Text(
-                            '000님이 구출한 모난이는\n총 ___kg 이에요!\n구매해주셔서 감사합니다♡',
+                          child: Text(
+                            '$userName님이 구출한 모난이는\n총 ${totalWeight}kg 이에요!\n구매해주셔서 감사합니다♡',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 16,
@@ -336,8 +362,8 @@ class _FarmerMainScreenState extends State<FarmerMainScreen> {
                 const SizedBox(height: 16),
 
                 // 5) 구매 문구
-                const Text(
-                  '약 ___원 저렴하게 샀어요!',
+                Text(
+                  '약 $savedAmount원 저렴하게 샀어요!',
                   style: TextStyle(fontSize: 14, color: Colors.black),
                 ),
               ],

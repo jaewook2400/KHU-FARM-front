@@ -2,8 +2,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:khu_farm/storage_service.dart';
+import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/model/user_info.dart';
+import 'package:khu_farm/model/address.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,30 +26,95 @@ class _LoginScreenState extends State<LoginScreen> {
     final pw = _pwController.text.trim();
 
     if (id.isEmpty || pw.isEmpty) {
-      setState(() {
-        _errorMessage = '아이디와 비밀번호를 모두 입력하세요.';
-      });
+      setState(() => _errorMessage = '아이디와 비밀번호를 모두 입력하세요.');
       return;
     }
 
-    final uri = Uri.parse('$baseUrl/auth/login'); // ← 실제 API 주소로 교체하세요.
-    final response = await http.post(
-      uri,
+    // 1. 로그인 API 호출
+    final loginUri = Uri.parse('$baseUrl/auth/login');
+    final loginResponse = await http.post(
+      loginUri,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'userId': id,
-        'password': pw,
-      }),
+      body: jsonEncode({'userId': id, 'password': pw}),
     );
 
-    final data = jsonDecode(utf8.decode(response.bodyBytes));
-    if (data['isSuccess'] == true) {
-      final accessToken = data['result']['accessToken'];
-      final refreshToken = "";
-      final userType = data['result']['userType'];
+    final loginData = jsonDecode(utf8.decode(loginResponse.bodyBytes));
 
+    if (loginData['isSuccess'] == true) {
+      final loginResult = loginData['result'];
+      final accessToken = loginResult['accessToken'];
+      final userType = loginResult['userType'];
+      String? refreshToken;
+      final String? rawCookie = loginResponse.headers['set-cookie'];
+      if (rawCookie != null) {
+        final regExp = RegExp(r'refresh_token=([^;]+)');
+        final match = regExp.firstMatch(rawCookie);
+        if (match != null) {
+          refreshToken = match.group(1);
+        }
+      }
+
+      if (refreshToken == null) {
+        setState(() => _errorMessage = '로그인에 실패했습니다. (토큰 오류)');
+        return;
+      }
+
+      // 2. 토큰 저장
       await StorageService.saveTokens(accessToken, refreshToken);
+
+      // 3. 유저 가치(Value) 정보 API 호출
+      final userInfoUri = Uri.parse('$baseUrl/users/value');
+      final userInfoResponse = await http.get(
+        userInfoUri,
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+
+      if (userInfoResponse.statusCode != 200) {
+        setState(() => _errorMessage = '사용자 정보 로딩에 실패했습니다.');
+        return;
+      }
+
+      final userInfoData = jsonDecode(utf8.decode(userInfoResponse.bodyBytes));
+      if (userInfoData['isSuccess'] != true) {
+        setState(() => _errorMessage = '사용자 정보 로딩에 실패했습니다.');
+        return;
+      }
+      
+      final valueResult = userInfoData['result'];
+
+      // 4. 두 API 응답을 합쳐서 하나의 UserInfo 객체 생성
+      final UserInfo userInfo = UserInfo(
+        userId: valueResult['userId'],
+        userName: valueResult['userName'],
+        totalPoint: valueResult['totalPoint'],
+        totalDonation: valueResult['totalDonation'],
+        totalPurchasePrice: valueResult['totalPurchasePrice'],
+        totalPurchaseWeight: valueResult['totalPurchaseWeight'],
+        totalDiscountPrice: valueResult['totalDiscountPrice'],
+        email: loginResult['email'], // From login API
+        phoneNumber: loginResult['phoneNumber'], // From login API
+        userType: userType, // From login API
+      );
+
+      // 5. 통합된 사용자 정보를 Storage Service에 저장
+      await StorageService().saveUserInfo(userInfo);
+
       setState(() => _errorMessage = null);
+
+      final addressUri = Uri.parse('$baseUrl/address');
+      final addressResponse = await http.get(
+        addressUri,
+        headers: {'Authorization': 'Bearer $accessToken'},
+      );
+      if (addressResponse.statusCode == 200) {
+        final addressData = json.decode(utf8.decode(addressResponse.bodyBytes));
+        if (addressData['isSuccess'] == true && addressData['result'] != null) {
+          final List<dynamic> addressJson = addressData['result']['content'];
+          final addresses = addressJson.map((json) => Address.fromJson(json)).toList();
+          await StorageService().saveAddresses(addresses);
+          print('User addresses saved successfully.');
+        }
+      }
 
       String route = '';
       switch (userType) {
@@ -66,16 +134,10 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() => _errorMessage = '회원 유형이 올바르지 않습니다.');
           return;
       }
+      if(mounted) Navigator.pushReplacementNamed(context, route);
 
-      Navigator.pushReplacementNamed(context, route);
     } else {
-      if (data['code'] == 'USER404') {
-        setState(() => _errorMessage = '아이디 또는 비밀번호가 일치하지 않습니다.');
-      } else if (data['code'] == 'USER401') {
-        setState(() => _errorMessage = '아이디 또는 비밀번호가 일치하지 않습니다.');
-      } else {
-        setState(() => _errorMessage = '아이디 또는 비밀번호가 일치하지 않습니다.');
-      }
+      setState(() => _errorMessage = '아이디 또는 비밀번호가 일치하지 않습니다.');
     }
   }
 

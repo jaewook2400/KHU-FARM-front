@@ -169,13 +169,13 @@ class FarmerManageListScreen extends StatelessWidget {
                   Navigator.pushNamed(context, '/farmer/mypage/manage/product/add');
                 }),
                 _SectionItem(label: '제품 관리하기', onTap: () {
-                  // TODO: 제품 관리하기 화면으로 이동
+                  
                 }),
                 _SectionItem(label: '리뷰 관리', onTap: () {
                   // TODO: 리뷰 관리 화면으로 이동
                 }),
                 _SectionItem(label: '받은 문의', onTap: () {
-                  // TODO: 받은 문의 화면으로 이동
+                  Navigator.pushNamed(context, '/farmer/mypage/manage/inquiry');
                 }),
                 const Divider(height: 30),
 
@@ -187,6 +187,14 @@ class FarmerManageListScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 _SectionItem(label: '우리 농가 설명', onTap: () {
                   // TODO: 우리 농가 설명 화면으로 이동
+                }),
+                const Divider(),
+                const Text(
+                  '주문 관리',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                _SectionItem(label: '주문 내역 확인', onTap: () {
+                  Navigator.pushNamed(context, '/farmer/mypage/manage/order');
                 }),
               ],
             ),

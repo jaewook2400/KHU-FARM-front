@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:khu_farm/screens/farmer/product_detail.dart';
+import 'package:khu_farm/screens/product_detail.dart';
 import 'package:khu_farm/screens/chatbot.dart';
 import 'package:khu_farm/constants.dart';
-import 'package:khu_farm/storage_service.dart';
-import 'package:khu_farm/fruit.dart';
-import 'package:khu_farm/farm.dart';
+import 'package:khu_farm/services/storage_service.dart';
+import 'package:khu_farm/model/fruit.dart';
+import 'package:khu_farm/model/farm.dart';
 
 class FarmerStockScreen extends StatefulWidget {
   const FarmerStockScreen({super.key});
@@ -245,6 +245,50 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
     }
   }
 
+  Future<void> _addToWishlist(int fruitId) async {
+  final accessToken = await StorageService.getAccessToken();
+  if (accessToken == null) return;
+
+  final headers = {'Authorization': 'Bearer $accessToken'};
+  final uri = Uri.parse('$baseUrl/wishList/$fruitId/add');
+
+  try {
+    final response = await http.post(uri, headers: headers);
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      print('찜 추가 성공');
+      // On success, refetch the entire list from the server
+      await _fetchFruits();
+    } else {
+      print('찜 추가 실패: ${response.statusCode}');
+      print('Response Body: ${utf8.decode(response.bodyBytes)}');
+    }
+  } catch (e) {
+    print('찜 추가 에러: $e');
+  }
+}
+
+Future<void> _removeFromWishlist(int fruitId) async {
+  final accessToken = await StorageService.getAccessToken();
+  if (accessToken == null) return;
+
+  final headers = {'Authorization': 'Bearer $accessToken'};
+  final uri = Uri.parse('$baseUrl/wishList/$fruitId/delete');
+
+  try {
+    final response = await http.delete(uri, headers: headers);
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      print('찜 삭제 성공');
+      // On success, refetch the entire list from the server
+      await _fetchFruits();
+    } else {
+      print('찜 삭제 실패: ${response.statusCode}');
+      print('Response Body: ${utf8.decode(response.bodyBytes)}');
+    }
+  } catch (e) {
+    print('찜 삭제 에러: $e');
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -397,11 +441,14 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
+                      onTap: () async {
+                        // 찜 화면으로 이동하고, 돌아올 때까지 기다립니다.
+                        await Navigator.pushNamed(
                           context,
                           '/farmer/dib/list',
                         );
+                        // 찜 화면에서 돌아온 후 목록을 새로고침합니다.
+                        _fetchFruits();
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -654,7 +701,6 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
   Widget _buildProductItem(BuildContext context, {required Fruit fruit}) {
     return GestureDetector(
       onTap: () {
-        // TODO: 상품 상세 화면으로 이동
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -663,12 +709,20 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
         );
       },
       child: _ProductItem(
-        imagePath: fruit.widthImageUrl,
+        imagePath: fruit.squareImageUrl,
         producer: fruit.brandName ?? '알 수 없음',
         title: fruit.title,
         price: fruit.price,
         unit: fruit.weight,
-        liked: fruit.liked,
+        liked: fruit.isWishList, // isWishList 대신 fruit 모델의 liked 사용
+        onLikeToggle: () {
+          // liked 상태에 따라 다른 API 호출
+          if (fruit.isWishList) {
+            _removeFromWishlist(fruit.wishListId);
+          } else {
+            _addToWishlist(fruit.id);
+          }
+        },
       ),
     );
   }
@@ -710,6 +764,7 @@ class _ProductItem extends StatelessWidget {
   final int price;
   final int unit;
   final bool liked;
+  final VoidCallback onLikeToggle;
 
   const _ProductItem({
     required this.imagePath,
@@ -717,7 +772,8 @@ class _ProductItem extends StatelessWidget {
     required this.title,
     required this.price,
     required this.unit,
-    this.liked = false,
+    required this.liked,
+    required this.onLikeToggle,
   });
 
   @override
@@ -763,9 +819,13 @@ class _ProductItem extends StatelessWidget {
               Positioned(
                 top: 8,
                 right: 8,
-                child: Icon(
-                  liked ? Icons.favorite : Icons.favorite_border,
-                  color: liked ? Colors.red : Colors.white,
+                child: GestureDetector(
+                  onTap: onLikeToggle, // 탭 시 콜백 함수 호출
+                  child: Icon(
+                    liked ? Icons.favorite : Icons.favorite_border,
+                    color: liked ? Colors.red : Colors.white,
+                    size: 28, // 아이콘 크기 약간 키움
+                  ),
                 ),
               ),
               Positioned(
@@ -837,80 +897,86 @@ class _FarmItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(imagePath);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.3),
       child: Stack(
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              imagePath,
-              width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                print('Image loading error: $error'); 
-                return Image.asset(
-                  'assets/farm/temp_farm.jpg',
-                  width: double.infinity,
-                  height: 180,
-                  fit: BoxFit.cover,
-                );
-              },
-            ),
+          // 1. 배경 이미지
+          Image.network(
+            imagePath,
+            width: double.infinity,
+            height: 180,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Image.asset(
+                'assets/farm/temp_farm.jpg',
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+              );
+            },
           ),
-          // Favorite icon top-right
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Icon(
-              liked ? Icons.favorite : Icons.favorite_border,
-              color: liked ? Colors.red : Colors.white,
-            ),
-          ),
-          // Text and icon at bottom
+          
+          // 2. 하단 텍스트 및 아이콘 버튼
           Positioned(
             bottom: 12,
-            left: 12,
-            right: 12,
+            left: 16,
+            right: 16,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      producer,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                // --- 🖼️ 이 부분이 수정되었습니다 ---
+                // 텍스트를 감싸는 반투명 컨테이너
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5), // 반투명 배경
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min, // Column이 자식 크기만큼만 차지하도록 설정
+                    children: [
+                      Text(
+                        producer,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(fontSize: 12, color: Colors.white),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Icon(
-                  liked ? Icons.favorite : Icons.favorite_border,
-                  color: liked ? Colors.red : Colors.black,
-                ),
+                const Spacer(), // 텍스트와 아이콘 사이의 공간을 모두 차지
+                // --- 여기까지 ---
+                
+                // 찜 아이콘 버튼
+                // Container(
+                //   padding: const EdgeInsets.all(8),
+                //   decoration: const BoxDecoration(
+                //     color: Colors.white,
+                //     shape: BoxShape.circle,
+                //   ),
+                //   child: Icon(
+                //     liked ? Icons.favorite : Icons.favorite_border,
+                //     color: liked ? Colors.red : Colors.grey.shade700,
+                //     size: 24,
+                //   ),
+                // ),
               ],
             ),
           ),

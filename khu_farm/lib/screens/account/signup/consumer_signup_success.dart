@@ -17,6 +17,7 @@ class ConsumerSignupSuccessScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -91,7 +92,7 @@ class ConsumerSignupSuccessScreen extends StatelessWidget {
               top: statusBarHeight + 20,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 30,
+              bottom: bottomPadding + 40,
             ),
             child: Column(
               children: [

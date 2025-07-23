@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:khu_farm/screens/farmer/product_detail.dart';
+import 'package:khu_farm/screens/product_detail.dart';
 import 'package:khu_farm/constants.dart';
-import 'package:khu_farm/fruit.dart';
-import 'package:khu_farm/storage_service.dart';
+import 'package:khu_farm/model/fruit.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
 class FarmerStockFruitScreen extends StatefulWidget {
   const FarmerStockFruitScreen({super.key});
@@ -166,6 +166,50 @@ class _FarmerStockFruitScreenState extends State<FarmerStockFruitScreen> {
     }
   }
 
+  Future<void> _addToWishlist(int fruitId) async {
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
+
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    final uri = Uri.parse('$baseUrl/wishList/$fruitId/add');
+
+    try {
+      final response = await http.post(uri, headers: headers);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('찜 추가 성공');
+        // On success, refetch the entire list from the server
+        await _fetchFruits(wholesaleId);
+      } else {
+        print('찜 추가 실패: ${response.statusCode}');
+        print('Response Body: ${utf8.decode(response.bodyBytes)}');
+      }
+    } catch (e) {
+      print('찜 추가 에러: $e');
+    }
+  }
+
+  Future<void> _removeFromWishlist(int fruitId) async {
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
+
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    final uri = Uri.parse('$baseUrl/wishList/$fruitId/delete');
+
+    try {
+      final response = await http.delete(uri, headers: headers);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        print('찜 삭제 성공');
+        // On success, refetch the entire list from the server
+        await _fetchFruits(wholesaleId);
+      } else {
+        print('찜 삭제 실패: ${response.statusCode}');
+        print('Response Body: ${utf8.decode(response.bodyBytes)}');
+      }
+    } catch (e) {
+      print('찜 삭제 에러: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -309,11 +353,14 @@ class _FarmerStockFruitScreenState extends State<FarmerStockFruitScreen> {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
+                      onTap: () async {
+                        // 찜 화면으로 이동하고, 돌아올 때까지 기다립니다.
+                        await Navigator.pushNamed(
                           context,
                           '/farmer/dib/list',
                         );
+                        // 찜 화면에서 돌아온 후 목록을 새로고침합니다.
+                        _fetchFruits(wholesaleId);
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -483,7 +530,15 @@ class _FarmerStockFruitScreenState extends State<FarmerStockFruitScreen> {
         title: fruit.title,
         price: fruit.price,
         unit: fruit.weight,
-        liked: fruit.liked,
+        liked: fruit.isWishList, // isWishList 대신 fruit 모델의 liked 사용
+        onLikeToggle: () {
+          // liked 상태에 따라 다른 API 호출
+          if (fruit.isWishList) {
+            _removeFromWishlist(fruit.wishListId);
+          } else {
+            _addToWishlist(fruit.id);
+          }
+        },
       ),
     );
   }
@@ -511,6 +566,7 @@ class _ProductItem extends StatelessWidget {
   final int price;
   final int unit;
   final bool liked;
+  final VoidCallback onLikeToggle;
 
   const _ProductItem({
     required this.imagePath,
@@ -518,7 +574,8 @@ class _ProductItem extends StatelessWidget {
     required this.title,
     required this.price,
     required this.unit,
-    this.liked = false,
+    required this.liked,
+    required this.onLikeToggle,
   });
 
   @override
@@ -564,9 +621,13 @@ class _ProductItem extends StatelessWidget {
               Positioned(
                 top: 8,
                 right: 8,
-                child: Icon(
-                  liked ? Icons.favorite : Icons.favorite_border,
-                  color: liked ? Colors.red : Colors.white,
+                child: GestureDetector(
+                  onTap: onLikeToggle, // 탭 시 콜백 함수 호출
+                  child: Icon(
+                    liked ? Icons.favorite : Icons.favorite_border,
+                    color: liked ? Colors.red : Colors.white,
+                    size: 28, // 아이콘 크기 약간 키움
+                  ),
                 ),
               ),
               Positioned(

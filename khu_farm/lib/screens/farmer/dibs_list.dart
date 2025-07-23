@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:khu_farm/constants.dart';
-import 'product_detail.dart';
-import 'package:khu_farm/fruit.dart';
-import 'package:khu_farm/storage_service.dart';
+import '../product_detail.dart';
+import 'package:khu_farm/model/fruit.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
 // DibsItem 모델을 삭제하고 Fruit 모델을 사용합니다.
 
@@ -56,7 +56,8 @@ class _FarmerDibsScreenState extends State<FarmerDibsScreen> {
         final data = jsonDecode(decodedBody);
 
         if (data['isSuccess'] == true) {
-          final List<dynamic> itemsJson = data['result']['fruits']['content'];
+          print("asdasasd");
+          final List<dynamic> itemsJson = data['result']['fruitWithWishList']['content'];
           if (mounted) {
             setState(() {
               // DibsItem.fromJson 대신 Fruit.fromJson을 사용
@@ -277,7 +278,7 @@ class _FarmerDibsScreenState extends State<FarmerDibsScreen> {
                                   },
                                   child: _WishlistItem(
                                     fruit: fruit,
-                                    onDelete: () => _deleteDibsItem(fruit.id),
+                                    onDelete: () => _deleteDibsItem(fruit.wishListId),
                                   ),
                                 );
                               },

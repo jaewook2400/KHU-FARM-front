@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:khu_farm/services/pedometer_service.dart';
+import 'package:khu_farm/model/user_info.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
 class FarmerHarvestScreen extends StatefulWidget {
   const FarmerHarvestScreen({super.key});
@@ -13,10 +16,62 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
+  UserInfo? _userInfo;
+  int _totalPoints = 0;
+  int _totalDonation = 0;
+
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
+    PedometerService().init();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final userInfo = await StorageService().getUserInfo();
+    if (userInfo != null) {
+      setState(() {
+        _userInfo = userInfo;
+        _totalPoints = userInfo.totalPoint;
+        _totalDonation = userInfo.totalDonation;
+      });
+    }
+  }
+
+  int _calculateLevel(int points) {
+    if (points < 0) return 1;
+    return (points / 100).floor() + 1;
+  }
+
+  /// 레벨에 맞는 이름을 반환합니다.
+  String _getLevelName(int level) {
+    switch (level) {
+      case 1:
+        return '씨앗';
+      case 2:
+        return '줄기';
+      default:
+        return '열매';
+    }
+  }
+  
+  String _getLevelImagePath(int level) {
+    switch (level) {
+      case 1:
+        return 'assets/harvest/seed.png';
+      case 2:
+        return 'assets/harvest/stem.png';
+      case 3:
+      default: // For level 3 and above
+        return 'assets/harvest/fruit.png';
+    }
+  }
+
+  /// 현재 레벨의 진행도를 0.0 ~ 1.0 사이의 값으로 계산합니다.
+  double _calculateProgress(int points) {
+    if (points < 0) return 0.0;
+    return (points % 100) / 100.0;
   }
 
   @override
@@ -28,6 +83,11 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
         statusBarBrightness: Brightness.light,
       ),
     );
+
+    final int currentLevel = _calculateLevel(_totalPoints);
+    final String levelName = _getLevelName(currentLevel);
+    final double progressValue = _calculateProgress(_totalPoints);
+    final String levelImagePath = _getLevelImagePath(currentLevel); 
 
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -172,7 +232,7 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 찜 화면으로
+                        Navigator.pushNamed(context, '/farmer/dib/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -183,7 +243,7 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 장바구니 화면으로
+                        Navigator.pushNamed(context, '/farmer/cart/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',
@@ -208,14 +268,14 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // 레벨 & 이름
-                  const Text(
-                    'Lv.2',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  Text(
+                    'Lv.$currentLevel', // 동적으로 레벨 표시
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    '줄기',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Text(
+                    levelName, // 동적으로 이름 표시
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
 
@@ -223,17 +283,18 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
-                      value: 0.25,
+                      value: progressValue, // 동적으로 진행도 표시
                       minHeight: 8,
                       backgroundColor: Colors.grey.shade300,
-                      valueColor: AlwaysStoppedAnimation(Color(0xFF6FCF4B)),
+                      valueColor: const AlwaysStoppedAnimation(Color(0xFF6FCF4B)),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    '25point',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    '${_totalPoints}point',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
+                  // --- 여기까지 ---
                   const SizedBox(height: 16),
 
                   // 탭바
@@ -257,30 +318,38 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                           mainAxisAlignment: MainAxisAlignment.start,
                           children: [
                             const SizedBox(height: 16),
-                            const Text(
-                              '오늘은 총 200보 걸었습니다.',
-                              style: TextStyle(fontSize: 14),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6FCF4B),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
+                            StreamBuilder<int>(
+                              stream: PedometerService().stepCountStream, // 서비스의 스트림을 구독
+                              builder: (context, snapshot) {
+                                // 데이터 상태에 따라 다른 UI 표시
+                                String steps = '0';
+                                if (snapshot.hasError) {
+                                  steps = '측정 불가';
+                                } else if (snapshot.hasData) {
+                                  steps = snapshot.data.toString();
+                                }
+
+                                return RichText(
+                                  text: TextSpan(
+                                    style: const TextStyle(fontSize: 18, color: Colors.black),
+                                    children: [
+                                      const TextSpan(text: '오늘은 총 '),
+                                      TextSpan(
+                                        text: steps,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                                      ),
+                                      const TextSpan(text: '보 걸었습니다.'),
+                                    ],
                                   ),
-                                ),
-                                child: const Text('2point 받기'),
-                              ),
+                                );
+                              },
                             ),
                             const Spacer(),
                             Expanded(
                               flex: 2,
                               child: Image.asset(
-                                'assets/harvest/stem.png',
+                                // --- This line is updated ---
+                                levelImagePath, // Use the dynamic image path
                                 fit: BoxFit.contain,
                               ),
                             ),
@@ -389,7 +458,7 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
               padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children:  [
                   Text(
                     '내가 기부한 금액',
                     style: TextStyle(
@@ -400,7 +469,7 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    '10,000원',
+                    '$_totalDonation 원',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

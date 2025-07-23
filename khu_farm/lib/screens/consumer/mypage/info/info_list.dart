@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/services/storage_service.dart';
+import 'package:http/http.dart' as http;
 
 class ConsumerInfoListScreen extends StatelessWidget {
   const ConsumerInfoListScreen({super.key});
@@ -155,50 +159,53 @@ class ConsumerInfoListScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+              const SizedBox(height: 20), // 타이틀과 리스트 사이의 간격
 
-                // 리스트
-                Expanded(
-                  child: ListView(
-                    children: [
-                      _OptionItem(
-                        label: '회원 정보 수정',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/consumer/mypage/info/edit/profile',
+                // --- 🖼️ 이 부분이 수정되었습니다 ---
+                // Expanded 대신 Column을 직접 사용
+                Column(
+                  children: [
+                  //   _OptionItem(
+                  //     label: '회원 정보 수정',
+                  //     onTap: () {
+                  //       Navigator.pushNamed(
+                  //         context,
+                  //         '/consumer/mypage/info/edit/profile',
+                  //       );
+                  //     },
+                  //   ),
+                  // const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                  //   _OptionItem(
+                  //     label: '비밀번호 수정',
+                  //     onTap: () {
+                  //       Navigator.pushNamed(
+                  //         context,
+                  //         '/consumer/mypage/info/edit/pw',
+                  //       );
+                  //     },
+                  //   ),
+                  // const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                    _OptionItem(
+                      label: '배송지 관리',
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/mypage/info/edit/address',
+                        );
+                      },
+                    ),
+                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                    _OptionItem(
+                      label: '로그아웃',
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => _LogoutConfirmDialog(),
                           );
-                        },
-                      ),
-                      _OptionItem(
-                        label: '비밀번호 수정',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/consumer/mypage/info/edit/pw',
-                          );
-                        },
-                      ),
-                      _OptionItem(
-                        label: '배송지 관리',
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/consumer/mypage/info/edit/address',
-                          );
-                        },
-                      ),
-                      _OptionItem(
-                        label: '로그아웃',
-                        onTap: ()  {
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => _LogoutConfirmDialog(),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -236,6 +243,51 @@ class _OptionItem extends StatelessWidget {
 }
 
 class _LogoutConfirmDialog extends StatelessWidget {
+  Future<void> _handleLogout(BuildContext context) async {
+    final accessToken = await StorageService.getAccessToken();
+    final refreshToken = await StorageService.getRefreshToken();
+
+    if (accessToken == null || refreshToken == null) {
+      print('Error: Tokens not found.');
+      return;
+    }
+
+    // --- 🖼️ 이 부분이 수정되었습니다 ---
+    final headers = {
+      'Authorization': 'Bearer $accessToken',
+      // refresh_token을 Cookie 헤더에 포함시킵니다.
+      'Cookie': 'refresh_token=$refreshToken',
+    };
+    // --- 여기까지 ---
+
+    final uri = Uri.parse('$baseUrl/auth/logout');
+
+    try {
+      // 요청 시 body를 제거합니다.
+      final response = await http.post(uri, headers: headers);
+
+      if (response.statusCode == 200) {
+        print('Logout successful');
+      } else {
+        print('Logout failed: ${response.statusCode}');
+        print('Response: ${response.body}');
+      }
+    } catch (e) {
+      print('An error occurred during logout: $e');
+    } finally {
+      await StorageService().clearAllData();
+
+      if (context.mounted) {
+        Navigator.pop(context); // 확인 다이얼로그 닫기
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => _LogoutSuccessDialog(),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -275,14 +327,7 @@ class _LogoutConfirmDialog extends StatelessWidget {
                     width: double.infinity,
                     height: 44,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (_) => _LogoutSuccessDialog(),
-                          );
-                      },
+                      onPressed: () => _handleLogout(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6FCF4B),
                         shape: RoundedRectangleBorder(

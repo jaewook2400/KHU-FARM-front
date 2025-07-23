@@ -1,10 +1,294 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:khu_farm/screens/consumer/daily/product_detail.dart';
+import 'package:http/http.dart' as http;
+import 'package:khu_farm/screens/product_detail.dart';
 import 'package:khu_farm/screens/chatbot.dart';
+import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/services/storage_service.dart';
+import 'package:khu_farm/model/fruit.dart';
+import 'package:khu_farm/model/farm.dart';
 
-class ConsumerDailyScreen extends StatelessWidget {
+class ConsumerDailyScreen extends StatefulWidget {
   const ConsumerDailyScreen({super.key});
+
+  @override
+  State<ConsumerDailyScreen> createState () => _ConsumerDailyScreenState();
+}
+
+class _ConsumerDailyScreenState extends State<ConsumerDailyScreen> {
+  List<Fruit> _fruits = [];
+  List<Farm> _farms = [];
+  bool _isLoading = true;
+  late final TextEditingController _searchFruitController;
+  late final TextEditingController _searchFarmController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFruitController = TextEditingController();
+    _searchFarmController = TextEditingController();
+    _fetchFruits();
+    _fetchFarms();
+  }
+
+  Future<void> _fetchFruits() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final accessToken = await StorageService.getAccessToken();
+
+      if (accessToken == null || accessToken.isEmpty) {
+        print('Authentication token is missing. Please log in.');
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final headers = {
+        'Authorization': 'Bearer $accessToken',
+      };
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/fruits/get/2?size=1000'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> result = data['result'];
+        final List<dynamic>? fruitList = result['content'];
+
+        if (fruitList != null) {
+          setState(() {
+            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
+            _isLoading = false;
+          });
+        } else {
+          print("The 'content' field in the server response is null.");
+          setState(() {
+            _fruits = [];
+            _isLoading = false;
+          });
+        }
+      } else {
+        print('API Error - Status Code: ${response.statusCode}');
+        print('API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('An error occurred: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _searchFruits(String keyword) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final accessToken = await StorageService.getAccessToken();
+
+      if (accessToken == null || accessToken.isEmpty) {
+        print('Authentication token is missing. Please log in.');
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final headers = {
+        'Authorization': 'Bearer $accessToken',
+      };
+
+      // API 명세서에 따라 검색 키워드를 포함한 URL 구성
+      final response = await http.get(
+        Uri.parse('$baseUrl/fruits/search/2?searchKeyword=$keyword'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> result = data['result'];
+        final List<dynamic>? fruitList = result['content'];
+
+        if (fruitList != null) {
+          setState(() {
+            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
+            _isLoading = false;
+          });
+        } else {
+          print("The 'content' field in the server response is null.");
+          setState(() {
+            _fruits = [];
+            _isLoading = false;
+          });
+        }
+      } else {
+        print('Search API Error - Status Code: ${response.statusCode}');
+        print('Search API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('An error occurred during search: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchFarms() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final accessToken = await StorageService.getAccessToken();
+
+      if (accessToken == null || accessToken.isEmpty) {
+        print('Authentication token is missing. Please log in.');
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final headers = {
+        'Authorization': 'Bearer $accessToken',
+      };
+  
+      final uri = Uri.parse('$baseUrl/seller');
+      final response = await http.get(uri, headers: headers);
+      
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> result = data['result'];
+        final List<dynamic>? farmList = result['content'];
+
+        if (farmList != null && farmList.isNotEmpty) {
+          setState(() {
+            final newFarms = farmList.map((json) => Farm.fromJson(json)).toList();
+            _farms.addAll(newFarms);
+          });
+        } else {
+          setState(() {
+            _farms = [];
+            _isLoading = false;
+          });
+        }
+      } else {
+        print('API Error - Status Code: ${response.statusCode}');
+        print('API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
+      }
+    } catch (e) {
+      print('An error occurred during farm fetch: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _searchFarms(String keyword) async {
+    final String? token = await StorageService.getAccessToken();
+    if (token == null) {
+      print('로그인 정보가 없습니다.');
+      return;
+    }
+
+    // API 명세에 따라 searchKeyword만 쿼리 파라미터로 추가
+    final uri = Uri.parse('$baseUrl/seller/search').replace(
+      queryParameters: {'searchKeyword': keyword},
+    );
+
+    try {
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        final Map<String, dynamic> result = data['result'];
+        final List<dynamic>? farmList = result['content'];
+        // 응답 본문의 'result' 필드에서 농가 목록을 추출하여 상태 업데이트
+        if (farmList != null && farmList.isNotEmpty) {
+          setState(() {
+            final newFarms = farmList.map((json) => Farm.fromJson(json)).toList();
+            _farms.addAll(newFarms);
+          });
+        } else {
+          setState(() {
+            _farms = [];
+            _isLoading = false;
+          });
+        }
+        print('농가 검색 성공: $_farms');
+      } else {
+        print('농가 검색 실패 (${response.statusCode}): ${response.body}');
+      }
+    } catch (e) {
+      print('네트워크 오류: $e');
+    }
+  }
+
+  Future<void> _addToWishlist(int fruitId) async {
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
+
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    final uri = Uri.parse('$baseUrl/wishList/$fruitId/add');
+
+    try {
+      final response = await http.post(uri, headers: headers);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('찜 추가 성공');
+        // On success, refetch the entire list from the server
+        await _fetchFruits();
+      } else {
+        print('찜 추가 실패: ${response.statusCode}');
+        print('Response Body: ${utf8.decode(response.bodyBytes)}');
+      }
+    } catch (e) {
+      print('찜 추가 에러: $e');
+    }
+  }
+
+  Future<void> _removeFromWishlist(int fruitId) async {
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
+
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    final uri = Uri.parse('$baseUrl/wishList/$fruitId/delete');
+    print(uri);
+
+    try {
+      final response = await http.delete(uri, headers: headers);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        print('찜 삭제 성공');
+        // On success, refetch the entire list from the server
+        await _fetchFruits();
+      } else {
+        print('찜 삭제 실패: ${response.statusCode}');
+        print('Response Body: ${utf8.decode(response.bodyBytes)}');
+      }
+    } catch (e) {
+      print('찜 삭제 에러: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +432,14 @@ class ConsumerDailyScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        // TODO: 찜 화면으로
+                      onTap: () async {
+                        // 찜 화면으로 이동하고, 돌아올 때까지 기다립니다.
+                        await Navigator.pushNamed(
+                          context,
+                          '/consumer/dib/list',
+                        );
+                        // 찜 화면에서 돌아온 후 목록을 새로고침합니다.
+                        _fetchFruits();
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -160,7 +450,10 @@ class ConsumerDailyScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 장바구니 화면으로
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/cart/list',
+                        );
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',
@@ -208,10 +501,11 @@ class ConsumerDailyScreen extends StatelessWidget {
                                   onTap: () {
                                     Navigator.pushNamed(
                                       context,
-                                      '/consumer/daily/apple',
+                                      '/consumer/daily/fruit',
+                                      arguments: {'fruitId': 1, 'wholesale': 2},
                                     );
                                   },
-                                  child: _CategoryIcon(
+                                  child: const _CategoryIcon(
                                     iconPath: 'assets/icons/apple.png',
                                   ),
                                 ),
@@ -219,10 +513,11 @@ class ConsumerDailyScreen extends StatelessWidget {
                                   onTap: () {
                                     Navigator.pushNamed(
                                       context,
-                                      '/consumer/daily/mandarin',
+                                      '/consumer/daily/fruit',
+                                      arguments: {'fruitId': 2, 'wholesale': 2},
                                     );
                                   },
-                                  child: _CategoryIcon(
+                                  child: const _CategoryIcon(
                                     iconPath: 'assets/icons/mandarin.png',
                                   ),
                                 ),
@@ -230,10 +525,11 @@ class ConsumerDailyScreen extends StatelessWidget {
                                   onTap: () {
                                     Navigator.pushNamed(
                                       context,
-                                      '/consumer/daily/strawberry',
+                                      '/consumer/daily/fruit',
+                                      arguments: {'fruitId': 3, 'wholesale': 2},
                                     );
                                   },
-                                  child: _CategoryIcon(
+                                  child: const _CategoryIcon(
                                     iconPath: 'assets/icons/strawberry.png',
                                   ),
                                 ),
@@ -253,8 +549,9 @@ class ConsumerDailyScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              child: const TextField(
-                                decoration: InputDecoration(
+                              child: TextField(
+                                controller: _searchFruitController,
+                                decoration: const InputDecoration(
                                   prefixIcon: Icon(Icons.search),
                                   hintText: '검색하기',
                                   border: InputBorder.none,
@@ -263,40 +560,30 @@ class ConsumerDailyScreen extends StatelessWidget {
                                     horizontal: 16,
                                   ),
                                 ),
+                                onSubmitted: (value) {
+                                  if (value.isNotEmpty) {
+                                    _searchFruits(value);
+                                  } else {
+                                    _fetchFruits(); // 검색어가 없으면 전체 목록 다시 로드
+                                  }
+                                },
                               ),
                             ),
                             Expanded(
-                              child: ListView(
-                                children: [
-                                  _buildProductItem(
-                                    context,
-                                    imagePath: 'assets/mascot/login_mascot.png',
-                                    producer: '한우리영농조합법인',
-                                    title: '못난이 꿀사과 가정용 특가',
-                                    price: '10,000원',
-                                    unit: '/5kg',
-                                    liked: false,
-                                  ),
-                                  _buildProductItem(
-                                    context,
-                                    imagePath: 'assets/mascot/login_mascot.png',
-                                    producer: '새은귤농원',
-                                    title: '감귤 못난이 10kg 꿀맛 과즙 팡팡',
-                                    price: '10,000원',
-                                    unit: '/5kg',
-                                    liked: true,
-                                  ),
-                                  _buildProductItem(
-                                    context,
-                                    imagePath: 'assets/mascot/login_mascot.png',
-                                    producer: '우리농원딸농산물센터',
-                                    title: '감귤 못난이 10kg 과즙 팡팡',
-                                    price: '10,000원',
-                                    unit: '/5kg',
-                                    liked: false,
-                                  ),
-                                ],
-                              ),
+                              child: _isLoading
+                                ? const Center(child: CircularProgressIndicator())
+                                : _fruits.isEmpty
+                                    ? const Center(child: Text('해당 과일이 없습니다.'))
+                                    : ListView.builder(
+                                        itemCount: _fruits.length,
+                                        itemBuilder: (context, index) {
+                                          final fruit = _fruits[index];
+                                          return _buildProductItem(
+                                            context,
+                                            fruit: fruit,
+                                          );
+                                        },
+                                      ),
                             ),
                           ],
                         ),
@@ -319,8 +606,9 @@ class ConsumerDailyScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              child: const TextField(
-                                decoration: InputDecoration(
+                              child: TextField(
+                                controller: _searchFarmController,
+                                decoration: const InputDecoration(
                                   prefixIcon: Icon(Icons.search),
                                   hintText: '검색하기',
                                   border: InputBorder.none,
@@ -329,32 +617,33 @@ class ConsumerDailyScreen extends StatelessWidget {
                                     horizontal: 16,
                                   ),
                                 ),
+                                onSubmitted: (value) {
+                                  if (value.isNotEmpty) {
+                                    _searchFarms(value);
+                                  } else {
+                                    _fetchFarms(); // 검색어가 없으면 전체 목록 다시 로드
+                                  }
+                                },
                               ),
                             ),
                             // 농가 리스트
                             Expanded(
-                              child: ListView(
-                                children: const [
-                                  _FarmListItem(
-                                    imagePath: 'assets/farm/temp_farm.jpg',
-                                    producer: '한우리영농조합법인',
-                                    subtitle: '싱싱한 사과를 기르는 조합',
-                                    liked: false,
-                                  ),
-                                  _FarmListItem(
-                                    imagePath: 'assets/farm/temp_farm.jpg',
-                                    producer: '맑은귤농원',
-                                    subtitle: '맛있는 귤을 재배하는 농원',
-                                    liked: true,
-                                  ),
-                                  _FarmListItem(
-                                    imagePath: 'assets/farm/temp_farm.jpg',
-                                    producer: '우리농산물센터',
-                                    subtitle: '신선한 딸기를 전달하는 센터',
-                                    liked: false,
-                                  ),
-                                ],
-                              ),
+                              child: _isLoading
+                                ? const Center(child: CircularProgressIndicator())
+                                : _farms.isEmpty
+                                  ? const Center(child: Text('해당 농가가 없습니다.'))
+                                  : ListView.builder(
+                                    itemCount: _farms.length,
+                                    itemBuilder: (context, index) {
+                                      final farm = _farms[index];
+                                      return _FarmItem(
+                                        imagePath: farm.imageUrl,
+                                        producer: farm.brandName,
+                                        subtitle: farm.description,
+                                        liked: false,
+                                      );
+                                    },
+                                ),
                             ),
                           ],
                         ),
@@ -400,39 +689,35 @@ class ConsumerDailyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProductItem(
-    BuildContext context, {
-    required String imagePath,
-    required String producer,
-    required String title,
-    required String price,
-    required String unit,
-    required bool liked,
-  }) {
+  Widget _buildProductItem(BuildContext context, {required Fruit fruit}) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      // onTap 콜백을 async로 변경
+      onTap: () async {
+        // MaterialPageRoute를 await로 호출하여, 해당 페이지가 pop될 때까지 기다림
+        await Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (_) => ProductDetailScreen(
-                  imagePath: imagePath,
-                  title: title,
-                  producer: producer,
-                  price: price,
-                  unit: unit,
-                  liked: liked,
-                ),
+            builder: (_) => ProductDetailScreen(fruit: fruit),
           ),
         );
+        // ProductDetailScreen에서 돌아온 후에 _fetchFruits()를 호출하여 데이터를 새로고침
+        print('Returned from detail screen. Refreshing fruit list...');
+        _fetchFruits();
       },
-      child: _ProductListItem(
-        imagePath: imagePath,
-        producer: producer,
-        title: title,
-        price: price,
-        unit: unit,
-        liked: liked,
+      child: _ProductItem(
+        imagePath: fruit.squareImageUrl,
+        producer: fruit.brandName ?? '알 수 없음',
+        title: fruit.title,
+        price: fruit.price,
+        unit: fruit.weight,
+        liked: fruit.isWishList,
+        onLikeToggle: () {
+          if (fruit.isWishList) {
+            _removeFromWishlist(fruit.wishListId);
+          } else {
+            _addToWishlist(fruit.id);
+          }
+        },
       ),
     );
   }
@@ -467,24 +752,25 @@ class _CategoryIcon extends StatelessWidget {
   }
 }
 
-class _ProductListItem extends StatelessWidget {
+class _ProductItem extends StatelessWidget {
   final String imagePath;
   final String producer;
   final String title;
-  final String price;
-  final String unit;
+  final int price;
+  final int unit;
   final bool liked;
+  final VoidCallback onLikeToggle;
 
-  const _ProductListItem({
+  const _ProductItem({
     required this.imagePath,
     required this.producer,
     required this.title,
     required this.price,
     required this.unit,
-    this.liked = false,
+    required this.liked,
+    required this.onLikeToggle,
   });
 
-  @override
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -504,24 +790,37 @@ class _ProductListItem extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 상품 이미지 및 아이콘
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.asset(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Image.network(
                   imagePath,
                   width: double.infinity,
                   height: 180,
                   fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Image.asset(
+                      'assets/mascot/main_mascot.png',
+                      width: double.infinity,
+                      height: 180,
+                      fit: BoxFit.cover,
+                    );
+                  },
                 ),
               ),
               Positioned(
                 top: 8,
                 right: 8,
-                child: Icon(
-                  liked ? Icons.favorite : Icons.favorite_border,
-                  color: liked ? Colors.red : Colors.white,
+                child: GestureDetector(
+                  onTap: onLikeToggle, // 탭 시 콜백 함수 호출
+                  child: Icon(
+                    liked ? Icons.favorite : Icons.favorite_border,
+                    color: liked ? Colors.red : Colors.white,
+                    size: 28, // 아이콘 크기 약간 키움
+                  ),
                 ),
               ),
               Positioned(
@@ -532,7 +831,10 @@ class _ProductListItem extends StatelessWidget {
                     horizontal: 8,
                     vertical: 4,
                   ),
-                  color: Colors.black54,
+                  decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                   child: Text(
                     producer,
                     style: const TextStyle(color: Colors.white, fontSize: 12),
@@ -541,7 +843,6 @@ class _ProductListItem extends StatelessWidget {
               ),
             ],
           ),
-          // 상세 텍스트
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -557,14 +858,14 @@ class _ProductListItem extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  price,
+                  '$price원',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  unit,
+                  ' / $unit' 'kg',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -576,13 +877,13 @@ class _ProductListItem extends StatelessWidget {
   }
 }
 
-class _FarmListItem extends StatelessWidget {
+class _FarmItem extends StatelessWidget {
   final String imagePath;
   final String producer;
   final String subtitle;
   final bool liked;
 
-  const _FarmListItem({
+  const _FarmItem({
     required this.imagePath,
     required this.producer,
     required this.subtitle,
@@ -591,70 +892,86 @@ class _FarmListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.3),
       child: Stack(
         children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.asset(
-              imagePath,
-              width: double.infinity,
-              height: 180,
-              fit: BoxFit.cover,
-            ),
+          // 1. 배경 이미지
+          Image.network(
+            imagePath,
+            width: double.infinity,
+            height: 180,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Image.asset(
+                'assets/farm/temp_farm.jpg',
+                width: double.infinity,
+                height: 180,
+                fit: BoxFit.cover,
+              );
+            },
           ),
-          // Favorite icon top-right
-          Positioned(
-            top: 8,
-            right: 8,
-            child: Icon(
-              liked ? Icons.favorite : Icons.favorite_border,
-              color: liked ? Colors.red : Colors.white,
-            ),
-          ),
-          // Text and icon at bottom
+          
+          // 2. 하단 텍스트 및 아이콘 버튼
           Positioned(
             bottom: 12,
-            left: 12,
-            right: 12,
+            left: 16,
+            right: 16,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      producer,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                // --- 🖼️ 이 부분이 수정되었습니다 ---
+                // 텍스트를 감싸는 반투명 컨테이너
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5), // 반투명 배경
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min, // Column이 자식 크기만큼만 차지하도록 설정
+                    children: [
+                      Text(
+                        producer,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(fontSize: 12, color: Colors.white),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Icon(
-                  liked ? Icons.favorite : Icons.favorite_border,
-                  color: liked ? Colors.red : Colors.black,
-                ),
+                const Spacer(), // 텍스트와 아이콘 사이의 공간을 모두 차지
+                // --- 여기까지 ---
+                
+                // 찜 아이콘 버튼
+                // Container(
+                //   padding: const EdgeInsets.all(8),
+                //   decoration: const BoxDecoration(
+                //     color: Colors.white,
+                //     shape: BoxShape.circle,
+                //   ),
+                //   child: Icon(
+                //     liked ? Icons.favorite : Icons.favorite_border,
+                //     color: liked ? Colors.red : Colors.grey.shade700,
+                //     size: 24,
+                //   ),
+                // ),
               ],
             ),
           ),

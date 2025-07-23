@@ -111,6 +111,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 top: statusBarHeight + screenHeight * 0.06 + 30,
                 left: screenWidth * 0.08,
                 right: screenWidth * 0.08,
+                bottom: MediaQuery.of(context).padding.bottom,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

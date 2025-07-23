@@ -21,18 +21,25 @@ dependencies:
   flutter_localization: ^0.3.0
   cupertino_icons: ^1.0.8
 
+  flutter_markdown: ^0.7.1
+
   image_picker: ^1.0.0
 
   flutter_lints: ^5.0.0
   flutter_native_splash: ^2.4.6
   table_calendar: ^3.0.8
 
+  pedometer: ^4.1.1
+  daum_postcode_search: ^0.0.2
+
+  flutter_inappwebview: ^6.0.0
+
+  portone_flutter: ^0.12.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_lints: ^5.0.0
-  flutter_native_splash: ^2.4.6
 
 flutter:
   uses-material-design: true

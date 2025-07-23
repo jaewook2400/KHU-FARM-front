@@ -1,0 +1,643 @@
+import 'dart:convert';
+import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:khu_farm/model/fruit.dart';
+import 'package:khu_farm/model/address.dart';
+import 'package:khu_farm/model/user_info.dart';
+import 'package:khu_farm/services/storage_service.dart';
+import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/screens/order/payment.dart';
+import 'package:portone_flutter/model/payment_data.dart';
+import 'package:http/http.dart' as http;
+
+class DirectOrderScreen extends StatefulWidget {
+  const DirectOrderScreen({super.key});
+
+  @override
+  State<DirectOrderScreen> createState() => _DirectOrderScreenState();
+}
+
+class _DirectOrderScreenState extends State<DirectOrderScreen> {
+  final TextEditingController _orderRequestController = TextEditingController();
+  int _selectedPaymentMethod = 1;
+  bool _agreeAll = false;
+  final List<bool> _agreements = List.generate(5, (_) => false);
+
+  Address? _shippingAddress;
+  UserInfo? _userInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _orderRequestController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadInitialData() async {
+    final addresses = await StorageService().getAddresses();
+    final userInfo = await StorageService().getUserInfo();
+    if (mounted) {
+      setState(() {
+        _userInfo = userInfo;
+        if (addresses != null && addresses.isNotEmpty) {
+          _shippingAddress = addresses.firstWhere((addr) => addr.isDefault, orElse: () => addresses.first);
+        }
+      });
+    }
+  }
+
+  void _onAgreeAll(bool? value) {
+    setState(() {
+      _agreeAll = value ?? false;
+      for (int i = 0; i < _agreements.length; i++) {
+        _agreements[i] = _agreeAll;
+      }
+    });
+  }
+
+  void _onAgreementChanged(int index, bool? value) {
+    setState(() {
+      _agreements[index] = value ?? false;
+      _agreeAll = _agreements.every((agreed) => agreed);
+    });
+  }
+
+  Future<void> _handlePayment(Fruit fruit, int quantity, int finalPayment) async {
+    if (_shippingAddress == null || _userInfo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('배송지 또는 사용자 정보가 없습니다.')),
+      );
+      return;
+    }
+
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
+
+    // STEP 1: Register the order with your server
+    final preOrderUri = Uri.parse('$baseUrl/order/directOrder');
+    final headers = {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json',
+    };
+    final body = jsonEncode({
+      "fruitId": fruit.id,
+      "orderCount": quantity,
+      "totalPrice": finalPayment,
+      "shippingInfo": {
+        "addressName": _shippingAddress!.addressName,
+        "portCode": _shippingAddress!.portCode,
+        "address": _shippingAddress!.address,
+        "detailAddress": _shippingAddress!.detailAddress,
+        "recipient": _shippingAddress!.recipient,
+        "phoneNumber": _shippingAddress!.phoneNumber
+      },
+      "orderRequest": _orderRequestController.text,
+    });
+
+    try {
+      final preOrderResponse = await http.post(preOrderUri, headers: headers, body: body);
+      final preOrderData = jsonDecode(utf8.decode(preOrderResponse.bodyBytes));
+
+      if (preOrderResponse.statusCode == 200 && preOrderData['isSuccess'] == true) {
+        final orderResult = preOrderData['result'];
+        final paymentData = PaymentData(
+          pg: 'html5_inicis',
+          payMethod: 'card',
+          name: fruit.title,
+          merchantUid: orderResult['merchantUid'],
+          amount: orderResult['totalPrice'],
+          buyerName: orderResult['recipient'],
+          buyerTel: orderResult['phoneNumber'],
+          buyerEmail: _userInfo!.email,
+          buyerAddr: '${orderResult['address']} ${orderResult['detailAddress']}',
+          buyerPostcode: orderResult['portCode'],
+          appScheme: 'khufarm',
+          confirmUrl: '$baseUrl/payment/confirm'
+        );
+
+        // --- This part is updated ---
+        // Navigate to the payment screen without waiting for a result.
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PaymentScreen(paymentData: paymentData),
+          ),
+        );
+        // --- End of update ---
+
+      } else {
+        throw Exception('Failed to create order on server: ${preOrderData['message']}');
+      }
+    } catch (e) {
+      print('An error occurred during payment prep: $e');
+      if(mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('주문 생성에 실패했습니다. 다시 시도해주세요.')),
+        );
+      }
+    }
+  }
+
+  String _getMainRoute() {
+    final userType = _userInfo?.userType;
+    switch (userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/main';
+      case 'ROLE_BUSINESS':
+        return '/retailer/main';
+      case 'ROLE_FARMER':
+        return '/farmer/main';
+      default:
+        // 혹시 userType이 없거나 일치하지 않을 경우 기본 경로
+        return '/';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+    );
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    final Fruit fruit = args['fruit'];
+    final int quantity = args['quantity'];
+
+    final formatter = NumberFormat('#,###');
+    final productTotal = fruit.price * quantity;
+    final deliveryFee = 0;
+    // final deliveryFee = productTotal > 0 ? 5000 : 0; // Example fee
+    final finalPayment = productTotal + deliveryFee;
+
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+
+    final bool canProceed = _agreements.every((agreed) => agreed);
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+
+      body: Stack(
+        children: [
+          // 노치 배경
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: statusBarHeight + screenHeight * 0.06,
+            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
+          ),
+
+          // 우상단 이미지
+          Positioned(
+            top: 0,
+            right: 0,
+            height: statusBarHeight * 1.2,
+            child: Image.asset(
+              'assets/notch/morning_right_up_cloud.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topRight,
+            ),
+          ),
+
+          // 좌하단 이미지
+          Positioned(
+            top: statusBarHeight,
+            left: 0,
+            height: screenHeight * 0.06,
+            child: Image.asset(
+              'assets/notch/morning_left_down_cloud.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topRight,
+            ),
+          ),
+
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    final route = _getMainRoute();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      route,
+                      (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/farmer/notification/list',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/notice.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/farmer/dib/list');
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/dibs.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/farmer/cart/list');
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/cart.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // 콘텐츠
+          Padding(
+            padding: EdgeInsets.only(
+              top: statusBarHeight + screenHeight * 0.06 + 20,
+              left: screenWidth * 0.08,
+              right: screenWidth * 0.08,
+              bottom: 20,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Image.asset(
+                        'assets/icons/goback.png',
+                        width: 18,
+                        height: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '결제하기',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader('배송지', actionText: '배송지 변경 >'),
+                        // _shippingAddress 상태 변수를 위젯에 전달
+                        _buildShippingInfoCard(address: _shippingAddress),
+                        const SizedBox(height: 18),
+                        const Divider(),
+                        const SizedBox(height: 6),
+                        _buildSectionHeader('주문 상품', actionText: '$quantity개'),
+                        _buildProductCard(fruit: fruit, quantity: quantity), // Pass data to card
+                        const SizedBox(height: 18),
+                        const Divider(),
+                        const SizedBox(height: 12),
+                        const Text('주문 요청사항', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        const TextField(
+                          maxLines: 4,
+                          decoration: InputDecoration(
+                            hintText: '내용을 입력해주세요.',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        const Divider(),
+                        const SizedBox(height: 12),
+                        const Text('결제 수단', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        _buildPaymentMethod(1, '토스페이'),
+                        _buildPaymentMethod(2, '카카오페이'),
+                        _buildPaymentMethod(3, '계좌 간편결제'),
+                        const SizedBox(height: 8),
+                        const Divider(),
+                        const SizedBox(height: 12),
+                        _AmountRow(
+                        label: '총 결제금액',
+                        amount: '${formatter.format(finalPayment)}원',
+                        isTotal: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _AmountRow(
+                        label: '상품 금액',
+                        amount: '${formatter.format(productTotal)}원',
+                      ),
+                      const SizedBox(height: 8),
+                      _AmountRow(
+                        label: '배송비',
+                        amount: deliveryFee > 0 ? '${formatter.format(deliveryFee)}원' : '무료',
+                        isFree: deliveryFee == 0,
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      const SizedBox(height: 12),
+
+                      // Agreements Section
+                      _buildAgreementRow(
+                        isAll: true,
+                        value: _agreeAll,
+                        onChanged: _onAgreeAll,
+                        label: '주문내용 확인 및 결제 모두 동의',
+                      ),
+                      const SizedBox(height: 8),
+                      _buildAgreementRow(
+                        value: _agreements[0],
+                        onChanged: (val) => _onAgreementChanged(0, val),
+                        label: '(필수) 개인정보 수집, 이용 동의',
+                      ),
+                      const SizedBox(height: 8), // Add vertical spacing
+                      _buildAgreementRow(
+                        value: _agreements[1],
+                        onChanged: (val) => _onAgreementChanged(1, val),
+                        label: '(필수) 개인정보 제3자 정보 제공 동의',
+                      ),
+                      const SizedBox(height: 8), // Add vertical spacing
+                      _buildAgreementRow(
+                        value: _agreements[2],
+                        onChanged: (val) => _onAgreementChanged(2, val),
+                        label: '(필수) 결제대행 서비스 이용약관 동의',
+                      ),
+                      const SizedBox(height: 8), // Add vertical spacing
+                      _buildAgreementRow(
+                        value: _agreements[3],
+                        onChanged: (val) => _onAgreementChanged(3, val),
+                        label: '(필수) 공동현관비밀번호 개인정보 수집, 이용 동의',
+                      ),
+                      const SizedBox(height: 120),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Positioned(
+            left: 0, right: 0, bottom: 0,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10)]
+              ),
+              child: ElevatedButton(
+                // --- onPressed is updated ---
+                onPressed: canProceed ? () => _handlePayment(fruit, quantity, finalPayment) : null,
+                // --- End of update ---
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFB6832B),
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text('${formatter.format(finalPayment)}원 결제하기', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, {String? actionText}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          if (actionText != null)
+            Text(actionText, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShippingInfoCard({Address? address}) {
+    if (address == null) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(child: Text('배송지 정보를 불러오는 중...')),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(address.addressName, style: const TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text('${address.recipient} | ${address.phoneNumber}'),
+          const SizedBox(height: 4),
+          Text('${address.address} ${address.detailAddress} [${address.portCode}]'),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton(
+              onPressed: () { /* TODO: 수정 기능 */ },
+              child: const Text('수정'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                side: BorderSide(color: Colors.grey.shade400)
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductCard({required Fruit fruit, required int quantity}) {
+    final formatter = NumberFormat('#,###');
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(fruit.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(fruit.brandName ?? '알 수 없음', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 12),
+                Text('${quantity}박스', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 4),
+                Text('${formatter.format(fruit.price)}원 / ${fruit.weight}kg', style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(fruit.squareImageUrl, width: 80, height: 80, fit: BoxFit.cover),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethod(int value, String title) {
+    return InkWell(
+      onTap: () => setState(() => _selectedPaymentMethod = value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 0), // Reduced vertical padding
+        child: Row(
+          children: [
+            Radio<int>(
+              value: value,
+              groupValue: _selectedPaymentMethod,
+              onChanged: (val) => setState(() => _selectedPaymentMethod = val!),
+              activeColor: Colors.black,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            Text(title, style: const TextStyle(fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAgreementRow({
+    required bool value,
+    required Function(bool?) onChanged,
+    required String label,
+    bool isAll = false,
+  }) {
+    return Row(
+      children: [
+        Checkbox(
+          value: value,
+          onChanged: onChanged,
+          visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          
+          // --- This section is updated ---
+          activeColor: Colors.white,  // Set the background to white when checked
+          checkColor: Colors.black,   // Set the checkmark to black
+          side: MaterialStateBorderSide.resolveWith(
+            (states) {
+              return BorderSide(color: Colors.grey.shade400, width: 2); // Border when unchecked
+            },
+          ),
+          // --- End of update ---
+        ),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: isAll ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+        if (!isAll)
+          GestureDetector(
+            onTap: () {
+              // TODO: Show terms and conditions modal
+            },
+            child: Text(
+              '더보기 >',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _AmountRow extends StatelessWidget {
+  final String label;
+  final String amount;
+  final bool isTotal;
+  final bool isFree;
+
+  const _AmountRow({
+    required this.label,
+    required this.amount,
+    this.isTotal = false,
+    this.isFree = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(fontSize: 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.normal)),
+        Text(
+          amount,
+          style: TextStyle(
+            fontSize: isTotal ? 16 : 14,
+            fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
+            color: isFree ? Colors.redAccent : Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+}

@@ -1,8 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:khu_farm/services/storage_service.dart';
+import 'package:khu_farm/model/user_info.dart';
 
-class ConsumerMypageScreen extends StatelessWidget {
+class ConsumerMypageScreen extends StatefulWidget {
   const ConsumerMypageScreen({super.key});
+
+  @override
+  State<ConsumerMypageScreen> createState() => _ConsumerMypageScreenState();
+}
+
+class _ConsumerMypageScreenState extends State<ConsumerMypageScreen> {
+  UserInfo? _userInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  /// Loads user information from storage and updates the state.
+  Future<void> _loadUserInfo() async {
+    final userInfo = await StorageService().getUserInfo();
+    if (mounted) {
+      setState(() {
+        _userInfo = userInfo;
+      });
+    }
+  }
+
+  String _getUserTypeString(String? userType) {
+    switch (userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '일반회원';
+      case 'ROLE_BUSINESS':
+        return '기업회원';
+      case 'ROLE_FARMER':
+        return '농가회원';
+      default:
+        return '회원';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +55,7 @@ class ConsumerMypageScreen extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -177,7 +216,7 @@ class ConsumerMypageScreen extends StatelessWidget {
               top: statusBarHeight + screenHeight * 0.06 + 20,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 20,
+              bottom: bottomPadding,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,15 +241,19 @@ class ConsumerMypageScreen extends StatelessWidget {
                         // 이름/타입 + 이메일
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
+                          children: [
                             Text(
-                              '김*김님 어서오세요. [일반회원]',
-                              style: TextStyle(fontSize: 16),
+                              // Show user name or a loading message
+                              _userInfo != null
+                                  ? '${_userInfo!.userName}님 어서오세요. [${_getUserTypeString(_userInfo!.userType)}]'
+                                  : '로딩 중...',
+                              style: const TextStyle(fontSize: 16),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
-                              'idnumber@gmail.com',
-                              style: TextStyle(
+                              // Show user ID (email) or an empty string
+                              _userInfo?.email.toString() ?? '',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey,
                               ),
@@ -235,7 +278,10 @@ class ConsumerMypageScreen extends StatelessWidget {
                 _SectionItem(
                   label: '주문/배송',
                   onTap: () {
-                    // TODO: 주문/배송 화면으로
+                    Navigator.pushNamed(
+                      context,
+                      '/consumer/mypage/order',
+                    );
                   },
                 ),
                 _SectionItem(
