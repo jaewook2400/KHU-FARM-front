@@ -43,6 +43,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: LogoFont
+      fonts:
+        - asset: assets/fonts/RixInooAriDuri Regular.ttf
+    - family: default
+      fonts:
+        - asset: assets/fonts/PRETENDARD-MEDIUM.OTF
+
   assets:
     - assets/splash/splash.png
     - assets/notch/morning.png
@@ -55,7 +63,8 @@ flutter:
     - assets/icons/farmer.png
     - assets/icons/apple.png
     - assets/icons/mandarin.png
-    - assets/icons/strawberry.png
+    - assets/icons/tangor.png
+    - assets/icons/korean_melon.png
     - assets/mascot/main_mascot.png
     - assets/bottom_navigator/unselect/daily.png
     - assets/bottom_navigator/unselect/stock.png

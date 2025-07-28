@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:khu_farm/model/fruit.dart';
 import 'package:khu_farm/model/inquiry.dart';
 import 'package:khu_farm/model/user_info.dart';
+import 'package:khu_farm/model/review.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart' as quill_ext;
 import 'package:http/http.dart' as http;
@@ -30,6 +31,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   List<Inquiry> _inquiries = [];
   bool _isInquiriesLoading = true;
 
+  List<ReviewInfo> _reviews = [];
+  bool _isReviewsLoading = true;
+
   UserInfo? _userInfo;
 
   @override
@@ -38,6 +42,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     _isWishList = widget.fruit.isWishList;
     _loadInitialData();
     _fetchInquiries();
+    _fetchReviews();
 
     try {
       final dynamic deltaJson = jsonDecode(widget.fruit.description);
@@ -74,12 +79,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
     final headers = {'Authorization': 'Bearer $accessToken'};
-    final uri = Uri.parse('$baseUrl/inquiry/${widget.fruit.id}');
+    
+    // --- 이 부분이 수정되었습니다 ---
+    // API 명세에 따라 size=1000 쿼리 파라미터를 추가합니다.
+    final uri = Uri.parse('$baseUrl/inquiry/${widget.fruit.id}?size=1000');
+    // --- 여기까지 ---
 
     try {
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
+        
+        // API 응답 구조에 맞춰 'result' 객체 안의 'content' 리스트를 가져옵니다.
         if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> itemsJson = data['result']['content'];
           if (mounted) {
@@ -97,8 +108,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   void _showInquiryModal() async {
-    // Wait for a result from the inquiry list modal.
-    final result = await showModalBottomSheet<bool>(
+    // 문의 목록 모달을 띄우고, 새로운 문의가 등록되었는지 결과(true)를 기다립니다.
+    final inquiryAdded = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -112,14 +123,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ),
     );
 
-    // If the result is true, a new inquiry was added.
-    if (result == true) {
-      // 1. Refresh the entire inquiry list.
+    // 새로운 문의가 성공적으로 추가되었다면 (결과가 true라면)
+    if (inquiryAdded == true && mounted) {
+      // 1. 서버로부터 전체 문의 목록을 다시 불러와 갱신합니다.
       await _fetchInquiries();
-      // 2. If the list is not empty, show the detail view for the newest item (the first one).
-      if (_inquiries.isNotEmpty && mounted) {
-        _showDetailModal(context, _inquiries.first);
-      }
+      
+      // 2. 갱신된 문의 목록을 보여주기 위해 모달을 다시 엽니다.
+      //    (사용자 경험상 모달이 닫혔다가 다시 열리는 흐름입니다)
+      _showInquiryModal();
     }
   }
 
@@ -134,6 +145,55 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           fruit: widget.fruit,
           scrollController: controller,
           inquiry: inquiry,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _fetchReviews() async {
+    setState(() => _isReviewsLoading = true);
+    // 이 API는 토큰이 필요 없을 수 있으나, 일관성을 위해 추가합니다.
+    // 필요 없다면 headers 부분을 제거해도 됩니다.
+    final accessToken = await StorageService.getAccessToken();
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    
+    final uri = Uri.parse('$baseUrl/review/${widget.fruit.id}/retrieve/all?size=1000');
+
+    try {
+      final response = await http.get(uri, headers: headers);
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['isSuccess'] == true && data['result']?['content'] != null) {
+          final List<dynamic> itemsJson = data['result']['content'];
+          setState(() {
+            _reviews = itemsJson.map((json) => ReviewInfo.fromJson(json)).toList();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching reviews: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isReviewsLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showReviewModal() {
+    // DraggableScrollableSheet을 사용하여 모달을 띄웁니다.
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        builder: (_, controller) => _ReviewModal(
+          reviews: _reviews,
+          scrollController: controller,
         ),
       ),
     );
@@ -527,8 +587,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
@@ -593,9 +653,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(0),
                     child: Image.network(
-                      widget.fruit.widthImageUrl,
+                      widget.fruit.squareImageUrl,
                       width: double.infinity,
-                      height: screenHeight * 0.3,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -757,15 +816,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         const SizedBox(height: 12,),
                         
                         // Review header
-                        const Text(
-                          '리뷰',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text('리뷰 데이터가 없습니다.'),
+                         _buildReviewSection(),
+
                         const SizedBox(height: 12),
                         const Divider(),
                         const SizedBox(height: 12,),
@@ -870,6 +922,44 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewSection() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('리뷰', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              GestureDetector(
+                onTap: _showReviewModal,
+                child: const Text('더보기 >', style: TextStyle(fontSize: 14, color: Colors.grey)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _isReviewsLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _reviews.isEmpty
+                  ? const Text('작성된 리뷰가 없습니다.')
+                  : SizedBox(
+                      // --- 🔽 카드 높이에 맞춰 영역 높이 수정 🔽 ---
+                      height: 110, 
+                      // --- 🔼 수정 끝 🔼 ---
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _reviews.length,
+                        itemBuilder: (context, index) {
+                          return _ReviewCard(review: _reviews[index]);
+                        },
+                      ),
+                    ),
         ],
       ),
     );
@@ -1278,14 +1368,26 @@ class _NewInquiryModalState extends State<_NewInquiryModal> {
     super.dispose();
   }
 
+        
+
   Future<void> _submitInquiry() async {
     if (_contentController.text.trim().isEmpty) {
-      // ...
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('문의 내용을 입력해주세요.')),
+      );
       return;
     }
 
     final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null) return;
+    if (accessToken == null) {
+      print('[API Error] Access Token is missing. User might not be logged in.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인이 필요합니다.')),
+        );
+      }
+      return;
+    }
 
     final headers = {
       'Authorization': 'Bearer $accessToken',
@@ -1299,27 +1401,35 @@ class _NewInquiryModalState extends State<_NewInquiryModal> {
 
     try {
       final response = await http.post(uri, headers: headers, body: body);
+      // 응답 본문은 한 번만 디코딩하여 재사용합니다.
+      final data = json.decode(utf8.decode(response.bodyBytes));
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(utf8.decode(response.bodyBytes));
-        if (data['isSuccess'] == true) {
-          print('Inquiry submitted successfully.');
-          if (mounted) {
-            // On success, pop and return true to signal a change was made.
-            Navigator.of(context).pop(true);
-          }
+      // 요청이 성공적으로 처리된 경우 (isSuccess: true)
+      if (response.statusCode >= 200 && response.statusCode < 300 && data['isSuccess'] == true) {
+        print('[API Success] Inquiry submitted successfully.');
+        if (mounted) {
+          Navigator.of(context).pop(true);
         }
       } else {
-        print('Failed to submit inquiry: ${response.statusCode}');
-        print('Response: ${response.body}');
+        // 서버 로직상 실패 또는 HTTP 에러인 경우
+        print('[API Error] Failed to submit inquiry.');
+        print('   - Status Code: ${response.statusCode}');
+        print('   - Server Message: ${data['message']}');
+        print('   - Full Response: $data');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('문의 등록에 실패했습니다.')),
+            SnackBar(content: Text('문의 등록 실패: ${data['message'] ?? '알 수 없는 오류'}' )),
           );
         }
       }
     } catch (e) {
-      print('An error occurred while submitting inquiry: $e');
+      // 네트워크 오류 등 예외가 발생한 경우
+      print('[Exception] An exception occurred while submitting inquiry: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('오류가 발생했습니다. 네트워크 연결을 확인해주세요.')),
+        );
+      }
     }
   }
 
@@ -1454,6 +1564,258 @@ class _NewInquiryModalState extends State<_NewInquiryModal> {
           ),
         ],
       ),
+    );
+  }
+}
+
+
+class _ReviewCard extends StatelessWidget {
+  final ReviewInfo review;
+  const _ReviewCard({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // 리뷰 이미지
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              review.imageUrl,
+              width: 95,
+              fit: BoxFit.cover,
+              errorBuilder: (c, e, s) => Container(width: 95, color: Colors.grey[200]),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // 텍스트 영역
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              // --- 🔽 mainAxisAlignment.center 속성 제거 🔽 ---
+              // mainAxisAlignment: MainAxisAlignment.center, // 이 라인을 삭제하여 상단 정렬로 변경
+              // --- 🔼 수정 끝 🔼 ---
+              children: [
+                // 제목 및 별점
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        review.title,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    _buildRatingStars(review.rating.toDouble()),
+                    const SizedBox(width: 4),
+                    Text(
+                      review.rating.toStringAsFixed(1),
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // 내용
+                Text(
+                  review.content,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildRatingStars(double rating) {
+    return Row(
+      children: List.generate(5, (index) {
+        return Icon(
+          index < rating ? Icons.star : Icons.star_border,
+          color: Colors.red,
+          size: 16,
+        );
+      }),
+    );
+  }
+}
+
+class _ReviewModal extends StatelessWidget {
+  final List<ReviewInfo> reviews;
+  final ScrollController scrollController;
+
+  const _ReviewModal({required this.reviews, required this.scrollController});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // 헤더 (닫기 버튼, 타이틀)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                const Expanded(
+                  child: Text('리뷰', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(width: 48), // 중앙 정렬을 위한 공간
+              ],
+            ),
+          ),
+          // 리뷰 목록
+          Expanded(
+            child: ListView.separated(
+              controller: scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: reviews.length,
+              // itemBuilder는 각 리뷰 아이템을 생성합니다.
+              itemBuilder: (context, index) {
+                return _ReviewModalItem(review: reviews[index]);
+              },
+              // separatorBuilder는 각 아이템 사이에 들어갈 위젯(구분선)을 생성합니다.
+              // 마지막 아이템 다음에는 자동으로 추가되지 않습니다.
+              separatorBuilder: (context, index) => const Divider(
+                height: 48, // 위아래 여백을 포함한 높이
+                thickness: 1, // 구분선 두께
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+// --- 🔽 모달에 들어갈 개별 리뷰 아이템 위젯 🔽 ---
+class _ReviewModalItem extends StatelessWidget {
+  final ReviewInfo review;
+  const _ReviewModalItem({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    String formattedDate = '';
+    try {
+      formattedDate = DateFormat('yyyy.MM.dd').format(DateTime.parse(review.createdAt));
+    } catch (e) {
+      formattedDate = review.createdAt;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 리뷰 이미지 (있을 경우에만 표시)
+          if (review.imageUrl.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  review.imageUrl,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => Container(height: 200, color: Colors.grey[200]),
+                ),
+              ),
+            ),
+          
+          // 리뷰 제목
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(review.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 8),
+              _buildRatingStars(review.rating.toDouble()),
+              const SizedBox(width: 4),
+              Text(review.rating.toStringAsFixed(1), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 4),
+
+          // Row 2: 작성자와 날짜
+          Row(
+            children: [
+              Text('ID:${review.userId}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              const Spacer(),
+              Text(formattedDate, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          // --- 🔼 수정 끝 🔼 ---
+
+          const SizedBox(height: 12),
+          // 리뷰 내용
+          Text(review.content),
+          const SizedBox(height: 16),
+
+          // --- 🔽 판매자 답변 UI 수정 🔽 ---
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('판매자 답변', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(
+                  review.replyContent != null && review.replyContent!.isNotEmpty
+                      ? review.replyContent!
+                      : '답변 대기중',
+                  style: TextStyle(
+                    color: review.replyContent != null && review.replyContent!.isNotEmpty
+                        ? Colors.black
+                        : Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // --- 🔼 수정 끝 🔼 ---
+        ],
+      ),
+    );
+  }
+  
+  // 별점 표시 헬퍼 위젯
+  Widget _buildRatingStars(double rating) {
+    return Row(
+      children: List.generate(5, (index) {
+        return Icon(
+          index < rating ? Icons.star : Icons.star_border,
+          color: Colors.red,
+          size: 16,
+        );
+      }),
     );
   }
 }

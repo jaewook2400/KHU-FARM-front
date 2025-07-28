@@ -248,26 +248,26 @@ class _RetailerStockFruitScreenState extends State<RetailerStockFruitScreen> {
               iconPath: 'assets/bottom_navigator/select/stock.png',
               onTap: () {},
             ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/harvest',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/laicos',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/harvest',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/laicos',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {
@@ -322,7 +322,7 @@ class _RetailerStockFruitScreenState extends State<RetailerStockFruitScreen> {
                   onTap: () {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
-                      '/consumer/main',
+                      '/retailer/main',
                       (route) => false,
                     );
                   },
@@ -330,27 +330,27 @@ class _RetailerStockFruitScreenState extends State<RetailerStockFruitScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/retailer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () async {
@@ -501,16 +501,21 @@ class _RetailerStockFruitScreenState extends State<RetailerStockFruitScreen> {
   }
 
   String _getFruitName(int? id) {
-    switch (id) {
-      case 1:
-        return '사과';
-      case 2:
-        return '감귤';
-      case 3:
-        return '딸기';
-      default:
-        return '과일';
+    // id가 null이면 기본값 반환
+    if (id == null) {
+      return '과일';
     }
+
+    // fruitsCategory 리스트에서 일치하는 id를 찾습니다.
+    for (var category in fruitsCategory) {
+      if (category['fruitId'] == id) {
+        // 일치하는 id를 찾으면 해당 fruitName을 반환합니다.
+        return category['fruitName'] as String;
+      }
+    }
+
+    // 리스트에서 일치하는 id를 찾지 못하면 기본값을 반환합니다.
+    return '과일';
   }
 
   Widget _buildProductItem(BuildContext context, {required Fruit fruit}) {

@@ -8,7 +8,6 @@ import 'package:khu_farm/model/delivery_tracking.dart';
 import 'package:khu_farm/model/order_status.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
-import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
 
 class FarmerManageOrderDeliveryStatusScreen extends StatefulWidget {
@@ -142,27 +141,27 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/farmer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {

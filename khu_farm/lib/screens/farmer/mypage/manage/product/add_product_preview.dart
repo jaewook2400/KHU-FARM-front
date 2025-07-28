@@ -140,6 +140,7 @@ class _FarmerAddProductPreviewScreen
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final String hPath = args['horizontalImagePath'] as String;
+    final String sPath = args['squareImagePath'] as String;
     final String title = args['title'] as String;
     final String price = args['price'] as String;
     final String weight = args['weight'] as String;
@@ -210,27 +211,27 @@ class _FarmerAddProductPreviewScreen
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/farmer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
@@ -297,7 +298,7 @@ class _FarmerAddProductPreviewScreen
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 이미지 미리보기
-                  if (hPath.isNotEmpty) Image.file(File(hPath), width: mediaQuery.size.width, fit: BoxFit.cover),
+                  if (hPath.isNotEmpty) Image.file(File(sPath), width: mediaQuery.size.width, fit: BoxFit.cover),
                   const SizedBox(height: 16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),

@@ -1,9 +1,66 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:khu_farm/screens/farmer/mypage/csc/personal_inquiry/personal_inquiry_detail.dart';
+import 'package:http/http.dart' as http;
+import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/model/inquiry.dart';
+import 'package:khu_farm/screens/farmer/mypage/csc/personal_inquiry/personal_inquiry_detail.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
-class FarmerPersonalInquiryListScreen extends StatelessWidget {
+class FarmerPersonalInquiryListScreen extends StatefulWidget {
   const FarmerPersonalInquiryListScreen({super.key});
+
+  @override
+  State<FarmerPersonalInquiryListScreen> createState() =>
+      _FarmerPersonalInquiryListScreenState();
+}
+
+class _FarmerPersonalInquiryListScreenState
+    extends State<FarmerPersonalInquiryListScreen> {
+  bool _isLoading = true;
+  List<Inquiry> _inquiries = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchMyInquiries();
+  }
+
+  // 2. '내 문의 내역' API 호출 함수
+  Future<void> _fetchMyInquiries() async {
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null || !mounted) return;
+
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    final uri = Uri.parse('$baseUrl/inquiry/myInquiry?size=1000'); //
+
+    try {
+      final response = await http.get(uri, headers: headers);
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['isSuccess'] == true && data['result']?['content'] != null) {
+          final List<dynamic> itemsJson = data['result']['content'];
+          setState(() {
+            _inquiries =
+                itemsJson.map((json) => Inquiry.fromJson(json)).toList();
+          });
+        }
+      } else {
+        print('Failed to load inquiries: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching inquiries: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,8 +131,8 @@ class FarmerPersonalInquiryListScreen extends StatelessWidget {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
@@ -98,7 +155,7 @@ class FarmerPersonalInquiryListScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 찜 화면으로
+                        Navigator.pushNamed(context, '/farmer/dib/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -109,7 +166,7 @@ class FarmerPersonalInquiryListScreen extends StatelessWidget {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        // TODO: 장바구니 화면으로
+                        Navigator.pushNamed(context, '/farmer/cart/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',
@@ -161,51 +218,53 @@ class FarmerPersonalInquiryListScreen extends StatelessWidget {
                   ),
                 ),
                 Expanded(
-                  child: ListView(
-                    children: const [
-                      _InquiryCard(
-                        question: '문의내용 문의내용 문의내용 문의내용 문의내용 문의내용 문의내용...',
-                        answer: '답변내용 답변내용 답변내용 답변내용...',
-                      ),
-                      SizedBox(height: 12),
-                      _InquiryCard(
-                        question: '문의내용 문의내용 문의내용 문의내용 문의내용 문의내용...',
-                        answer: '답변대기중',
-                      ),
-                    ],
-                  ),
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _inquiries.isEmpty
+                          ? const Center(child: Text('작성된 문의 내역이 없습니다.'))
+                          : ListView.builder(
+                              padding: const EdgeInsets.only(top: 16),
+                              itemCount: _inquiries.length,
+                              itemBuilder: (context, index) {
+                                final inquiry = _inquiries[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12.0),
+                                  child: _InquiryCard(inquiry: inquiry),
+                                );
+                              },
+                            ),
                 ),
               ],
             ),
           ),
 
           // ── 하단 버튼 ────────────────────────────
-          Positioned(
-            left: screenWidth * 0.08,
-            right: screenWidth * 0.08,
-            bottom: 20 + MediaQuery.of(context).padding.bottom,
-            child: SizedBox(
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/farmer/mypage/inquiry/personal/add',
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6FCF4B),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                ),
-                child: const Text(
-                  '새 1:1 문의하기',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   left: screenWidth * 0.08,
+          //   right: screenWidth * 0.08,
+          //   bottom: 20 + MediaQuery.of(context).padding.bottom,
+          //   child: SizedBox(
+          //     height: 48,
+          //     child: ElevatedButton(
+          //       onPressed: () {
+          //         Navigator.pushNamed(
+          //           context,
+          //           '/farmer/mypage/inquiry/personal/add',
+          //         );
+          //       },
+          //       style: ElevatedButton.styleFrom(
+          //         backgroundColor: const Color(0xFF6FCF4B),
+          //         shape: RoundedRectangleBorder(
+          //           borderRadius: BorderRadius.circular(30),
+          //         ),
+          //       ),
+          //       child: const Text(
+          //         '새 1:1 문의하기',
+          //         style: TextStyle(fontSize: 16, color: Colors.white),
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -213,9 +272,8 @@ class FarmerPersonalInquiryListScreen extends StatelessWidget {
 }
 
 class _InquiryCard extends StatelessWidget {
-  final String question;
-  final String answer;
-  const _InquiryCard({required this.question, required this.answer});
+  final Inquiry inquiry;
+  const _InquiryCard({required this.inquiry});
 
   @override
   Widget build(BuildContext context) {
@@ -230,10 +288,11 @@ class _InquiryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
-                  'Q: $question',
+                  'Q: ${inquiry.content}',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -242,38 +301,29 @@ class _InquiryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              TextButton(
-                onPressed: () {
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:
-                          (_) => FarmerPersonalInquiryDetailScreen(
-                            productName: '못난이 꿀사과 5kg 가정용 특가',
-                            productSubtitle: '라이코스 농원',
-                            imagePath: 'assets/mascot/login_mascot.png',
-                            packInfo: '1박스',
-                            priceInfo: '10,000원/5kg',
-                            question: question,
-                            questionDate: '2025.01.01',
-                            answer: answer,
-                            answerDate: answer == '답변대기중' ? '' : '2025.01.02',
-                          ),
+                      // inquiryId를 생성자로 전달합니다.
+                      builder: (_) => FarmerPersonalInquiryDetailScreen(
+                        inquiryId: inquiry.inquiryId,
+                      ),
                     ),
                   );
                 },
-                style: TextButton.styleFrom(
-                  padding: EdgeInsets.zero,
-                  minimumSize: const Size(50, 30),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                child: Text(
+                  '더보기 >',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
-                child: const Text('더보기'),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            'A: $answer',
+            'A: ${inquiry.reply?.content ?? '답변대기중'}',
             style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

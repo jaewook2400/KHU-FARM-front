@@ -10,6 +10,8 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/screens/order/payment.dart';
 import 'package:portone_flutter/model/payment_data.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_markdown/flutter_markdown.dart';
+
 
 class DirectOrderScreen extends StatefulWidget {
   const DirectOrderScreen({super.key});
@@ -22,7 +24,7 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
   final TextEditingController _orderRequestController = TextEditingController();
   int _selectedPaymentMethod = 1;
   bool _agreeAll = false;
-  final List<bool> _agreements = List.generate(5, (_) => false);
+  List<bool> _agreements = List.generate(paymentAgreements.length, (_) => false);
 
   Address? _shippingAddress;
   UserInfo? _userInfo;
@@ -55,6 +57,7 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
   void _onAgreeAll(bool? value) {
     setState(() {
       _agreeAll = value ?? false;
+      // 이 로직은 _agreements 리스트의 길이에 따라 자동으로 동작하므로 수정할 필요가 없습니다.
       for (int i = 0; i < _agreements.length; i++) {
         _agreements[i] = _agreeAll;
       }
@@ -66,6 +69,107 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
       _agreements[index] = value ?? false;
       _agreeAll = _agreements.every((agreed) => agreed);
     });
+  }
+
+  void showTermsModal(BuildContext context, String title, String content) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          builder: (context, scrollController) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: _buildTermsWidgets(content),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 40,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('닫기', style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  List<Widget> _buildTermsWidgets(String markdown) {
+    final List<Widget> widgets = [];
+    const summaryDelimiter = '-       요      약      본      -';
+    const fullTextDelimiter = '-       전      문      -';
+
+    if (markdown.contains(summaryDelimiter)) {
+      final parts = markdown.split(summaryDelimiter);
+      if (parts[0].trim().isNotEmpty) {
+        widgets.add(MarkdownBody(data: parts[0]));
+      }
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Center(child: Text(summaryDelimiter, style: const TextStyle(fontWeight: FontWeight.bold))),
+        ),
+      );
+      
+      if (parts[1].contains(fullTextDelimiter)) {
+        final subParts = parts[1].split(fullTextDelimiter);
+        if (subParts[0].trim().isNotEmpty) {
+          widgets.add(MarkdownBody(data: subParts[0]));
+        }
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(child: Text(fullTextDelimiter, style: const TextStyle(fontWeight: FontWeight.bold))),
+          ),
+        );
+        if (subParts[1].trim().isNotEmpty) {
+          widgets.add(MarkdownBody(data: subParts[1]));
+        }
+      } else {
+        widgets.add(MarkdownBody(data: parts[1]));
+      }
+    } else {
+      widgets.add(MarkdownBody(data: markdown));
+    }
+    
+    return widgets;
   }
 
   Future<void> _handlePayment(Fruit fruit, int quantity, int finalPayment) async {
@@ -244,8 +348,8 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
@@ -389,29 +493,23 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
                         label: '주문내용 확인 및 결제 모두 동의',
                       ),
                       const SizedBox(height: 8),
-                      _buildAgreementRow(
-                        value: _agreements[0],
-                        onChanged: (val) => _onAgreementChanged(0, val),
-                        label: '(필수) 개인정보 수집, 이용 동의',
-                      ),
-                      const SizedBox(height: 8), // Add vertical spacing
-                      _buildAgreementRow(
-                        value: _agreements[1],
-                        onChanged: (val) => _onAgreementChanged(1, val),
-                        label: '(필수) 개인정보 제3자 정보 제공 동의',
-                      ),
-                      const SizedBox(height: 8), // Add vertical spacing
-                      _buildAgreementRow(
-                        value: _agreements[2],
-                        onChanged: (val) => _onAgreementChanged(2, val),
-                        label: '(필수) 결제대행 서비스 이용약관 동의',
-                      ),
-                      const SizedBox(height: 8), // Add vertical spacing
-                      _buildAgreementRow(
-                        value: _agreements[3],
-                        onChanged: (val) => _onAgreementChanged(3, val),
-                        label: '(필수) 공동현관비밀번호 개인정보 수집, 이용 동의',
-                      ),
+
+                      // paymentAgreements 리스트를 기반으로 동적으로 약관 위젯 생성
+                      for (int i = 0; i < paymentAgreements.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: _buildAgreementRow(
+                              value: _agreements[i],
+                              onChanged: (val) => _onAgreementChanged(i, val),
+                              label: paymentAgreements[i]['name'] as String,
+                              // '더보기' 버튼을 눌렀을 때 모달창을 띄우는 콜백 연결
+                              onMoreTap: () => showTermsModal(
+                                context,
+                                paymentAgreements[i]['name'] as String,
+                                paymentAgreements[i]['content'] as String,
+                              ),
+                            ),
+                          ),
                       const SizedBox(height: 120),
                       ],
                     ),
@@ -566,6 +664,7 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
     required Function(bool?) onChanged,
     required String label,
     bool isAll = false,
+    VoidCallback? onMoreTap, // '더보기' 탭 이벤트를 위한 콜백 추가
   }) {
     return Row(
       children: [
@@ -575,16 +674,11 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
           visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          
-          // --- This section is updated ---
-          activeColor: Colors.white,  // Set the background to white when checked
-          checkColor: Colors.black,   // Set the checkmark to black
+          activeColor: Colors.white,
+          checkColor: Colors.black,
           side: MaterialStateBorderSide.resolveWith(
-            (states) {
-              return BorderSide(color: Colors.grey.shade400, width: 2); // Border when unchecked
-            },
+            (states) => BorderSide(color: Colors.grey.shade400, width: 2),
           ),
-          // --- End of update ---
         ),
         Expanded(
           child: Text(
@@ -595,14 +689,16 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
             ),
           ),
         ),
-        if (!isAll)
+        // isAll이 false이고 onMoreTap 콜백이 제공된 경우에만 '더보기' 버튼 표시
+        if (!isAll && onMoreTap != null)
           GestureDetector(
-            onTap: () {
-              // TODO: Show terms and conditions modal
-            },
-            child: Text(
-              '더보기 >',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            onTap: onMoreTap,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8.0),
+              child: Text(
+                '더보기 >',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              ),
             ),
           ),
       ],

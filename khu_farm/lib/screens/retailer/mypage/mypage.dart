@@ -89,26 +89,26 @@ class _RetailerMypageScreenState extends State<RetailerMypageScreen> {
                 );
               },
             ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/harvest',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/laicos',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/harvest',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/laicos',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/select/mypage.png',
               onTap: () {},
@@ -172,27 +172,27 @@ class _RetailerMypageScreenState extends State<RetailerMypageScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/retailer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
@@ -297,7 +297,10 @@ class _RetailerMypageScreenState extends State<RetailerMypageScreen> {
                 _SectionItem(
                   label: '작성한 리뷰',
                   onTap: () {
-                    // TODO: 작성한 리뷰 화면으로
+                    Navigator.pushNamed(
+                      context,
+                      '/retailer/mypage/review',
+                    );
                   },
                 ),
 
@@ -319,15 +322,15 @@ class _RetailerMypageScreenState extends State<RetailerMypageScreen> {
                     );
                   },
                 ),
-                _SectionItem(
-                  label: '자주 묻는 질문',
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/retailer/mypage/inquiry/faq',
-                    );
-                  },
-                ),
+                // _SectionItem(
+                //   label: '자주 묻는 질문',
+                //   onTap: () {
+                //     Navigator.pushNamed(
+                //       context,
+                //       '/retailer/mypage/inquiry/faq',
+                //     );
+                //   },
+                // ),
               ],
             ),
           ),

@@ -128,27 +128,27 @@ class _RetailerOrderListScreenState extends State<RetailerOrderListScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/retailer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
@@ -249,14 +249,10 @@ class _OrderCard extends StatelessWidget {
       formattedDate = order.createdAt;
     }
 
-    // Determine if a review has been written.
-    // TODO: Replace with actual logic based on your data (e.g., checking a review status)
-    final bool hasReview = order.ratingCount > 0;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date and Item Count Row
+        // 주문 날짜 및 수량 정보 (기존과 동일)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
@@ -269,6 +265,7 @@ class _OrderCard extends StatelessWidget {
             ],
           ),
         ),
+        // 주문 상세 정보 카드 (기존과 동일)
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -325,29 +322,57 @@ class _OrderCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        // "Write Review" Button
+
+        // --- 🔽 "리뷰 작성" 버튼 위젯 수정 🔽 ---
+        
+        // TODO: [리뷰 작성 버튼 활성화 로직] 추후 API에 orderStatus와 리뷰 작성 여부 필드가 추가되면 아래 주석을 해제하고 사용하세요.
+        /*
+        // 1. 이미 리뷰를 작성했는지 확인 (API 응답에 isReviewed 와 같은 boolean 필드가 필요합니다)
+        final bool hasReview = order.isReviewed;
+
+        // 2. 리뷰 작성이 가능한 주문 상태인지 확인 (API 응답에 orderStatus 필드가 필요합니다)
+        final String currentStatus = order.orderStatus;
+        final bool isReviewableStatus = currentStatus == '배달완료' ||
+            currentStatus == '환불 대기' ||
+            currentStatus == '주문 취소';
+
+        // 3. 최종적으로 버튼이 활성화될 조건
+        final bool isButtonEnabled = isReviewableStatus && !hasReview;
+        
+        // 4. 버튼 텍스트
+        final String buttonText = hasReview ? '리뷰 작성 완료' : '리뷰 작성';
+        */
+        
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: hasReview ? null : () {
-              // TODO: Navigate to review writing screen
+            // onPressed: isButtonEnabled ? () { ... } : null, // 추후 위 로직과 연결
+            onPressed: () {
+              // 리뷰 작성 페이지로 이동하며 order 객체를 arguments로 전달
+              Navigator.pushNamed(
+                context,
+                '/retailer/mypage/order/review/add',
+                arguments: order,
+              );
             },
+            // style: ElevatedButton.styleFrom( backgroundColor: isButtonEnabled ? ... ), // 추후 위 로직과 연결
             style: ElevatedButton.styleFrom(
-              backgroundColor: hasReview ? Colors.grey.shade300 : const Color(0xFF6FCF4B),
-              foregroundColor: hasReview ? Colors.grey.shade600 : Colors.white,
+              backgroundColor: const Color(0xFF6FCF4B),
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 0,
-              side: hasReview ? BorderSide(color: Colors.grey.shade300) : null,
             ),
-            child: Text(
-              hasReview ? '리뷰 작성 완료' : '리뷰 작성',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            // child: Text(buttonText), // 추후 위 로직과 연결
+            child: const Text(
+              '리뷰 작성',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),
+        // --- 🔼 버튼 위젯 수정 끝 🔼 ---
         const SizedBox(height: 24),
       ],
     );

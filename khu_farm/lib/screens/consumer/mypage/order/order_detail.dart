@@ -38,9 +38,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final headers = {'Authorization': 'Bearer $accessToken'};
 
     try {
-      final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
+      final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderDetailId}/tracking');
       final getResponse = await http.get(getUri, headers: headers);
-      
+
       if (getResponse.statusCode == 200) {
         final data = json.decode(utf8.decode(getResponse.bodyBytes));
         if (data['isSuccess'] == true && data['result'] != null) {
@@ -143,31 +143,31 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/consumer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/retailer/dib/list');
+                        Navigator.pushNamed(context, '/consumer/dib/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -178,7 +178,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/retailer/cart/list');
+                        Navigator.pushNamed(context, '/consumer/cart/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',
@@ -299,7 +299,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       'out_for_delivery': 2,
       'delivered': 3,
     };
-    print(trackingData.currentStateText);
     int currentStep = statusMap[trackingData.currentStateText] ?? 0;
     
     return Column(

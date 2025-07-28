@@ -29,6 +29,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   bool _agreeService = false;
   bool _agreePrivacy = false;
   bool _agreeThirdParty = false;
+  bool _agreeEntry = false;
 
   void showTermsModal(BuildContext context, String title, String content) {
     showModalBottomSheet(
@@ -252,8 +253,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
@@ -337,6 +338,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                         _agreeService = value;
                         _agreePrivacy = value;
                         _agreeThirdParty = value;
+                        _agreeEntry = value;
                       });
                     },
                     label: '모든 약관에 동의합니다.',
@@ -347,7 +349,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                     onChanged: (value) {
                       setState(() {
                         _agreeService = value!;
-                        _agreeAll = _agreeService && _agreePrivacy && _agreeThirdParty;
+                        _agreeAll = _agreeService && _agreePrivacy && _agreeThirdParty && _agreeEntry;
                       });
                     },
                     label: '(필수) 이용약관에 동의합니다.',
@@ -362,7 +364,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                     onChanged: (value) {
                       setState(() {
                         _agreePrivacy = value!;
-                        _agreeAll = _agreeService && _agreePrivacy && _agreeThirdParty;
+                        _agreeAll = _agreeService && _agreePrivacy && _agreeThirdParty && _agreeEntry;
                       });
                     },
                     label: '(필수) 개인정보 수집 및 이용에 동의합니다.',
@@ -377,7 +379,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                     onChanged: (value) {
                       setState(() {
                         _agreePrivacy = value!;
-                        _agreeAll = _agreeService && _agreePrivacy && _agreeThirdParty;
+                        _agreeAll = _agreeService && _agreePrivacy && _agreeThirdParty && _agreeEntry;
                       });
                     },
                     label: '(필수) 제3자 제공에 동의합니다.(KG이니시스 결제서비스 제공 목적)',
@@ -385,6 +387,21 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                       context,
                       signupAgreements[2]['name'] as String,
                       signupAgreements[2]['content'] as String,
+                    ),
+                  ),
+                  _customCheckboxTile(
+                    value: _agreeThirdParty,
+                    onChanged: (value) {
+                      setState(() {
+                        _agreePrivacy = value!;
+                        _agreeAll = _agreeService && _agreePrivacy && _agreeThirdParty && _agreeEntry;
+                      });
+                    },
+                    label: '(필수) 입점 운영 및 정산 관련 약관 동의',
+                    onMoreTap: () => showTermsModal(
+                      context,
+                      signupAgreements[3]['name'] as String,
+                      signupAgreements[3]['content'] as String,
                     ),
                   ),
                 ],
@@ -403,14 +420,16 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 onPressed: (_isIdCheckedAndAvailable &&
                         _agreeService &&
                         _agreePrivacy &&
-                        _agreeThirdParty)
+                        _agreeThirdParty &&
+                        _agreeEntry)
                     ? _handleSignup // Connect the signup function
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: (_isIdCheckedAndAvailable &&
                           _agreeService &&
                           _agreePrivacy &&
-                          _agreeThirdParty)
+                          _agreeThirdParty &&
+                          _agreeEntry)
                       ? const Color(0xFF6FCF4B)
                       : Colors.grey.shade300,
                   shape: RoundedRectangleBorder(
@@ -424,7 +443,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                     color: (_isIdCheckedAndAvailable &&
                             _agreeService &&
                             _agreePrivacy &&
-                            _agreeThirdParty)
+                            _agreeThirdParty && 
+                            _agreeEntry)
                         ? Colors.white
                         : Colors.grey.shade600,
                   ),

@@ -238,26 +238,26 @@ class _ConsumerDailyFruitScreenState extends State<ConsumerDailyFruitScreen> {
               iconPath: 'assets/bottom_navigator/select/daily.png',
               onTap: () {},
             ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/consumer/harvest',
-                  ModalRoute.withName("/consumer/main"),
-                );
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/consumer/laicos',
-                  ModalRoute.withName("/consumer/main"),
-                );
-              },
-            ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/consumer/harvest',
+            //       ModalRoute.withName("/consumer/main"),
+            //     );
+            //   },
+            // ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/consumer/laicos',
+            //       ModalRoute.withName("/consumer/main"),
+            //     );
+            //   },
+            // ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {
@@ -320,27 +320,27 @@ class _ConsumerDailyFruitScreenState extends State<ConsumerDailyFruitScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/consumer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/consumer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () async {
@@ -457,50 +457,55 @@ class _ConsumerDailyFruitScreenState extends State<ConsumerDailyFruitScreen> {
               ],
             ),
           ),
-          Positioned(
-            bottom: screenWidth * 0.02,
-            right: screenWidth * 0.02,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade300),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: GestureDetector(
-                onTap: () {
-                  // TODO: 챗봇 모달 열기
-                },
-                child: Image.asset(
-                  'assets/chat/chatbot_icon.png',
-                  width: 68,
-                  height: 68,
-                ),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   bottom: screenWidth * 0.02,
+          //   right: screenWidth * 0.02,
+          //   child: Container(
+          //     decoration: BoxDecoration(
+          //       shape: BoxShape.circle,
+          //       color: Colors.white,
+          //       border: Border.all(color: Colors.grey.shade300),
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: Colors.black.withOpacity(0.1),
+          //           blurRadius: 4,
+          //           offset: const Offset(0, 2),
+          //         ),
+          //       ],
+          //     ),
+          //     child: GestureDetector(
+          //       onTap: () {
+          //         // TODO: 챗봇 모달 열기
+          //       },
+          //       child: Image.asset(
+          //         'assets/chat/chatbot_icon.png',
+          //         width: 68,
+          //         height: 68,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
   }
 
   String _getFruitName(int? id) {
-    switch (id) {
-      case 1:
-        return '사과';
-      case 2:
-        return '감귤';
-      case 3:
-        return '딸기';
-      default:
-        return '과일';
+    // id가 null이면 기본값 반환
+    if (id == null) {
+      return '과일';
     }
+
+    // fruitsCategory 리스트에서 일치하는 id를 찾습니다.
+    for (var category in fruitsCategory) {
+      if (category['fruitId'] == id) {
+        // 일치하는 id를 찾으면 해당 fruitName을 반환합니다.
+        return category['fruitName'] as String;
+      }
+    }
+
+    // 리스트에서 일치하는 id를 찾지 못하면 기본값을 반환합니다.
+    return '과일';
   }
 
   Widget _buildProductItem(BuildContext context, {required Fruit fruit}) {
@@ -514,7 +519,7 @@ class _ConsumerDailyFruitScreenState extends State<ConsumerDailyFruitScreen> {
         );
       },
       child: _ProductItem(
-        imagePath: fruit.squareImageUrl,
+        imagePath: fruit.widthImageUrl,
         producer: fruit.brandName ?? '알 수 없음',
         title: fruit.title,
         price: fruit.price,

@@ -6,7 +6,7 @@ class Order {
   final String widthImageUrl;
   final String squareImageUrl;
   final int price;
-  final int weight; // Assuming weight can be a double
+  final int weight;
   final String deliveryCompany;
   final int deliveryDay;
   final int ratingSum;
@@ -20,7 +20,7 @@ class Order {
   final int orderCount;
   final int orderId;
   final int orderDetailId;
-  final String createdAt; // Assuming you have a date field
+  final String createdAt;
 
   Order({
     required this.id,
@@ -66,7 +66,13 @@ class Order {
       orderCount: json['orderCount'] ?? 0,
       orderId: json['orderId'] ?? 0,
       orderDetailId: json['orderDetailId'] ?? 0,
-      createdAt: json['createdAt'] ?? '2025.01.01', // Use a real date field from your API
+      createdAt: json['createdAt'] ?? '2025.01.01',
     );
+  }
+
+  // 👇 여기에 toString() 메서드 추가
+  @override
+  String toString() {
+    return 'Order(id: $id, title: $title, price: $price, brandName: $brandName, orderId: $orderId, createdAt: $createdAt)';
   }
 }

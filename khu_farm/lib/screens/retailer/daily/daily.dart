@@ -330,26 +330,26 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
                 );
               },
             ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/harvest',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/laicos',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/harvest',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/laicos',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {
@@ -419,27 +419,27 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/retailer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () async {
@@ -507,42 +507,25 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/retailer/daily/fruit',
-                                      arguments: {'fruitId': 1, 'wholesale': 2},
-                                    );
-                                  },
-                                  child: const _CategoryIcon(
-                                    iconPath: 'assets/icons/apple.png',
+                                for (var category in fruitsCategory)
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/retailer/daily/fruit',
+                                        arguments: {
+                                          // category 맵에서 fruitId를 가져옵니다.
+                                          'fruitId': category['fruitId'],
+                                          // wholesale 값은 2로 고정합니다.
+                                          'wholesale': 2,
+                                        },
+                                      );
+                                    },
+                                    child: _CategoryIcon(
+                                      // category 맵에서 icon 경로를 가져옵니다.
+                                      iconPath: category['fruitIcon'] as String,
+                                    ),
                                   ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/retailer/daily/fruit',
-                                      arguments: {'fruitId': 2, 'wholesale': 2},
-                                    );
-                                  },
-                                  child: const _CategoryIcon(
-                                    iconPath: 'assets/icons/mandarin.png',
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/retailer/daily/fruit',
-                                      arguments: {'fruitId': 3, 'wholesale': 2},
-                                    );
-                                  },
-                                  child: const _CategoryIcon(
-                                    iconPath: 'assets/icons/strawberry.png',
-                                  ),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -715,7 +698,7 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
         _fetchFruits();
       },
       child: _ProductItem(
-        imagePath: fruit.squareImageUrl,
+        imagePath: fruit.widthImageUrl,
         producer: fruit.brandName ?? '알 수 없음',
         title: fruit.title,
         price: fruit.price,

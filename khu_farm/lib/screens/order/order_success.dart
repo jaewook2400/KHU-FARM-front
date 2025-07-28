@@ -54,6 +54,25 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
     Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);
   }
 
+  void _navigateToOrderListPage() {
+    String route = '/login'; // 기본값은 로그인 화면
+    if (_userInfo != null) {
+      switch (_userInfo!.userType) {
+        case 'ROLE_INDIVIDUAL':
+          route = '/consumer/mypage/order';
+          break;
+        case 'ROLE_BUSINESS':
+          route = '/retailer/mypage/order';
+          break;
+        case 'ROLE_FARMER':
+          route = '/farmer/mypage/order';
+          break;
+      }
+    }
+    // 모든 화면 스택을 제거하고 해당 라우트로 이동합니다.
+    Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -108,8 +127,8 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
@@ -153,9 +172,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   SizedBox(
                     height: 52,
                     child: OutlinedButton(
-                      onPressed: () {
-                        // TODO: 주문 내역 화면으로 이동
-                      },
+                      onPressed: _navigateToOrderListPage,
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: Colors.grey.shade400),
                         shape: RoundedRectangleBorder(

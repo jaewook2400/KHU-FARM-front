@@ -18,8 +18,6 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
   String? _squareImagePath;
   String? _selectedCourierId;
 
-  final categoryList = ['사과', '감귤', '딸기'];
-
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _weightController = TextEditingController();
@@ -130,27 +128,27 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/farmer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
@@ -225,13 +223,13 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                         value: selectedCategory,
                         isExpanded: true,
                         onChanged: (value) => setState(() => selectedCategory = value),
-                        items: [
-                          for (var i = 0; i < categoryList.length; i++)
-                            DropdownMenuItem<int>(
-                              value: i + 1,                       // index + 1
-                              child: Text(categoryList[i]),
-                            )
-                        ],
+                        items: fruitsCategory.map((fruit) {
+                          return DropdownMenuItem<int>(
+                            // value는 고유한 값이어야 하므로 index 대신 fruitId를 사용하는 것이 좋습니다.
+                            value: fruit['fruitId'] as int,
+                            child: Text(fruit['fruitName'] as String),
+                          );
+                        }).toList(),
                       ),
                     ),
                   ),

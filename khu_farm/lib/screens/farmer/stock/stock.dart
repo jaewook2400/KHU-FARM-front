@@ -329,26 +329,26 @@ Future<void> _removeFromWishlist(int fruitId) async {
               iconPath: 'assets/bottom_navigator/select/stock.png',
               onTap: () {},
             ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/farmer/harvest',
-                  ModalRoute.withName("/farmer/main"),
-                );
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/farmer/laicos',
-                  ModalRoute.withName("/farmer/main"),
-                );
-              },
-            ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/farmer/harvest',
+            //       ModalRoute.withName("/farmer/main"),
+            //     );
+            //   },
+            // ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/farmer/laicos',
+            //       ModalRoute.withName("/farmer/main"),
+            //     );
+            //   },
+            // ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {
@@ -418,27 +418,27 @@ Future<void> _removeFromWishlist(int fruitId) async {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/farmer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () async {
@@ -506,42 +506,25 @@ Future<void> _removeFromWishlist(int fruitId) async {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/farmer/stock/fruit',
-                                      arguments: {'fruitId': 1, 'wholesale': 1},
-                                    );
-                                  },
-                                  child: const _CategoryIcon(
-                                    iconPath: 'assets/icons/apple.png',
+                                for (var category in fruitsCategory)
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/farmer/daily/fruit',
+                                        arguments: {
+                                          // category 맵에서 fruitId를 가져옵니다.
+                                          'fruitId': category['fruitId'],
+                                          // wholesale 값은 1로 고정합니다.
+                                          'wholesale': 1,
+                                        },
+                                      );
+                                    },
+                                    child: _CategoryIcon(
+                                      // category 맵에서 icon 경로를 가져옵니다.
+                                      iconPath: category['fruitIcon'] as String,
+                                    ),
                                   ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/farmer/stock/fruit',
-                                      arguments: {'fruitId': 2, 'wholesale': 1},
-                                    );
-                                  },
-                                  child: const _CategoryIcon(
-                                    iconPath: 'assets/icons/mandarin.png',
-                                  ),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.pushNamed(
-                                      context,
-                                      '/farmer/stock/fruit',
-                                      arguments: {'fruitId': 3, 'wholesale': 1},
-                                    );
-                                  },
-                                  child: const _CategoryIcon(
-                                    iconPath: 'assets/icons/strawberry.png',
-                                  ),
-                                ),
                               ],
                             ),
                             const SizedBox(height: 16),
@@ -665,34 +648,34 @@ Future<void> _removeFromWishlist(int fruitId) async {
           ),
 
           // 채팅 모달 버튼 (고정)
-          Positioned(
-            bottom: screenWidth * 0.02,
-            right: screenWidth * 0.02,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade300),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: GestureDetector(
-                onTap: () {
-                  showChatbotModal(context);
-                },
-                child: Image.asset(
-                  'assets/chat/chatbot_icon.png',
-                  width: 68,
-                  height: 68,
-                ),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   bottom: screenWidth * 0.02,
+          //   right: screenWidth * 0.02,
+          //   child: Container(
+          //     decoration: BoxDecoration(
+          //       shape: BoxShape.circle,
+          //       color: Colors.white,
+          //       border: Border.all(color: Colors.grey.shade300),
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: Colors.black.withOpacity(0.1),
+          //           blurRadius: 4,
+          //           offset: const Offset(0, 2),
+          //         ),
+          //       ],
+          //     ),
+          //     child: GestureDetector(
+          //       onTap: () {
+          //         showChatbotModal(context);
+          //       },
+          //       child: Image.asset(
+          //         'assets/chat/chatbot_icon.png',
+          //         width: 68,
+          //         height: 68,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
@@ -709,7 +692,7 @@ Future<void> _removeFromWishlist(int fruitId) async {
         );
       },
       child: _ProductItem(
-        imagePath: fruit.squareImageUrl,
+        imagePath: fruit.widthImageUrl,
         producer: fruit.brandName ?? '알 수 없음',
         title: fruit.title,
         price: fruit.price,

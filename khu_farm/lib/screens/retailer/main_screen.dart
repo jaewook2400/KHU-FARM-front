@@ -79,26 +79,26 @@ class _RetailerMainScreenState extends State<RetailerMainScreen> {
                 );
               },
             ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/harvest',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/retailer/laicos',
-                  ModalRoute.withName("/retailer/main"),
-                );
-              },
-            ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/harvest',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/retailer/laicos',
+            //       ModalRoute.withName("/retailer/main"),
+            //     );
+            //   },
+            // ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {
@@ -168,27 +168,27 @@ class _RetailerMainScreenState extends State<RetailerMainScreen> {
                     'KHU:FARM',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
                       color: Colors.white,
                     ),
                   ),
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/retailer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
@@ -228,48 +228,48 @@ class _RetailerMainScreenState extends State<RetailerMainScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // 1) 오늘의 날씨 카드
-                Container(
-                  // 화면 너비의 70% 만큼 가로 크기 지정 (원하는 비율로 조정)
-                  width: screenWidth * 0.4,
-                  // 내부 콘텐츠를 수평·수직 중앙에 맞추기
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 12,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    // 가로 방향으로도 가운데 정렬
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Text(
-                        '오늘의 날씨',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Image.asset(
-                        'assets/weather/cloud_sun.png',
-                        width: 32,
-                        height: 32,
-                      ),
-                      const SizedBox(height: 4),
-                      const Text('10°C/20°C', style: TextStyle(fontSize: 13)),
-                    ],
-                  ),
-                ),
+                // Container(
+                //   // 화면 너비의 70% 만큼 가로 크기 지정 (원하는 비율로 조정)
+                //   width: screenWidth * 0.4,
+                //   // 내부 콘텐츠를 수평·수직 중앙에 맞추기
+                //   alignment: Alignment.center,
+                //   padding: const EdgeInsets.symmetric(
+                //     vertical: 12,
+                //     horizontal: 16,
+                //   ),
+                //   decoration: BoxDecoration(
+                //     color: Colors.white,
+                //     borderRadius: BorderRadius.circular(12),
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: Colors.black.withOpacity(0.05),
+                //         blurRadius: 8,
+                //         offset: const Offset(0, 4),
+                //       ),
+                //     ],
+                //   ),
+                //   child: Column(
+                //     // 가로 방향으로도 가운데 정렬
+                //     crossAxisAlignment: CrossAxisAlignment.center,
+                //     children: [
+                //       const Text(
+                //         '오늘의 날씨',
+                //         style: TextStyle(
+                //           fontSize: 14,
+                //           fontWeight: FontWeight.w500,
+                //         ),
+                //       ),
+                //       const SizedBox(height: 8),
+                //       Image.asset(
+                //         'assets/weather/cloud_sun.png',
+                //         width: 32,
+                //         height: 32,
+                //       ),
+                //       const SizedBox(height: 4),
+                //       const Text('10°C/20°C', style: TextStyle(fontSize: 13)),
+                //     ],
+                //   ),
+                // ),
 
                 const SizedBox(height: 40),
 

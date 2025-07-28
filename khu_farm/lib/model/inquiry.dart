@@ -21,12 +21,14 @@ class InquiryReply {
 }
 
 class Inquiry {
+  final int inquiryId;
   final String content;
   final String createdAt;
   final InquiryReply? reply;
   final bool isPrivate;
 
   Inquiry({
+    required this.inquiryId,
     required this.content,
     required this.createdAt,
     this.reply,
@@ -35,6 +37,7 @@ class Inquiry {
 
   factory Inquiry.fromJson(Map<String, dynamic> json) {
     return Inquiry(
+      inquiryId: json['inquiryId'] ?? 0,
       content: json['content'] ?? '내용 없음',
       createdAt: json['createdAt'] ?? '',
       reply: json['reply'] != null ? InquiryReply.fromJson(json['reply']) : null,
