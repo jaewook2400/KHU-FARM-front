@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http; // For http calls
 import 'package:pedometer/pedometer.dart';
 import 'package:khu_farm/constants.dart'; // For baseUrl
 import 'storage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 /// 만보기 데이터 관리를 위한 서비스 클래스 (싱글턴)
 class PedometerService {
@@ -19,16 +21,55 @@ class PedometerService {
   // pedometer 패키지의 스트림 구독 객체
   StreamSubscription<StepCount>? _pedometerSubscription;
 
+  int _todayStepBaseline = 0;
+  String _lastSavedDate = '';
+
   /// 만보기 서비스 초기화
-  void init() {
-    if (_pedometerSubscription != null) return; // 중복 초기화 방지
+  void init() async {
+    if (_pedometerSubscription != null) return;
 
     print("PedometerService 초기화 시작...");
 
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateFormat('yyyyMMdd').format(DateTime.now());
+    
+    _lastSavedDate = prefs.getString('lastSavedDate') ?? '';
+
+    // ✨ 앱 시작 시 날짜가 다르면, 저장된 기준점을 0으로 초기화
+    if (_lastSavedDate != today) {
+      _todayStepBaseline = 0;
+      await prefs.setInt('todayStepBaseline', 0);
+    } else {
+      _todayStepBaseline = prefs.getInt('todayStepBaseline') ?? 0;
+    }
+
     _pedometerSubscription = Pedometer.stepCountStream.listen(
-      (StepCount event) {
-        // 센서에서 새로운 걸음 수 데이터가 오면 스트림에 추가
-        _stepCountController.add(event.steps);
+      (StepCount event) async {
+        final currentTotalSteps = event.steps;
+        final todayStr = DateFormat('yyyyMMdd').format(DateTime.now());
+
+        // 날짜가 바뀌었거나, 기준점이 아직 설정되지 않은 경우 (앱 설치 후 첫 실행 등)
+        if (_lastSavedDate != todayStr) {
+          print("날짜가 변경되었습니다. 걸음 수 기준점을 새로 설정합니다.");
+          _todayStepBaseline = currentTotalSteps;
+          _lastSavedDate = todayStr;
+
+          await prefs.setInt('todayStepBaseline', _todayStepBaseline);
+          await prefs.setString('lastSavedDate', _lastSavedDate);
+        }
+        
+        // ✨ 휴대폰 재부팅으로 누적값이 초기화된 경우 처리
+        if (currentTotalSteps < _todayStepBaseline) {
+          print("재부팅이 감지되었습니다. 걸음 수 기준점을 재설정합니다.");
+          _todayStepBaseline = currentTotalSteps;
+          await prefs.setInt('todayStepBaseline', _todayStepBaseline);
+        }
+
+        int todaySteps = currentTotalSteps - _todayStepBaseline;
+
+        print('[PedometerService] 원본: $currentTotalSteps, 기준점: $_todayStepBaseline, 오늘 걸음: $todaySteps');
+        
+        _stepCountController.add(todaySteps);
       },
       onError: (error) {
         print("PedometerService 에러: $error");

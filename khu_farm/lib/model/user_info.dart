@@ -57,6 +57,32 @@ class UserInfo {
     };
   }
 
+  UserInfo copyWith({
+    int? userId,
+    String? userName,
+    String? email,
+    String? phoneNumber,
+    String? userType,
+    int? totalPoint,
+    int? totalDonation,
+    int? totalPurchasePrice,
+    int? totalPurchaseWeight,
+    int? totalDiscountPrice,
+  }) {
+    return UserInfo(
+      userId: userId ?? this.userId,
+      userName: userName ?? this.userName,
+      email: email ?? this.email,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      userType: userType ?? this.userType,
+      totalPoint: totalPoint ?? this.totalPoint,
+      totalDonation: totalDonation ?? this.totalDonation,
+      totalPurchasePrice: totalPurchasePrice ?? this.totalPurchasePrice,
+      totalPurchaseWeight: totalPurchaseWeight ?? this.totalPurchaseWeight,
+      totalDiscountPrice: totalDiscountPrice ?? this.totalDiscountPrice,
+    );
+  }
+
   @override
   String toString() {
     return 'UserInfo(${toJson()})';

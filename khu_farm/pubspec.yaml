@@ -30,11 +30,15 @@ dependencies:
   table_calendar: ^3.0.8
 
   pedometer: ^4.1.1
+  shared_preferences: ^2.5.0
+  permission_handler: ^12.0.0
   daum_postcode_search: ^0.0.2
 
   flutter_inappwebview: ^6.0.0
 
   portone_flutter: ^0.12.0
+
+  geolocator: ^14.0.0
 
 dev_dependencies:
   flutter_test:
@@ -53,6 +57,8 @@ flutter:
 
   assets:
     - assets/splash/splash.png
+    - assets/splash/splash_background.png
+    - assets/splash/splash_square.png
     - assets/notch/morning.png
     - assets/notch/morning_right_up_cloud.png
     - assets/notch/morning_left_down_cloud.png
@@ -76,7 +82,10 @@ flutter:
     - assets/bottom_navigator/select/harvest.png
     - assets/bottom_navigator/select/laicos.png
     - assets/bottom_navigator/select/mypage.png
-    - assets/weather/cloud_sun.png
+    - assets/weather/cloudy.png
+    - assets/weather/rain.png
+    - assets/weather/snow.png
+    - assets/weather/sunny.png
     - assets/top_icons/notice.png
     - assets/top_icons/notice_selected_morning.png
     - assets/top_icons/dibs.png
@@ -90,8 +99,15 @@ flutter:
     - assets/farm/temp_farm.jpg
 
 flutter_native_splash:
-  color: "#ffffff"
-  image: assets/splash/splash.png
+  color: "#FFFFFF"
+
+  # 2. 중앙에 표시될 아이콘 이미지를 지정합니다.
+  image: assets/splash/splash_square.png
+  
+  # 3. 모든 플랫폼에 적용합니다.
   android: true
   ios: true
-  fullscreen: true
+
+  android_12:
+    image: "assets/splash/splash_square.png"
+    color: "#FFFFFF"

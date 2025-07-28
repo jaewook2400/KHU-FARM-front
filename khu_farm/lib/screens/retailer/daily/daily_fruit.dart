@@ -248,16 +248,16 @@ class _RetailerDailyFruitScreenState extends State<RetailerDailyFruitScreen> {
                 );
               },
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/retailer/harvest',
-            //       ModalRoute.withName("/retailer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/retailer/harvest',
+                  ModalRoute.withName("/retailer/main"),
+                );
+              },
+            ),
             // _NavItem(
             //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
             //   onTap: () {

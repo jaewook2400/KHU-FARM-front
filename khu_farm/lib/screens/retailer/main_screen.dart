@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/model/user_info.dart';
+import 'package:khu_farm/model/weather_data.dart';
 import 'package:intl/intl.dart';
+import 'package:khu_farm/services/weather_service.dart';
 
 class RetailerMainScreen extends StatefulWidget {
   const RetailerMainScreen({super.key});
@@ -14,11 +16,15 @@ class RetailerMainScreen extends StatefulWidget {
 
 class _RetailerMainScreenState extends State<RetailerMainScreen> {
   UserInfo? _userInfo;
+  final WeatherService _weatherService = WeatherService();
+  Future<WeatherData>? _weatherDataFuture;
+
 
   @override
   void initState() {
     super.initState();
     _loadUserInfo();
+    _weatherDataFuture = _weatherService.getWeatherData();
   }
 
   Future<void> _loadUserInfo() async {
@@ -27,6 +33,30 @@ class _RetailerMainScreenState extends State<RetailerMainScreen> {
       setState(() {
         _userInfo = userInfo;
       });
+    }
+  }
+
+  String _getWeatherIconPath(String pty, String sky) {
+    // PTY(강수형태): 없음(0), 비(1), 비/눈(2), 눈(3), 소나기(4)
+    // SKY(하늘상태): 맑음(1), 구름많음(3), 흐림(4)
+    switch (pty) {
+      case '1': // 비
+      case '2': // 비/눈 (-> 비 아이콘으로 표시)
+      case '4': // 소나기 (-> 비 아이콘으로 표시)
+        return 'assets/weather/rain.png';
+      case '3': // 눈
+        return 'assets/weather/snow.png';
+      case '0': // 강수 없음 -> 하늘 상태(SKY)에 따라 결정
+      default:
+        switch (sky) {
+          case '1': // 맑음
+            return 'assets/weather/sunny.png';
+          case '3': // 구름많음 (-> 흐림 아이콘으로 표시)
+          case '4': // 흐림
+            return 'assets/weather/cloudy.png';
+          default:
+            return 'assets/weather/sunny.png'; // 기본값 (맑음)
+        }
     }
   }
 
@@ -79,16 +109,16 @@ class _RetailerMainScreenState extends State<RetailerMainScreen> {
                 );
               },
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/retailer/harvest',
-            //       ModalRoute.withName("/retailer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/retailer/harvest',
+                  ModalRoute.withName("/retailer/main"),
+                );
+              },
+            ),
             // _NavItem(
             //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
             //   onTap: () {
@@ -228,48 +258,50 @@ class _RetailerMainScreenState extends State<RetailerMainScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // 1) 오늘의 날씨 카드
-                // Container(
-                //   // 화면 너비의 70% 만큼 가로 크기 지정 (원하는 비율로 조정)
-                //   width: screenWidth * 0.4,
-                //   // 내부 콘텐츠를 수평·수직 중앙에 맞추기
-                //   alignment: Alignment.center,
-                //   padding: const EdgeInsets.symmetric(
-                //     vertical: 12,
-                //     horizontal: 16,
-                //   ),
-                //   decoration: BoxDecoration(
-                //     color: Colors.white,
-                //     borderRadius: BorderRadius.circular(12),
-                //     boxShadow: [
-                //       BoxShadow(
-                //         color: Colors.black.withOpacity(0.05),
-                //         blurRadius: 8,
-                //         offset: const Offset(0, 4),
-                //       ),
-                //     ],
-                //   ),
-                //   child: Column(
-                //     // 가로 방향으로도 가운데 정렬
-                //     crossAxisAlignment: CrossAxisAlignment.center,
-                //     children: [
-                //       const Text(
-                //         '오늘의 날씨',
-                //         style: TextStyle(
-                //           fontSize: 14,
-                //           fontWeight: FontWeight.w500,
-                //         ),
-                //       ),
-                //       const SizedBox(height: 8),
-                //       Image.asset(
-                //         'assets/weather/cloud_sun.png',
-                //         width: 32,
-                //         height: 32,
-                //       ),
-                //       const SizedBox(height: 4),
-                //       const Text('10°C/20°C', style: TextStyle(fontSize: 13)),
-                //     ],
-                //   ),
-                // ),
+                FutureBuilder<WeatherData>(
+                  future: _weatherDataFuture,
+                  builder: (context, snapshot) {
+                    // 기본 카드 디자인
+                    Widget weatherContent;
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      weatherContent = const CircularProgressIndicator(strokeWidth: 2);
+                    } else if (snapshot.hasError) {
+                      weatherContent = const Text('날씨 오류', style: TextStyle(fontSize: 12));
+                    } else if (snapshot.hasData) {
+                      final weather = snapshot.data!;
+                      weatherContent = Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          const Text('오늘의 날씨', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 8),
+                          Image.asset(_getWeatherIconPath(weather.pty, weather.sky), width: 32, height: 32),
+                          const SizedBox(height: 4),
+                          Text('${weather.tempMax}°C / ${weather.tempMin}°C', style: const TextStyle(fontSize: 13)),
+                        ],
+                      );
+                    } else {
+                      weatherContent = const Text('날씨 정보 없음', style: TextStyle(fontSize: 12));
+                    }
+
+                    return Container(
+                      width: screenWidth * 0.4,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: weatherContent,
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 40),
 

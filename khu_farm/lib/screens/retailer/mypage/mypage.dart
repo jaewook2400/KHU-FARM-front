@@ -228,114 +228,142 @@ class _RetailerMypageScreenState extends State<RetailerMypageScreen> {
               right: screenWidth * 0.08,
               bottom: bottomPadding,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 뒤로가기 + 제목
-                const SizedBox(width: 8),
-                const Text(
-                  'My Page',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 뒤로가기 + 제목
+                  const SizedBox(width: 8),
+                  const Text(
+                    'My Page',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                  ),
 
-                // 1) 회원 정보
-                InkWell(
-                  onTap: () {
-                    Navigator.pushNamed(context, '/retailer/mypage/info');
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // 이름/타입 + 이메일
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              // Show user name or a loading message
-                              _userInfo != null
-                                  ? '${_userInfo!.userName}님 어서오세요. [${_getUserTypeString(_userInfo!.userType)}]'
-                                  : '로딩 중...',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              // Show user ID (email) or an empty string
-                              _userInfo?.email.toString() ?? '',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey,
+                  // 1) 회원 정보
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/retailer/mypage/info');
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // 이름/타입 + 이메일
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                // Show user name or a loading message
+                                _userInfo != null
+                                    ? '${_userInfo!.userName}님 어서오세요. [${_getUserTypeString(_userInfo!.userType)}]'
+                                    : '로딩 중...',
+                                style: const TextStyle(fontSize: 16),
                               ),
-                            ),
-                          ],
-                        ),
-                        const Icon(Icons.chevron_right, size: 20),
-                      ],
+                              const SizedBox(height: 4),
+                              Text(
+                                // Show user ID (email) or an empty string
+                                _userInfo?.email.toString() ?? '',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Icon(Icons.chevron_right, size: 20),
+                        ],
+                      ),
                     ),
                   ),
-                ),
 
-                const Divider(),
+                  const Divider(),
 
-                // 2) 배송 섹션
-                const SizedBox(height: 12),
-                const Text(
-                  '배송',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                _SectionItem(
-                  label: '주문/배송',
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/retailer/mypage/order',
-                    );
-                  },
-                ),
-                _SectionItem(
-                  label: '작성한 리뷰',
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/retailer/mypage/review',
-                    );
-                  },
-                ),
+                  // 2) 배송 섹션
+                  const SizedBox(height: 12),
+                  const Text(
+                    '배송',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  _SectionItem(
+                    label: '주문/배송',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/retailer/mypage/order',
+                      );
+                    },
+                  ),
+                  _SectionItem(
+                    label: '작성한 리뷰',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/retailer/mypage/review',
+                      );
+                    },
+                  ),
 
-                const Divider(),
+                  const Divider(),
 
-                // 3) 고객센터 섹션
-                const SizedBox(height: 12),
-                const Text(
-                  '고객센터',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                _SectionItem(
-                  label: '1:1 문의',
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/retailer/mypage/inquiry/personal',
-                    );
-                  },
-                ),
-                // _SectionItem(
-                //   label: '자주 묻는 질문',
-                //   onTap: () {
-                //     Navigator.pushNamed(
-                //       context,
-                //       '/retailer/mypage/inquiry/faq',
-                //     );
-                //   },
-                // ),
-              ],
+                  // 3) 고객센터 섹션
+                  const SizedBox(height: 12),
+                  const Text(
+                    '고객센터',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  _SectionItem(
+                    label: '1:1 문의',
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        '/retailer/mypage/inquiry/personal',
+                      );
+                    },
+                  ),
+                  // _SectionItem(
+                  //   label: '자주 묻는 질문',
+                  //   onTap: () {
+                  //     Navigator.pushNamed(
+                  //       context,
+                  //       '/retailer/mypage/inquiry/faq',
+                  //     );
+                  //   },
+                  // ),
+                  const SizedBox(height: 40),
+                  const Divider(),
+                  const SizedBox(height: 20),
+                  _buildBusinessInfoFooter(),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildBusinessInfoFooter() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '개별 판매자가 등록한 모든 거래에 대한 배송, 교환, 환불 민원 등의 의무와 책임은 각 판매자가 부담하며, 경우에 따라 \'쿠팜(KHUFARM)\'은 통신판매중개업자로서 그 절차를 보조할 수 있습니다. 자세한 문의는 판매 상품 내 \'문의\'로 남겨주시면 빠른 시일 내 순차적으로 도와 드리겠습니다.',
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '상호명: 쿠팜(KHUFARM)\n'
+          '사업자 등록: 안소연, 272-20-02300\n'
+          '주소 : 서울특별시 강남구 강남대로 342, 5층 501-12호(역삼동,역삼빌딩)\n'
+          '전화 : 0502-1949-1224\n'
+          '통신판매신고번호: 2025-서울강남-03927',
+          style: TextStyle(fontSize: 12, color: Colors.grey[600], height: 1.5),
+        ),
+      ],
     );
   }
 }
