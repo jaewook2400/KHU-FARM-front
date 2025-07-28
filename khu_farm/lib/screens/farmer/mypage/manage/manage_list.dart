@@ -171,9 +171,9 @@ class FarmerManageListScreen extends StatelessWidget {
                 _SectionItem(label: '제품 관리하기', onTap: () {
                   Navigator.pushNamed(context, '/farmer/mypage/manage/product');
                 }),
-                // _SectionItem(label: '리뷰 관리', onTap: () {
-                //   // TODO: 리뷰 관리 화면으로 이동
-                // }),
+                _SectionItem(label: '리뷰 관리', onTap: () {
+                  Navigator.pushNamed(context, '/farmer/mypage/manage/review');
+                }),
                 _SectionItem(label: '받은 문의', onTap: () {
                   Navigator.pushNamed(context, '/farmer/mypage/manage/inquiry');
                 }),

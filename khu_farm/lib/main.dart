@@ -27,6 +27,7 @@ import 'package:khu_farm/screens/farmer/mypage/manage/product/edit_product.dart'
 import 'package:khu_farm/screens/farmer/mypage/manage/product/edit_product_detail.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/edit_product_preview.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/manage_product.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/review/manage_review.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order.dart';
 import 'package:khu_farm/screens/farmer/mypage/review/review.dart';
 import 'package:khu_farm/screens/order/cart_order.dart';
@@ -236,6 +237,7 @@ class MyApp extends StatelessWidget {
         '/farmer/mypage/manage/product/edit/preview': (context) => const FarmerEditProductPreviewScreen(),
         '/farmer/mypage/manage/product/delete': (context) => const FarmerDeleteProductScreen(),
         '/farmer/mypage/manage/product/delete/success': (context) => const FarmerDeleteProductSuccessScreen(),
+        '/farmer/mypage/manage/review': (context) => const FarmerManageReviewScreen(),
         '/farmer/mypage/manage/inquiry': (context) => FarmerManageInquiryScreen(),
         '/farmer/mypage/manage/order': (context) => const FarmerManageOrderListScreen(),
         '/farmer/mypage/manage/order/detail': (context) => const FarmerManageOrderDetailScreen(),

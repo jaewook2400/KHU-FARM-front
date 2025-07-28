@@ -249,14 +249,11 @@ class _OrderCard extends StatelessWidget {
       formattedDate = order.createdAt;
     }
 
-    // Determine if a review has been written.
-    // TODO: Replace with actual logic based on your data (e.g., checking a review status)
-    final bool hasReview = order.ratingCount > 0;
+    final bool isReviewable = order.deliveryStatus?.currentStateText == '배달완료';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Date and Item Count Row
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Row(
@@ -325,26 +322,33 @@ class _OrderCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        // "Write Review" Button
+
         SizedBox(
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: hasReview ? null : () {
-              // TODO: Navigate to review writing screen
-            },
+            // ✨ isReviewable 값에 따라 onPressed 동작을 결정
+            onPressed: isReviewable
+                ? () {
+                    Navigator.pushNamed(
+                      context,
+                      '/farmer/mypage/order/review/add',
+                      arguments: order,
+                    );
+                  }
+                : null, // false일 경우 버튼 비활성화
             style: ElevatedButton.styleFrom(
-              backgroundColor: hasReview ? Colors.grey.shade300 : const Color(0xFF6FCF4B),
-              foregroundColor: hasReview ? Colors.grey.shade600 : Colors.white,
+              // ✨ isReviewable 값에 따라 버튼 색상 변경
+              backgroundColor: isReviewable ? const Color(0xFF6FCF4B) : Colors.grey.shade400,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 0,
-              side: hasReview ? BorderSide(color: Colors.grey.shade300) : null,
             ),
-            child: Text(
-              hasReview ? '리뷰 작성 완료' : '리뷰 작성',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            child: const Text(
+              '리뷰 작성',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ),

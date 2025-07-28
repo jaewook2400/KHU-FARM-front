@@ -1,5 +1,3 @@
-// lib/models/inquiry.dart
-
 class InquiryReply {
   final String content;
   final String sellerName;
@@ -17,6 +15,12 @@ class InquiryReply {
       sellerName: json['sellerName'] ?? '판매자',
       createdAt: json['createdAt'] ?? '',
     );
+  }
+
+  // ✨ toString() 메서드 추가
+  @override
+  String toString() {
+    return 'InquiryReply(content: $content, sellerName: $sellerName, createdAt: $createdAt)';
   }
 }
 
@@ -43,5 +47,11 @@ class Inquiry {
       reply: json['reply'] != null ? InquiryReply.fromJson(json['reply']) : null,
       isPrivate: json['private'] ?? false,
     );
+  }
+
+  // ✨ toString() 메서드 추가
+  @override
+  String toString() {
+    return 'Inquiry(inquiryId: $inquiryId, content: $content, createdAt: $createdAt, reply: $reply, isPrivate: $isPrivate)';
   }
 }

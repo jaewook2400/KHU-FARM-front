@@ -248,26 +248,26 @@ class _FarmerDailyFruitScreenState extends State<FarmerDailyFruitScreen> {
                 );
               },
             ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/farmer/harvest',
-                  ModalRoute.withName("/farmer/main"),
-                );
-              },
-            ),
-            _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/farmer/laicos',
-                  ModalRoute.withName("/farmer/main"),
-                );
-              },
-            ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/farmer/harvest',
+            //       ModalRoute.withName("/farmer/main"),
+            //     );
+            //   },
+            // ),
+            // _NavItem(
+            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+            //   onTap: () {
+            //     Navigator.pushNamedAndRemoveUntil(
+            //       context,
+            //       '/farmer/laicos',
+            //       ModalRoute.withName("/farmer/main"),
+            //     );
+            //   },
+            // ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {
@@ -338,19 +338,19 @@ class _FarmerDailyFruitScreenState extends State<FarmerDailyFruitScreen> {
                 ),
                 Row(
                   children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/farmer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () async {

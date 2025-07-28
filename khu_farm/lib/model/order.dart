@@ -1,4 +1,4 @@
-// lib/models/order.dart
+import 'package:khu_farm/model/delivery_tracking.dart'; // deliveryStatus를 위해 import
 
 class Order {
   final int id;
@@ -21,6 +21,7 @@ class Order {
   final int orderId;
   final int orderDetailId;
   final String createdAt;
+  final DeliveryTrackingData? deliveryStatus; // ✨ deliveryStatus 필드 추가
 
   Order({
     required this.id,
@@ -43,6 +44,7 @@ class Order {
     required this.orderId,
     required this.orderDetailId,
     required this.createdAt,
+    this.deliveryStatus, // ✨ 생성자에 추가
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -67,12 +69,15 @@ class Order {
       orderId: json['orderId'] ?? 0,
       orderDetailId: json['orderDetailId'] ?? 0,
       createdAt: json['createdAt'] ?? '2025.01.01',
+      // ✨ fromJson 팩토리에 deliveryStatus 파싱 로직 추가
+      deliveryStatus: json['deliveryStatus'] != null
+          ? DeliveryTrackingData.fromJson(json['deliveryStatus'])
+          : null,
     );
   }
 
-  // 👇 여기에 toString() 메서드 추가
   @override
   String toString() {
-    return 'Order(id: $id, title: $title, price: $price, brandName: $brandName, orderId: $orderId, createdAt: $createdAt)';
+    return 'Order(id: $id, title: $title, price: $price, brandName: $brandName, orderId: $orderId, createdAt: $createdAt, deliveryStatus: $deliveryStatus)';
   }
 }

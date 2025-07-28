@@ -30,36 +30,39 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _fetchTrackingInfo() async {
-    setState(() => _isLoading = true);
-    final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
-    final headers = {'Authorization': 'Bearer $accessToken'};
-
-    try {
-      final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
-      final getResponse = await http.get(getUri, headers: headers);
-      
-      if (getResponse.statusCode == 200) {
-        final data = json.decode(utf8.decode(getResponse.bodyBytes));
-        if (data['isSuccess'] == true && data['result'] != null) {
-          if(mounted) {
-            setState(() {
-              _trackingData = DeliveryTrackingData.fromJson(data['result']['deliveryStatus']);
-            });
-          }
-        }
-      } else {
-        throw Exception('Failed to fetch tracking info');
-      }
-    } catch (e) {
-      print('Error in fetching tracking info: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+  setState(() => _isLoading = true);
+  final accessToken = await StorageService.getAccessToken();
+  if (accessToken == null) {
+    setState(() => _isLoading = false);
+    return;
   }
+  final headers = {'Authorization': 'Bearer $accessToken'};
+
+  try {
+    final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
+    final getResponse = await http.get(getUri, headers: headers);
+    
+    if (getResponse.statusCode == 200) {
+      final data = json.decode(utf8.decode(getResponse.bodyBytes));
+      if (data['isSuccess'] == true && data['result'] != null) {
+        if(mounted) {
+          setState(() {
+            // --- 이 부분이 수정되었습니다 ---
+            // 'deliveryStatus' 객체 대신 'result' 객체 전체를 전달합니다.
+            _trackingData = DeliveryTrackingData.fromJson(data['result']);
+            // --- 여기까지 ---
+          });
+        }
+      }
+    } else {
+      throw Exception('Failed to fetch tracking info');
+    }
+  } catch (e) {
+    print('Error in fetching tracking info: $e');
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +78,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final formatter = NumberFormat('#,###');
-    
+
     String formattedDate = '';
     try {
       // --- This is the corrected part ---
@@ -266,7 +269,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                           : SingleChildScrollView( // Make the status scrollable
                               child: Column(
                                 children: [
-                                  _buildDeliveryStatus(_trackingData!),
+                                  _buildDeliveryStatus(_trackingData!, widget.order),
                                   const SizedBox(height: 40),
                                   const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
                                   const SizedBox(height: 8),
@@ -293,53 +296,88 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   /// Helper widget for the delivery status stepper
-  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData) {
-    // 각 배송 단계에 대한 상태 문자열 리스트
+  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order order) {
     const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
-    
-    // 현재 상태 텍스트를 statusMap에서 찾아보고, 없으면 '알 수 없음'으로 처리
-    final currentStatusInfo = statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
-    
-    // 현재 상태가 몇 번째 단계인지 확인 (없으면 -1)
-    int currentStep = stepStatuses.indexOf(currentStatusInfo.displayName);
+    final currentStatusInfo =
+        statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
+    int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+
+    final companyName = getDeliveryCompanyName(order.deliveryCompany);
+
+    final invoiceFullText = '운송장 번호 : $companyName ${trackingData.deliveryNumber} (눌러서 복사)';
 
     return Column(
       children: [
-        _buildStep(title: '결제 완료', isDone: true), // 결제는 항상 완료된 상태로 가정
+        _buildStep(title: '결제 완료', isActive: currentStep == 0),
         _buildStepConnector(),
-        _buildStep(title: '배송 준비중', isDone: currentStep >= 3, isActive: currentStep == 3),
+
+        _buildStep(title: '배송 준비중', isActive: currentStep == 1),
         _buildStepConnector(),
-        _buildStep(
-          title: '배송중',
-          isDone: currentStep >= 4,
-          isActive: currentStep == 4,
-          subText: '운송장 번호 : ${trackingData.carrierName} ${trackingData.progresses.isNotEmpty ? trackingData.progresses.first.description : ''} (눌러서 복사)',
-        ),
+
+        _buildStep(title: '배송중', isActive: currentStep == 2),
+        
+        // '배송중' 단계 이거나 그 이후 단계일 때 운송장 번호 표시
+        if (currentStep >= 2)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: trackingData.deliveryNumber!));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
+                );
+              },
+              child: Text(
+                invoiceFullText,
+                textAlign: TextAlign.center,
+                // 변경된 부분: '배송중' 단계가 활성화(currentStep == 2)일 때만 초록색, 아니면 회색
+                style: TextStyle(
+                  fontSize: 12,
+                  color: currentStep == 2 ? const Color(0xFF6FCF4B) : Colors.grey,
+                ),
+              ),
+            ),
+          ),
         _buildStepConnector(),
-        _buildStep(title: '배송 완료', isDone: currentStep >= 5, isActive: currentStep == 5),
+
+        _buildStep(title: '배달 완료', isActive: currentStep == 3),
       ],
     );
   }
 
-  Widget _buildStep({required String title, String? subText, bool isDone = false, bool isActive = false}) {
-    final Color activeColor = isDone ? const Color(0xFF6FCF4B) : Colors.grey.shade300;
-    
+  Widget _buildStep({required String title, bool isActive = false}) {
+    final Color borderColor;
+    final Color fontColor;
+    final Color backgroundColor;
+
+    if (isActive) {
+      borderColor = const Color(0xFF6FCF4B);
+      fontColor = const Color(0xFF6FCF4B);
+      backgroundColor = Colors.white;
+    } else {
+      borderColor = Colors.grey;
+      fontColor = Colors.grey;
+      backgroundColor = Colors.white;
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       decoration: BoxDecoration(
-        color: isActive ? Colors.green.shade50 : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: activeColor),
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: isDone ? Colors.black : Colors.grey)),
-          if (subText != null) ...[
-            const SizedBox(height: 4),
-            Text(subText, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          ]
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: fontColor,
+            ),
+          ),
         ],
       ),
     );
@@ -347,9 +385,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Widget _buildStepConnector() {
     return Container(
-      height: 20,
+      height: 32, // 간격 조정
       alignment: Alignment.center,
-      child: const Icon(Icons.arrow_downward, color: Colors.grey, size: 16),
+      child: const Icon(Icons.arrow_downward, color: Colors.grey, size: 20),
     );
   }
 }

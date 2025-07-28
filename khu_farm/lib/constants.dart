@@ -121,6 +121,21 @@ const deliveryCompany = [
   },
 ];
 
+final Map<String, String> deliveryCompanyMap = {
+  for (var company in deliveryCompany)
+    if (company['id'] != null)
+      company['id']!.split('.').last: company['name']!
+};
+
+// ✨ 수정된 변환 함수
+String getDeliveryCompanyName(String? companyId) {
+  if (companyId == null || companyId.isEmpty) return '정보 없음';
+
+  // ID를 소문자로 변환하여 Map에서 찾습니다.
+  final lowerCaseId = companyId.toLowerCase();
+  return deliveryCompanyMap[lowerCaseId] ?? companyId;
+}
+
 final signupAgreements = [
   {
     "id": 1,

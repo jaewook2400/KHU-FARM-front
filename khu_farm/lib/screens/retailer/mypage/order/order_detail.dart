@@ -296,13 +296,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   /// Helper widget for the delivery status stepper
-  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order sellerOrder) {
+  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order order) {
     const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
     final currentStatusInfo =
         statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
     int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
 
-    final invoiceFullText = '운송장 번호 : ${sellerOrder.deliveryCompany} ${trackingData.deliveryNumber} (눌러서 복사)';
+    final companyName = getDeliveryCompanyName(order.deliveryCompany);
+
+    final invoiceFullText = '운송장 번호 : $companyName ${trackingData.deliveryNumber} (눌러서 복사)';
 
     return Column(
       children: [

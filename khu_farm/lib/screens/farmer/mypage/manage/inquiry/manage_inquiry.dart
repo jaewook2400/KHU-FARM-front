@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:khu_farm/services/storage_service.dart';
+import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/model/inquiry.dart'; 
 
 class FarmerManageInquiryScreen extends StatefulWidget {
   const FarmerManageInquiryScreen({super.key});
@@ -12,11 +17,75 @@ class FarmerManageInquiryScreen extends StatefulWidget {
 class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  
+  bool _isLoading = true;
+  List<Inquiry> _unansweredInquiries = [];
+  List<Inquiry> _allInquiries = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // ✨ 두 API를 한 번에 호출하도록 수정
+    _fetchData();
+  }
+  
+  // ✨ 두 종류의 문의 데이터를 모두 가져오는 통합 함수
+  Future<void> _fetchData() async {
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    final String? token = await StorageService.getAccessToken();
+    if (token == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인 정보가 없습니다. 다시 로그인해주세요.')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    final headers = {'Authorization': 'Bearer $token'};
+
+    try {
+      // Future.wait를 사용하여 두 API를 병렬로 호출
+      final responses = await Future.wait([
+        http.get(Uri.parse('$baseUrl/inquiry/seller/notAnswered?size=1000'), headers: headers),
+        http.get(Uri.parse('$baseUrl/inquiry/seller/all?size=1000'), headers: headers),
+      ]);
+
+      // 답변 전 문의 처리
+      if (responses[0].statusCode == 200) {
+        final data = json.decode(utf8.decode(responses[0].bodyBytes));
+        final List<dynamic> content = data['result']['content'];
+        _unansweredInquiries = content.map((item) => Inquiry.fromJson(item)).toList();
+      } else {
+        print('Error fetching unanswered inquiries: ${responses[0].statusCode}');
+      }
+
+      // 전체 문의 처리
+      if (responses[1].statusCode == 200) {
+        final data = json.decode(utf8.decode(responses[1].bodyBytes));
+        final List<dynamic> content = data['result']['content'];
+        _allInquiries = content.map((item) => Inquiry.fromJson(item)).toList();
+      } else {
+        print('Error fetching all inquiries: ${responses[1].statusCode}');
+      }
+    } catch (e) {
+      print('An error occurred during fetch: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -180,7 +249,7 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
                 ),
 
                 TabBar(
-                  controller: _tabController, // Provide the controller
+                  controller: _tabController,
                   labelColor: Colors.black,
                   unselectedLabelColor: Colors.grey,
                   indicatorColor: Colors.black,
@@ -190,13 +259,12 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // TabBarView
+                
                 Expanded(
                   child: TabBarView(
-                    controller: _tabController, // Provide the controller
+                    controller: _tabController,
                     children: [
-                      _buildUnansweredList(),
+                      _buildUnansweredList(), 
                       _buildAllInquiriesList(),
                     ],
                   ),
@@ -210,27 +278,37 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
   }
 
   Widget _buildUnansweredList() {
-    // TODO: Replace with API data
-    final List<Map<String, String>> unansweredInquiries = [
-      {'q': '문의내용 문의내용 문의내용 문의내용 문의내용...'},
-      {'q': '두 번째 문의입니다. 답변을 기다리고 있습니다...'},
-    ];
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
+    if (_unansweredInquiries.isEmpty) {
+      return const Center(child: Text('답변 전 문의가 없습니다.'));
+    }
+    
     return ListView.builder(
       padding: EdgeInsets.zero,
-      itemCount: unansweredInquiries.length,
+      itemCount: _unansweredInquiries.length,
       itemBuilder: (context, index) {
-        return _InquiryCard(question: unansweredInquiries[index]['q']!);
+        final inquiry = _unansweredInquiries[index];
+        return _InquiryCard(inquiry: inquiry);
       },
     );
   }
 
-  /// Builds the list for the "전체 보기" (View All) tab
+  /// "전체 보기" 탭을 위한 위젯
   Widget _buildAllInquiriesList() {
-    // TODO: Replace with API data
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    if (_allInquiries.isEmpty) {
+      return const Center(child: Text('문의 내역이 없습니다.'));
+    }
+
     return Column(
       children: [
-        // Search Bar
+        // 검색 바 (기능은 추후 구현)
         TextField(
           decoration: InputDecoration(
             hintText: '검색하기',
@@ -246,18 +324,15 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
           ),
         ),
         const SizedBox(height: 16),
-        // Product List
+        
+        // 전체 문의 목록
         Expanded(
           child: ListView.builder(
             padding: EdgeInsets.zero,
-            itemCount: 3, // Placeholder
+            itemCount: _allInquiries.length,
             itemBuilder: (context, index) {
-              return const _ProductCard(
-                imagePath: 'https://via.placeholder.com/150', // Replace with real image path
-                producer: '한우리영농조합법인',
-                title: '못난이 꿀사과 5kg 가정용 특가',
-                price: '10,000원',
-              );
+              final inquiry = _allInquiries[index];
+              return _InquiryCard(inquiry: inquiry);
             },
           ),
         ),
@@ -267,8 +342,8 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
 }
 
 class _InquiryCard extends StatelessWidget {
-  final String question;
-  const _InquiryCard({required this.question});
+  final Inquiry inquiry;
+  const _InquiryCard({required this.inquiry});
 
   @override
   Widget build(BuildContext context) {
@@ -289,14 +364,19 @@ class _InquiryCard extends StatelessWidget {
               const Text('Q:', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(question, maxLines: 2, overflow: TextOverflow.ellipsis),
+                child: Text(inquiry.content, maxLines: 2, overflow: TextOverflow.ellipsis),
               ),
               const SizedBox(width: 8),
+              // TODO: '더보기' 클릭 시 상세 페이지로 이동하는 로직 추가
               const Text('더보기 >', style: TextStyle(color: Colors.grey, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 8),
-          const Text('A: 답변 대기중', style: TextStyle(color: Colors.grey)),
+          // ✨ 답변 유무에 따라 분기 처리
+          if (inquiry.reply != null)
+            Text('A: ${inquiry.reply!.content}', style: const TextStyle(color: Colors.black87), maxLines: 1, overflow: TextOverflow.ellipsis,)
+          else
+            const Text('A: 답변 대기중', style: TextStyle(color: Colors.grey)),
         ],
       ),
     );
