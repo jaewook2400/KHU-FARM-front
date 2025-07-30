@@ -22,54 +22,74 @@ class _FarmerDibsScreenState extends State<FarmerDibsScreen> {
   List<Fruit> _fruits = [];
   bool _isLoading = true;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
     _fetchDibsItems();
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _fetchDibsItems() async {
-    if (!mounted) return;
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_fruits.isNotEmpty) {
+        // 찜 목록에서는 wishListId를 cursor로 사용
+        _fetchDibsItems(cursorId: _fruits.last.wishListId);
+      }
+    }
+  }
+
+  Future<void> _fetchDibsItems({int? cursorId}) async {
+    if (_isFetchingMore) return;
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Error: Access token is missing.');
-        return;
-      }
+      if (accessToken == null) throw Exception('Token is missing.');
+      
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/wishList').replace(queryParameters: {
+        'size': '5',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
 
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      };
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/wishList'),
-        headers: headers,
-      );
-
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        final decodedBody = utf8.decode(response.bodyBytes);
-        final data = jsonDecode(decodedBody);
-
-        if (data['isSuccess'] == true) {
-          print("asdasasd");
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> itemsJson = data['result']['fruitWithWishList']['content'];
-          if (mounted) {
-            setState(() {
-              // DibsItem.fromJson 대신 Fruit.fromJson을 사용
-              _fruits =
-                  itemsJson.map((json) => Fruit.fromJson(json)).toList();
-            });
-          }
-        } else {
-          print('API Error: ${data['message']}');
+          final newItems = itemsJson.map((json) => Fruit.fromJson(json)).toList();
+
+          setState(() {
+            if (cursorId == null) {
+              _fruits = newItems;
+            } else {
+              _fruits.addAll(newItems);
+            }
+            if (newItems.length < 5) {
+              _hasMore = false;
+            }
+          });
         }
       } else {
-        print('HTTP Error: Status Code ${response.statusCode}');
+        throw Exception('HTTP Error: ${response.statusCode}');
       }
     } catch (e) {
       print('An unexpected error occurred: $e');
@@ -77,46 +97,42 @@ class _FarmerDibsScreenState extends State<FarmerDibsScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isFetchingMore = false;
         });
       }
     }
   }
 
+
   Future<void> _deleteDibsItem(int wishListId) async {
     try {
       final accessToken = await StorageService.getAccessToken();
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Error: Access token is missing.');
-        return;
-      }
-
+      if (accessToken == null) throw Exception('Token is missing.');
+      
       final headers = {'Authorization': 'Bearer $accessToken'};
-
-      final response = await http.delete(
-        Uri.parse('$baseUrl/wishList/$wishListId/delete'),
-        headers: headers,
-      );
+      final uri = Uri.parse('$baseUrl/wishList/$wishListId/delete');
+      final response = await http.delete(uri, headers: headers);
 
       if (response.statusCode == 200 || response.statusCode == 204) {
-        await _fetchDibsItems();
+        // API 성공 시, 로컬 리스트에서 해당 아이템 제거
+        setState(() {
+          _fruits.removeWhere((fruit) => fruit.wishListId == wishListId);
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('찜 목록에서 삭제되었습니다.')),
           );
         }
       } else {
-      print('찜 삭제 실패: ${response.statusCode}');
-      // 서버에서 보낸 응답 본문을 UTF-8로 디코딩하여 출력
-      print('Response Body: ${utf8.decode(response.bodyBytes)}'); 
-      // --- 여기까지 ---
+        throw Exception('Failed to delete item: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('찜 삭제 중 에러 발생: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('삭제에 실패했습니다. 다시 시도해주세요.')),
         );
       }
-      }
-    } catch (e) {
-      print('찜 삭제 중 에러 발생: $e');
     }
   }
 
@@ -230,7 +246,7 @@ class _FarmerDibsScreenState extends State<FarmerDibsScreen> {
               top: statusBarHeight + screenHeight * 0.06 + 20,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 20,
+              bottom: 20 + MediaQuery.of(context).padding.bottom,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,18 +277,26 @@ class _FarmerDibsScreenState extends State<FarmerDibsScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _fruits.isEmpty
                           ? const Center(child: Text('찜한 상품이 없습니다.'))
+                          // ✨ 6. ListView.builder 수정
                           : ListView.builder(
-                              itemCount: _fruits.length,
+                              controller: _scrollController, // 컨트롤러 연결
+                              itemCount: _fruits.length + (_hasMore ? 1 : 0), // 로딩 인디케이터 공간 추가
                               itemBuilder: (context, index) {
+                                if (index == _fruits.length) {
+                                  return _hasMore
+                                      ? const Padding(
+                                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                                          child: Center(child: CircularProgressIndicator()),
+                                        )
+                                      : const SizedBox.shrink();
+                                }
                                 final fruit = _fruits[index];
                                 return GestureDetector(
                                   onTap: () {
-                                    // MaterialPageRoute로 상세 페이지 이동
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) =>
-                                            ProductDetailScreen(fruit: fruit),
+                                        builder: (_) => ProductDetailScreen(fruit: fruit),
                                       ),
                                     );
                                   },

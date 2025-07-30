@@ -20,6 +20,7 @@ class _FarmerAddProductPreviewScreen
 
   late quill.QuillController _previewController;
   bool _initialized = false;
+  bool _isUploading = false;
 
   Future<String> _uploadImage(String imagePath) async {
     final String? token = await StorageService.getAccessToken();
@@ -49,6 +50,8 @@ class _FarmerAddProductPreviewScreen
   }
 
   Future<void> _addFruit() async {
+    setState(() => _isUploading = true);
+    _showLoadingDialog();
     // Route args 에서 path 꺼내기
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
     final int    fruitCategoryId = args['category']   as int;
@@ -99,17 +102,50 @@ class _FarmerAddProductPreviewScreen
         },
         body: jsonEncode(payload),
       );
-      print(jsonEncode(payload));
+      
+      if (mounted) Navigator.of(context).pop();
 
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('상품 등록 실패 ${response.statusCode}: ${response.body}');
       }
 
-      Navigator.popUntil(context, ModalRoute.withName('/farmer/main'));
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/farmer/mypage/manage/product/add/success', // 새 경로
+        ModalRoute.withName('/farmer/main'),
+      );
+      
     } catch (e) {
       // 업로드 또는 등록 실패 시 사용자에게 알림
       print('업로드 실패: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('상품 등록에 실패했습니다: ${e.toString()}')),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
     }
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Dialog(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text("등록중..."),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override

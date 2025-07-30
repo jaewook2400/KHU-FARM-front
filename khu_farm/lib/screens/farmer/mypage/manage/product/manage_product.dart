@@ -17,43 +17,80 @@ class FarmerManageProductListScreen extends StatefulWidget {
 
 class _FarmerManageProductListScreenState
     extends State<FarmerManageProductListScreen> {
-  // TODO: 추후 API 연동 시 이 더미 데이터를 실제 데이터로 교체합니다.
   bool _isLoading = true;
   List<Fruit> _products = [];
-  // --- 🔼 수정 끝 🔼 ---
+
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
 
   @override
   void initState() {
     super.initState();
     _fetchMyProducts();
+    // ✨ 2. 스크롤 리스너 추가
+    _scrollController.addListener(_onScroll);
   }
-
-  // --- 🔽 API 호출 함수 추가 🔽 ---
-  Future<void> _fetchMyProducts() async {
-    final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null || !mounted) {
-      setState(() => _isLoading = false);
-      return;
+  
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+  
+  // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_products.isNotEmpty) {
+        _fetchMyProducts(cursorId: _products.last.id);
+      }
     }
+  }
+  
+  Future<void> _fetchMyProducts({int? cursorId}) async {
+    if (_isFetchingMore) return;
 
-    final headers = {'Authorization': 'Bearer $accessToken'};
-    final uri = Uri.parse('$baseUrl/fruits/seller?size=1000'); // API 명세에 따른 엔드포인트
+    setState(() {
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
+    });
 
     try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing');
+      
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/fruits/seller').replace(queryParameters: {
+        'size': '5',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+      
       final response = await http.get(uri, headers: headers);
-      if (!mounted) return;
 
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result']?['content'] != null) {
           final List<dynamic> itemsJson = data['result']['content'];
-          setState(() {
-            // JSON 리스트를 Fruit 객체 리스트로 변환
-            _products = itemsJson.map((json) => Fruit.fromJson(json)).toList();
-          });
+          final newProducts = itemsJson.map((json) => Fruit.fromJson(json)).toList();
+          
+          if (mounted) {
+            setState(() {
+              if (cursorId == null) {
+                _products = newProducts;
+              } else {
+                _products.addAll(newProducts);
+              }
+              if (newProducts.length < 5) {
+                _hasMore = false;
+              }
+            });
+          }
         }
       } else {
-        print('Failed to load products: ${response.statusCode}');
+        throw Exception('Failed to load products: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching products: $e');
@@ -61,6 +98,7 @@ class _FarmerManageProductListScreenState
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isFetchingMore = false;
         });
       }
     }
@@ -224,15 +262,21 @@ class _FarmerManageProductListScreenState
                       ? const Center(child: CircularProgressIndicator())
                       : _products.isEmpty
                           ? const Center(child: Text('등록된 상품이 없습니다.'))
+                          // ✨ 5. ListView.builder 수정
                           : ListView.builder(
-                              itemCount: _products.length,
+                              controller: _scrollController, // 컨트롤러 연결
+                              itemCount: _products.length + (_hasMore ? 1 : 0), // 로딩 인디케이터 공간 추가
                               itemBuilder: (context, index) {
-                                // --- 🔽 수정: 카드에 새로고침 콜백 전달 🔽 ---
+                                if (index == _products.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  );
+                                }
                                 return _ProductManageCard(
                                   product: _products[index],
-                                  onProductEdited: _fetchMyProducts, // 수정 완료 후 목록을 새로고침하는 함수 전달
+                                  onProductEdited: () => _fetchMyProducts(),
                                 );
-                                // --- 🔼 수정 끝 🔼 ---
                               },
                             ),
                 ),

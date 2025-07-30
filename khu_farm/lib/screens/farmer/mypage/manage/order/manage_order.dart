@@ -24,35 +24,86 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
   List<SellerOrder> _orders = [];
   bool _isLoading = true;
 
+  // ✨ 1. 페이지네이션을 위한 상태 변수 추가
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
     _fetchSellerOrders();
+    // ✨ 2. 스크롤 리스너 추가
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _fetchSellerOrders() async {
-    setState(() => _isLoading = true);
-    final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null) return;
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-    final headers = {'Authorization': 'Bearer $accessToken'};
-    final uri = Uri.parse('$baseUrl/order/seller/orders?size=1000');
+  // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
+  void _onScroll() {
+    // 필터가 적용되지 않았을 때만 무한 스크롤 동작
+    if (_selectedPeriod == null && _selectedStatus == null) {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+          _hasMore &&
+          !_isFetchingMore) {
+        if (_orders.isNotEmpty) {
+          _fetchSellerOrders(cursorId: _orders.last.orderDetailId);
+        }
+      }
+    }
+  }
+
+  // ✨ 4. cursorId를 파라미터로 받도록 _fetchSellerOrders 함수 수정
+  Future<void> _fetchSellerOrders({int? cursorId}) async {
+    if (_isFetchingMore) return;
+
+    setState(() {
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
+    });
 
     try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) return;
+
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/order/seller/orders').replace(queryParameters: {
+        'size': '5',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+      
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
+        print(data);
         if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> orderJson = data['result']['content'];
+          final newOrders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
+          
           setState(() {
-            _orders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
+            if (cursorId == null) {
+              _orders = newOrders;
+            } else {
+              _orders.addAll(newOrders);
+            }
+            if (newOrders.length < 5) {
+              _hasMore = false;
+            }
           });
         }
       }
     } catch (e) {
       print('Failed to fetch seller orders: $e');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() {
+        _isLoading = false;
+        _isFetchingMore = false;
+      });
     }
   }
   
@@ -250,33 +301,33 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
                 ),
                 const SizedBox(height: 16,),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        hint: '기간',
-                        value: _selectedPeriod,
-                        items: ['모두', '1개월', '3개월', '6개월'],
-                        onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        hint: '상태',
-                        value: _selectedStatus,
-                        // statusMap의 key(한글 문자열)를 아이템으로 사용
-                        items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedStatus = val == '모두' ? null : val;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                // Row(
+                //   children: [
+                //     Expanded(
+                //       child: _buildFilterDropdown(
+                //         hint: '기간',
+                //         value: _selectedPeriod,
+                //         items: ['모두', '1개월', '3개월', '6개월'],
+                //         onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
+                //       ),
+                //     ),
+                //     const SizedBox(width: 12),
+                //     Expanded(
+                //       child: _buildFilterDropdown(
+                //         hint: '상태',
+                //         value: _selectedStatus,
+                //         // statusMap의 key(한글 문자열)를 아이템으로 사용
+                //         items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
+                //         onChanged: (val) {
+                //           setState(() {
+                //             _selectedStatus = val == '모두' ? null : val;
+                //           });
+                //         },
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                // const SizedBox(height: 16),
                 
                 // Order List
                 Expanded(
@@ -284,10 +335,21 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
                       ? const Center(child: CircularProgressIndicator())
                       : filteredOrders.isEmpty
                           ? const Center(child: Text('주문 내역이 없습니다.'))
+                          // ✨ 5. ListView.builder 수정
                           : ListView.builder(
+                              controller: _scrollController, // 컨트롤러 연결
                               padding: EdgeInsets.zero,
-                              itemCount: filteredOrders.length,
+                              itemCount: filteredOrders.length + 
+                                  // 필터가 없고, 더 불러올 데이터가 있을 때만 로딩 인디케이터 공간 추가
+                                  (_hasMore && _selectedPeriod == null && _selectedStatus == null ? 1 : 0),
                               itemBuilder: (context, index) {
+                                // 마지막 아이템일 경우 로딩 인디케이터 표시
+                                if (index == filteredOrders.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  );
+                                }
                                 final order = filteredOrders[index];
                                 // --- This is the updated part ---
                                 return GestureDetector(
@@ -373,6 +435,7 @@ class _OrderInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DeliveryStatus status = statusMap[order.status] ?? statusMap['알 수 없음']!;
+    print(order.status);
     
     String formattedDate = '';
     try {

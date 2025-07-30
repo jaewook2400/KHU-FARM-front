@@ -19,32 +19,73 @@ class _FarmerOrderListScreenState extends State<FarmerOrderListScreen> {
   List<Order> _orders = [];
   bool _isLoading = true;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
     _fetchOrders();
+    // ✨ 2. 스크롤 리스너 추가
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _fetchOrders() async {
-    setState(() => _isLoading = true);
-    final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
 
-    final headers = {'Authorization': 'Bearer $accessToken'};
-    final uri = Uri.parse('$baseUrl/payment?size=1000');
+  // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_orders.isNotEmpty) {
+        // 마지막 주문의 orderId를 cursor로 사용
+        _fetchOrders(cursorId: _orders.last.orderId);
+      }
+    }
+  }
+
+  Future<void> _fetchOrders({int? cursorId}) async {
+    if (_isFetchingMore) return;
+
+    setState(() {
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
+    });
 
     try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
+      
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      // 페이지 크기는 10으로 설정, cursorId는 있을 때만 추가
+      final uri = Uri.parse('$baseUrl/payment').replace(queryParameters: {
+        'size': '10', 
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> orderJson = data['result']['content'];
+          final newOrders = orderJson.map((json) => Order.fromJson(json)).toList();
+          
           if (mounted) {
             setState(() {
-              _orders = orderJson.map((json) => Order.fromJson(json)).toList();
+              if (cursorId == null) {
+                _orders = newOrders;
+              } else {
+                _orders.addAll(newOrders);
+              }
+              if (newOrders.length < 10) {
+                _hasMore = false;
+              }
             });
           }
         }
@@ -52,7 +93,12 @@ class _FarmerOrderListScreenState extends State<FarmerOrderListScreen> {
     } catch (e) {
       print('Failed to fetch orders: $e');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isFetchingMore = false;
+        });
+      }
     }
   }
 
@@ -214,10 +260,18 @@ class _FarmerOrderListScreenState extends State<FarmerOrderListScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _orders.isEmpty
                           ? const Center(child: Text('주문 내역이 없습니다.'))
+                          // ✨ 5. ListView.builder 수정
                           : ListView.builder(
+                              controller: _scrollController, // 컨트롤러 연결
                               padding: EdgeInsets.zero,
-                              itemCount: _orders.length,
+                              itemCount: _orders.length + (_hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
+                                if (index == _orders.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  );
+                                }
                                 return _OrderCard(order: _orders[index]);
                               },
                             ),

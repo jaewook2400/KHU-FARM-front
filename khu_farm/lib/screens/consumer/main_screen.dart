@@ -98,16 +98,16 @@ class _ConsumerMainScreenState extends State<ConsumerMainScreen> {
                 );
               },
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/consumer/harvest',
-            //       ModalRoute.withName("/consumer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/consumer/harvest',
+                  ModalRoute.withName("/consumer/main"),
+                );
+              },
+            ),
             // _NavItem(
             //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
             //   onTap: () {

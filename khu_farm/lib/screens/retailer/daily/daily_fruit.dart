@@ -21,10 +21,32 @@ class _RetailerDailyFruitScreenState extends State<RetailerDailyFruitScreen> {
   bool _isLoading = true;
   late final TextEditingController _searchController;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
+  String? _currentSearchKeyword;
+
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 100 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_fruits.isEmpty) return;
+      final cursorId = _fruits.last.id;
+      
+      if (_currentSearchKeyword != null && _currentSearchKeyword!.isNotEmpty) {
+        _searchFruits(_currentSearchKeyword!, cursorId: cursorId);
+      } else {
+        _fetchFruits(wholesaleId, cursorId: cursorId);
+      }
+    }
   }
 
   @override
@@ -44,124 +66,125 @@ class _RetailerDailyFruitScreenState extends State<RetailerDailyFruitScreen> {
         }
       } catch (e) {
         print('Failed to load fruit ID: ${e.toString()}');
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) setState(() => _isLoading = false);
       }
     }
   }
 
-  Future<void> _fetchFruits(int wholesale) async {
+  Future<void> _fetchFruits(int wholesale, {int? cursorId}) async {
+    if (_isFetchingMore) return;
+
+    if (cursorId == null) {
+      _currentSearchKeyword = null;
+      _searchController.clear();
+      _hasMore = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
 
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      
+      String uri = '$baseUrl/fruits/get/{wholesaleRetailCategoryId}/{fruitCategoryId}?wholesaleRetailCategoryId=$wholesale&fruitCategoryId=$_fruitCategoryId&size=5';
+      if (cursorId != null) {
+        uri += '&cursorId=$cursorId';
       }
 
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-      };
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/fruits/get/{wholesaleRetailCategoryId}/{fruitCategoryId}?wholesaleRetailCategoryId=$wholesale&fruitCategoryId=$_fruitCategoryId'),
-        headers: headers,
-      );
+      final response = await http.get(Uri.parse(uri), headers: headers);
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? fruitList = result['content'];
+        final List<dynamic>? fruitListJson = data['result']['content'];
 
-        if (fruitList != null) {
+        if (fruitListJson != null) {
+          final newFruits = fruitListJson.map((json) => Fruit.fromJson(json)).toList();
           setState(() {
-            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
-            _isLoading = false;
-          });
-        } else {
-          print("The 'content' field in the server response is null.");
-          setState(() {
-            _fruits = [];
-            _isLoading = false;
+            if (cursorId == null) {
+              _fruits = newFruits;
+            } else {
+              _fruits.addAll(newFruits);
+            }
+            if (newFruits.length < 5) {
+              _hasMore = false;
+            }
           });
         }
       } else {
-        print('API Error - Status Code: ${response.statusCode}');
-        print('API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
-        setState(() {
-          _isLoading = false;
-        });
+        throw Exception('Failed to load fruits: ${response.statusCode}');
       }
     } catch (e) {
-      print('An error occurred: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      print('An error occurred in _fetchFruits: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isFetchingMore = false;
+        });
+      }
     }
   }
 
-  Future<void> _searchFruits(String keyword) async {
+  Future<void> _searchFruits(String keyword, {int? cursorId}) async {
+    if (_isFetchingMore) return;
+
+    if (cursorId == null) {
+      _fruits.clear();
+      _currentSearchKeyword = keyword;
+      _hasMore = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
-
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
+      if (accessToken == null) throw Exception('Token is missing.');
+      
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      
+      // ✨ 5. API 명세서에 요청된 특정 URL 형식으로 구성
+      final path = '$baseUrl/fruits/search/{wholesaleRetailCategoryId}/{fruitCategoryId}';
+      final queryParameters = {
+          'wholesaleRetailCategoryId': wholesaleId.toString(),
+          'fruitCategoryId': _fruitCategoryId.toString(),
+          'searchKeyword': keyword,
+          'size': '5',
+          if (cursorId != null) 'cursorId': cursorId.toString(),
       };
 
-      // API 명세서에 따라 검색 키워드를 포함한 URL 구성
-      final response = await http.get(
-        Uri.parse('$baseUrl/fruits/search/{wholesaleRetailCategoryId}/{fruitCategoryId}?wholesaleRetailCategoryId=2&fruitCategoryId=$_fruitCategoryId&searchKeyword=$keyword?size=1000'),
-        headers: headers,
-      );
+      final uri = Uri.parse(path).replace(queryParameters: queryParameters);
+      
+      final response = await http.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? fruitList = result['content'];
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFruits = (data['result']['content'] as List)
+            .map((json) => Fruit.fromJson(json))
+            .toList();
 
-        if (fruitList != null) {
-          setState(() {
-            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
-            _isLoading = false;
-          });
-        } else {
-          print("The 'content' field in the server response is null.");
-          setState(() {
-            _fruits = [];
-            _isLoading = false;
-          });
-        }
-      } else {
-        print('Search API Error - Status Code: ${response.statusCode}');
-        print('Search API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
         setState(() {
-          _isLoading = false;
+          _fruits.addAll(newFruits);
+          if (newFruits.length < 5) {
+            _hasMore = false;
+          }
         });
+      } else {
+        throw Exception('Failed to search fruits: ${response.statusCode}');
       }
     } catch (e) {
       print('An error occurred during search: $e');
-      setState(() {
+    } finally {
+      if(mounted) setState(() {
         _isLoading = false;
+        _isFetchingMore = false;
       });
     }
   }
@@ -208,6 +231,14 @@ class _RetailerDailyFruitScreenState extends State<RetailerDailyFruitScreen> {
     } catch (e) {
       print('찜 삭제 에러: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -453,14 +484,21 @@ class _RetailerDailyFruitScreenState extends State<RetailerDailyFruitScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _fruits.isEmpty
                           ? const Center(child: Text('해당 과일이 없습니다.'))
+                          // ✨ 5. ListView.builder 수정
                           : ListView.builder(
-                              itemCount: _fruits.length,
+                              controller: _scrollController,
+                              itemCount: _fruits.length + (_hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
+                                if (index == _fruits.length) {
+                                  return _hasMore
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(16.0),
+                                          child: Center(child: CircularProgressIndicator()),
+                                        )
+                                      : const SizedBox.shrink();
+                                }
                                 final fruit = _fruits[index];
-                                return _buildProductItem(
-                                  context,
-                                  fruit: fruit,
-                                );
+                                return _buildProductItem(context, fruit: fruit);
                               },
                             ),
                 ),
@@ -517,6 +555,7 @@ class _RetailerDailyFruitScreenState extends State<RetailerDailyFruitScreen> {
     // 리스트에서 일치하는 id를 찾지 못하면 기본값을 반환합니다.
     return '과일';
   }
+
   Widget _buildProductItem(BuildContext context, {required Fruit fruit}) {
     return GestureDetector(
       onTap: () {

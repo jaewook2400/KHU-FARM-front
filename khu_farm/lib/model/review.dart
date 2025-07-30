@@ -1,6 +1,7 @@
 import 'package:khu_farm/model/order.dart';
 
 class ReviewInfo {
+  final int reviewId;
   final String title;
   final String userId;
   final String content;
@@ -10,6 +11,7 @@ class ReviewInfo {
   final String? replyContent;
 
   ReviewInfo({
+    required this.reviewId,
     required this.title,
     required this.userId,
     required this.content,
@@ -21,6 +23,7 @@ class ReviewInfo {
 
   factory ReviewInfo.fromJson(Map<String, dynamic> json) {
     return ReviewInfo(
+      reviewId: json['id'] ?? 0,
       title: json['title'] ?? '',
       userId: json['userId'] ?? '알 수 없음',
       content: json['content'] ?? '',

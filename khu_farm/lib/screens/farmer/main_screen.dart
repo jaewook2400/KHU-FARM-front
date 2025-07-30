@@ -107,16 +107,16 @@ class _FarmerMainScreenState extends State<FarmerMainScreen> {
                 );
               },
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/harvest.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/farmer/harvest',
-            //       ModalRoute.withName("/farmer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/harvest.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/farmer/harvest',
+                  ModalRoute.withName("/farmer/main"),
+                );
+              },
+            ),
             // _NavItem(
             //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
             //   onTap: () {

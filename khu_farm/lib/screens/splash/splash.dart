@@ -21,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _checkLoginStatus() async {
     // 스플래시 화면을 위한 최소 대기 시간
-    await Future.delayed(const Duration(seconds: 2));
+    // await Future.delayed(const Duration(seconds: 2));
 
     final accessToken = await StorageService.getAccessToken();
     final refreshToken = await StorageService.getRefreshToken();

@@ -61,4 +61,47 @@ class Fruit {
       isWishList: json['isWishList'] as bool? ?? false,
     );
   }
+
+  Fruit copyWith({
+    int? id,
+    int? wishListId,
+    String? title,
+    String? widthImageUrl,
+    String? squareImageUrl,
+    int? price,
+    int? weight,
+    String? deliveryCompany,
+    int? deliveryDay,
+    int? ratingSum,
+    int? ratingCount,
+    String? description,
+    int? stock,
+    int? sellerId,
+    String? brandName,
+    int? fruitCategoryId,
+    int? wholesaleRetailCategoryId,
+    bool? isWishList,
+  }) {
+    return Fruit(
+      id: id ?? this.id,
+      wishListId: wishListId ?? this.wishListId,
+      title: title ?? this.title,
+      widthImageUrl: widthImageUrl ?? this.widthImageUrl,
+      squareImageUrl: squareImageUrl ?? this.squareImageUrl,
+      price: price ?? this.price,
+      weight: weight ?? this.weight,
+      deliveryCompany: deliveryCompany ?? this.deliveryCompany,
+      deliveryDay: deliveryDay ?? this.deliveryDay,
+      ratingSum: ratingSum ?? this.ratingSum,
+      ratingCount: ratingCount ?? this.ratingCount,
+      description: description ?? this.description,
+      stock: stock ?? this.stock,
+      sellerId: sellerId ?? this.sellerId,
+      brandName: brandName ?? this.brandName,
+      fruitCategoryId: fruitCategoryId ?? this.fruitCategoryId,
+      wholesaleRetailCategoryId:
+          wholesaleRetailCategoryId ?? this.wholesaleRetailCategoryId,
+      isWishList: isWishList ?? this.isWishList,
+    );
+  }
 }

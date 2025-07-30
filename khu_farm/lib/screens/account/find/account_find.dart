@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:khu_farm/constants.dart';
 
 class AccountFind extends StatefulWidget {
   const AccountFind({super.key});
@@ -16,6 +19,94 @@ class _AccountFindState extends State<AccountFind> {
   final TextEditingController pwEmailController = TextEditingController();
   final TextEditingController pwIdController = TextEditingController();
 
+  bool _isFindingId = false;
+  bool _isFindingPassword = false;
+
+  // ✨ 아이디 찾기 API 호출 함수
+  Future<void> _findId() async {
+    if (idNameController.text.trim().isEmpty ||
+        idEmailController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('이름과 이메일을 모두 입력해주세요.')),
+      );
+      return;
+    }
+
+    setState(() => _isFindingId = true);
+
+    final uri = Uri.parse('$baseUrl/auth/findId');
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode({
+      'name': idNameController.text.trim(),
+      'email': idEmailController.text.trim(),
+    });
+
+    try {
+      final response = await http.post(uri, headers: headers, body: body);
+      final data = json.decode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200 && data['isSuccess'] == true) {
+        final foundId = data['result'];
+        Navigator.pushNamed(
+          context,
+          '/account/find/idfound',
+          arguments: {
+            'name': idNameController.text.trim(), // 이름 컨트롤러의 텍스트
+            'id': foundId,                       // API로 찾은 아이디
+          },
+        );
+      } else {
+        Navigator.pushNamed(context, '/account/find/notfound');
+      }
+    } catch (e) {
+      print('Failed to find ID: $e');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('오류가 발생했습니다. 다시 시도해주세요.')));
+    } finally {
+      if (mounted) setState(() => _isFindingId = false);
+    }
+  }
+
+  // ✨ 비밀번호 찾기 API 호출 함수
+  Future<void> _findPassword() async {
+    if (pwNameController.text.trim().isEmpty ||
+        pwEmailController.text.trim().isEmpty ||
+        pwIdController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('모든 정보를 입력해주세요.')),
+      );
+      return;
+    }
+
+    setState(() => _isFindingPassword = true);
+
+    final uri = Uri.parse('$baseUrl/auth/findPassword');
+    final headers = {'Content-Type': 'application/json'};
+    final body = jsonEncode({
+      'name': pwNameController.text.trim(),
+      'email': pwEmailController.text.trim(),
+      'userId': pwIdController.text.trim(),
+    });
+
+    try {
+      final response = await http.post(uri, headers: headers, body: body);
+      final data = json.decode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200 && data['isSuccess'] == true) {
+        Navigator.pushNamed(context, '/account/find/temppw');
+      } else {
+        Navigator.pushNamed(context, '/account/find/notfound');
+      }
+    } catch (e) {
+      print('Failed to find password: $e');
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('오류가 발생했습니다. 다시 시도해주세요.')));
+    } finally {
+      if (mounted) setState(() => _isFindingPassword = false);
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -29,6 +120,7 @@ class _AccountFindState extends State<AccountFind> {
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -77,7 +169,11 @@ class _AccountFindState extends State<AccountFind> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    // TODO: 로고 터치 시 동작
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
                   },
                   child: const Text(
                     'KHU:FARM',
@@ -99,12 +195,11 @@ class _AccountFindState extends State<AccountFind> {
               top: statusBarHeight + screenHeight * 0.06 + 30,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 20,
+              bottom: 20 + bottomPadding,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 🔙 상단 뒤로가기
                 Row(
                   children: [
                     GestureDetector(
@@ -157,27 +252,13 @@ class _AccountFindState extends State<AccountFind> {
                         const SizedBox(height: 16),
                         _ActionButton(
                           label: '아이디 찾기',
-                          onPressed: () {
-                            if (idNameController.text.trim().isEmpty ||
-                                idEmailController.text.trim().isEmpty) {
-                              Navigator.pushNamed(
-                                context,
-                                '/account/find/notfound',
-                              );
-                            } else {
-                              Navigator.pushNamed(
-                                context,
-                                '/account/find/idfound',
-                              );
-                            }
-                          }, // 연결 예정
+                          isLoading: _isFindingId, // ✨ 로딩 상태 전달
+                          onPressed: _findId,      // ✨ API 호출 함수 연결
                         ),
                         const SizedBox(height: 30),
-
                         const Divider(),
-
-                        // 비밀번호 찾기
                         const SizedBox(height: 30),
+                        // 비밀번호 찾기
                         const Text(
                           '비밀번호 찾기',
                           style: TextStyle(
@@ -204,21 +285,8 @@ class _AccountFindState extends State<AccountFind> {
                         const SizedBox(height: 16),
                         _ActionButton(
                           label: '비밀번호 찾기',
-                          onPressed: () {
-                            if (pwNameController.text.trim().isEmpty ||
-                                pwEmailController.text.trim().isEmpty ||
-                                pwIdController.text.trim().isEmpty) {
-                              Navigator.pushNamed(
-                                context,
-                                '/account/find/notfound',
-                              );
-                            } else {
-                              Navigator.pushNamed(
-                                context,
-                                '/account/find/temppw',
-                              );
-                            }
-                          }, // 연결 예정
+                          isLoading: _isFindingPassword, // ✨ 로딩 상태 전달
+                          onPressed: _findPassword,      // ✨ API 호출 함수 연결
                         ),
                       ],
                     ),
@@ -275,8 +343,13 @@ class _LabeledField extends StatelessWidget {
 class _ActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
+  final bool isLoading; // 로딩 상태를 받을 변수
 
-  const _ActionButton({required this.label, required this.onPressed});
+  const _ActionButton({
+    required this.label,
+    required this.onPressed,
+    this.isLoading = false, // 기본값은 false
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -284,17 +357,27 @@ class _ActionButton extends StatelessWidget {
       width: double.infinity,
       height: 48,
       child: ElevatedButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed, // 로딩 중일 때 버튼 비활성화
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF6FCF4B),
+          disabledBackgroundColor: Colors.grey,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
         ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 16, color: Colors.white),
-        ),
+        child: isLoading
+            ? const SizedBox( // 로딩 중일 때 인디케이터 표시
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
+              )
+            : Text( // 로딩 아닐 때 텍스트 표시
+                label,
+                style: const TextStyle(fontSize: 16, color: Colors.white),
+              ),
       ),
     );
   }

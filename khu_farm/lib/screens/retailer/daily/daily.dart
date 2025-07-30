@@ -17,231 +17,284 @@ class RetailerDailyScreen extends StatefulWidget {
 }
 
 class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
+  // 과일 목록 상태
   List<Fruit> _fruits = [];
-  List<Farm> _farms = [];
-  bool _isLoading = true;
+  final ScrollController _fruitScrollController = ScrollController();
+  bool _isFetchingMoreFruits = false;
+  bool _hasMoreFruits = true;
+  String? _currentFruitSearchKeyword;
   late final TextEditingController _searchFruitController;
+
+  // ✨ 1. 농가 목록을 위한 별도의 상태 변수 추가
+  List<Farm> _farms = [];
+  final ScrollController _farmScrollController = ScrollController();
+  bool _isFetchingMoreFarms = false;
+  bool _hasMoreFarms = true;
+  String? _currentFarmSearchKeyword;
   late final TextEditingController _searchFarmController;
+
+  bool _isLoading = true;
+
 
   @override
   void initState() {
     super.initState();
     _searchFruitController = TextEditingController();
     _searchFarmController = TextEditingController();
-    _fetchFruits();
-    _fetchFarms();
+    
+    _fruitScrollController.addListener(_onFruitScroll);
+    _farmScrollController.addListener(_onFarmScroll); // ✨ 농가 스크롤 리스너 추가
+
+    _loadInitialData();
   }
 
-  Future<void> _fetchFruits() async {
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoading = true);
+    await Future.wait([
+      _fetchFruits(),
+      _fetchFarms(),
+    ]);
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  void _onFruitScroll() {
+    if (_fruitScrollController.position.pixels >= _fruitScrollController.position.maxScrollExtent - 50 &&
+        _hasMoreFruits &&
+        !_isFetchingMoreFruits) {
+      final cursorId = _fruits.isNotEmpty ? _fruits.last.id : null;
+      if (cursorId == null) return;
+
+      if (_currentFruitSearchKeyword != null && _currentFruitSearchKeyword!.isNotEmpty) {
+        _searchFruits(_currentFruitSearchKeyword!, cursorId: cursorId);
+      } else {
+        _fetchFruits(cursorId: cursorId);
+      }
+    }
+  }
+
+  // ✨ 2. 농가 목록을 위한 스크롤 리스너 함수 추가
+  void _onFarmScroll() {
+    if (_farmScrollController.position.pixels >= _farmScrollController.position.maxScrollExtent - 50 &&
+        _hasMoreFarms &&
+        !_isFetchingMoreFarms) {
+      final cursorId = _farms.isNotEmpty ? _farms.last.id : null;
+      if (cursorId == null) return;
+      
+      if (_currentFarmSearchKeyword != null && _currentFarmSearchKeyword!.isNotEmpty) {
+        _searchFarms(_currentFarmSearchKeyword!, cursorId: cursorId);
+      } else {
+        _fetchFarms(cursorId: cursorId);
+      }
+    }
+  }
+
+  Future<void> _fetchFruits({int? cursorId}) async {
+    if (_isFetchingMoreFruits) return;
+    
+    // 새로운 목록을 불러오는 것이므로, 검색 상태를 초기화
+    if (cursorId == null) {
+      _currentFruitSearchKeyword = null;
+      _searchFruitController.clear();
+      _hasMoreFruits = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMoreFruits = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      String url = '$baseUrl/fruits/get/2?size=5';
+      if (cursorId != null) url += '&cursorId=$cursorId';
 
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-      };
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/fruits/get/2?size=1000'),
-        headers: headers,
-      );
-
+      final response = await http.get(Uri.parse(url), headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? fruitList = result['content'];
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFruits = (data['result']['content'] as List)
+            .map((json) => Fruit.fromJson(json))
+            .toList();
 
-        if (fruitList != null) {
-          setState(() {
-            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
-            _isLoading = false;
-          });
-        } else {
-          print("The 'content' field in the server response is null.");
-          setState(() {
-            _fruits = [];
-            _isLoading = false;
-          });
-        }
-      } else {
-        print('API Error - Status Code: ${response.statusCode}');
-        print('API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
         setState(() {
-          _isLoading = false;
+          if (cursorId == null) {
+            _fruits = newFruits;
+          } else {
+            _fruits.addAll(newFruits);
+          }
+          if (newFruits.length < 5) {
+            _hasMoreFruits = false;
+          }
         });
+      } else {
+        throw Exception('Failed to load fruits');
       }
     } catch (e) {
-      print('An error occurred: $e');
-      setState(() {
+      print('An error occurred in _fetchFruits: $e');
+    } finally {
+      if (mounted) setState(() {
         _isLoading = false;
+        _isFetchingMoreFruits = false;
       });
     }
   }
 
-  Future<void> _searchFruits(String keyword) async {
+  Future<void> _searchFruits(String keyword, {int? cursorId}) async {
+    if (_isFetchingMoreFruits) return;
+
+    // 새로운 검색 시작일 경우, 상태 초기화
+    if (cursorId == null) {
+      _fruits.clear();
+      _currentFruitSearchKeyword = keyword;
+      _hasMoreFruits = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMoreFruits = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
-
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-      };
-
-      // API 명세서에 따라 검색 키워드를 포함한 URL 구성
-      final response = await http.get(
-        Uri.parse('$baseUrl/fruits/search/2?searchKeyword=$keyword'),
-        headers: headers,
+      if (accessToken == null) throw Exception('Token is missing.');
+      
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      
+      final uri = Uri.parse('$baseUrl/fruits/search/2').replace(
+        queryParameters: {
+          'searchKeyword': keyword,
+          'size': '5',
+          if (cursorId != null) 'cursorId': cursorId.toString(),
+        },
       );
-
+      
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? fruitList = result['content'];
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFruits = (data['result']['content'] as List)
+            .map((json) => Fruit.fromJson(json))
+            .toList();
 
-        if (fruitList != null) {
-          setState(() {
-            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
-            _isLoading = false;
-          });
-        } else {
-          print("The 'content' field in the server response is null.");
-          setState(() {
-            _fruits = [];
-            _isLoading = false;
-          });
-        }
-      } else {
-        print('Search API Error - Status Code: ${response.statusCode}');
-        print('Search API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
         setState(() {
-          _isLoading = false;
+          // 검색 결과는 항상 추가합니다. (새 검색 시에는 위에서 clear() 했으므로)
+          _fruits.addAll(newFruits);
+          if (newFruits.length < 5) {
+            _hasMoreFruits = false;
+          }
         });
+      } else {
+        throw Exception('Failed to search fruits');
       }
     } catch (e) {
       print('An error occurred during search: $e');
-      setState(() {
+    } finally {
+      if(mounted) setState(() {
         _isLoading = false;
+        _isFetchingMoreFruits = false;
       });
     }
   }
 
-  Future<void> _fetchFarms() async {
+  Future<void> _fetchFarms({int? cursorId}) async {
+    if (_isFetchingMoreFarms) return;
+
+    if (cursorId == null) {
+      _currentFarmSearchKeyword = null;
+      _searchFarmController.clear();
+      _hasMoreFarms = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId != null) _isFetchingMoreFarms = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
-
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-      };
-  
-      final uri = Uri.parse('$baseUrl/seller');
-      final response = await http.get(uri, headers: headers);
+      if (accessToken == null) throw Exception('Token is missing.');
       
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/seller').replace(queryParameters: {
+        'size': '5',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+      
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? farmList = result['content'];
-
-        if (farmList != null && farmList.isNotEmpty) {
-          setState(() {
-            final newFarms = farmList.map((json) => Farm.fromJson(json)).toList();
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFarms = (data['result']['content'] as List)
+            .map((json) => Farm.fromJson(json))
+            .toList();
+        
+        setState(() {
+          if (cursorId == null) {
+            _farms = newFarms;
+          } else {
             _farms.addAll(newFarms);
-          });
-        } else {
-          setState(() {
-            _farms = [];
-            _isLoading = false;
-          });
-        }
+          }
+          if (newFarms.length < 5) {
+            _hasMoreFarms = false;
+          }
+        });
       } else {
-        print('API Error - Status Code: ${response.statusCode}');
-        print('API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
+        throw Exception('Failed to load farms');
       }
     } catch (e) {
       print('An error occurred during farm fetch: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isFetchingMoreFarms = false);
     }
   }
 
-  Future<void> _searchFarms(String keyword) async {
-    final String? token = await StorageService.getAccessToken();
-    if (token == null) {
-      print('로그인 정보가 없습니다.');
-      return;
+  // ✨ 4. 농가 검색 함수에 페이지네이션 적용
+  Future<void> _searchFarms(String keyword, {int? cursorId}) async {
+    if (_isFetchingMoreFarms) return;
+
+    if (cursorId == null) {
+      _farms.clear();
+      _currentFarmSearchKeyword = keyword;
+      _hasMoreFarms = true;
     }
 
-    // API 명세에 따라 searchKeyword만 쿼리 파라미터로 추가
-    final uri = Uri.parse('$baseUrl/seller/search').replace(
-      queryParameters: {'searchKeyword': keyword},
-    );
+    setState(() {
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMoreFarms = true;
+    });
 
     try {
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
 
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/seller/search').replace(queryParameters: {
+        'searchKeyword': keyword,
+        'size': '5',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? farmList = result['content'];
-        // 응답 본문의 'result' 필드에서 농가 목록을 추출하여 상태 업데이트
-        if (farmList != null && farmList.isNotEmpty) {
-          setState(() {
-            final newFarms = farmList.map((json) => Farm.fromJson(json)).toList();
-            _farms.addAll(newFarms);
-          });
-        } else {
-          setState(() {
-            _farms = [];
-            _isLoading = false;
-          });
-        }
-        print('농가 검색 성공: $_farms');
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFarms = (data['result']['content'] as List)
+            .map((json) => Farm.fromJson(json))
+            .toList();
+        
+        setState(() {
+          _farms.addAll(newFarms);
+          if (newFarms.length < 5) {
+            _hasMoreFarms = false;
+          }
+        });
       } else {
-        print('농가 검색 실패 (${response.statusCode}): ${response.body}');
+        throw Exception('Failed to search farms');
       }
     } catch (e) {
-      print('네트워크 오류: $e');
+      print('An error occurred during farm search: $e');
+    } finally {
+      if (mounted) {
+        if (cursorId == null) _isLoading = false;
+        _isFetchingMoreFarms = false;
+      }
     }
   }
 
@@ -288,6 +341,17 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
     } catch (e) {
       print('찜 삭제 에러: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _fruitScrollController.removeListener(_onFruitScroll);
+    _fruitScrollController.dispose();
+    _farmScrollController.removeListener(_onFarmScroll);
+    _farmScrollController.dispose();
+    _searchFruitController.dispose();
+    _searchFarmController.dispose();
+    super.dispose();
   }
 
   @override
@@ -564,19 +628,30 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
                             ),
                             Expanded(
                               child: _isLoading
-                                ? const Center(child: CircularProgressIndicator())
-                                : _fruits.isEmpty
-                                    ? const Center(child: Text('해당 과일이 없습니다.'))
-                                    : ListView.builder(
-                                        itemCount: _fruits.length,
-                                        itemBuilder: (context, index) {
-                                          final fruit = _fruits[index];
-                                          return _buildProductItem(
-                                            context,
-                                            fruit: fruit,
-                                          );
-                                        },
-                                      ),
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : _fruits.isEmpty
+                                      ? const Center(child: Text('해당 과일이 없습니다.'))
+                                      // ✨ 5. ListView.builder 수정
+                                      : ListView.builder(
+                                          controller: _fruitScrollController, // 스크롤 컨트롤러 연결
+                                          // 로딩 중일 때 하단에 인디케이터를 보여주기 위해 +1
+                                          itemCount: _fruits.length + (_hasMoreFruits ? 1 : 0),
+                                          itemBuilder: (context, index) {
+                                            // 마지막 아이템이고 더 불러올 데이터가 있으면 로딩 인디케이터 표시
+                                            if (index == _fruits.length) {
+                                              return const Padding(
+                                                padding: EdgeInsets.all(16.0),
+                                                child: Center(child: CircularProgressIndicator()),
+                                              );
+                                            }
+                                            // 일반 과일 아이템 표시
+                                            final fruit = _fruits[index];
+                                            return _buildProductItem(
+                                              context,
+                                              fruit: fruit,
+                                            );
+                                          },
+                                        ),
                             ),
                           ],
                         ),
@@ -622,21 +697,27 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
                             // 농가 리스트
                             Expanded(
                               child: _isLoading
-                                ? const Center(child: CircularProgressIndicator())
-                                : _farms.isEmpty
-                                  ? const Center(child: Text('해당 농가가 없습니다.'))
-                                  : ListView.builder(
-                                    itemCount: _farms.length,
-                                    itemBuilder: (context, index) {
-                                      final farm = _farms[index];
-                                      return _FarmItem(
-                                        imagePath: farm.imageUrl,
-                                        producer: farm.brandName,
-                                        subtitle: farm.description,
-                                        liked: false,
-                                      );
-                                    },
-                                ),
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : _farms.isEmpty
+                                      ? const Center(child: Text('해당 농가가 없습니다.'))
+                                      : ListView.builder(
+                                          controller: _farmScrollController, // 컨트롤러 연결
+                                          itemCount: _farms.length + (_hasMoreFarms ? 1 : 0),
+                                          itemBuilder: (context, index) {
+                                            if (index == _farms.length) {
+                                              return const Padding(
+                                                padding: EdgeInsets.all(16.0),
+                                                child: Center(child: CircularProgressIndicator()),
+                                              );
+                                            }
+                                            final farm = _farms[index];
+                                            return _FarmItem(
+                                              imagePath: farm.imageUrl,
+                                              producer: farm.brandName,
+                                              subtitle: farm.description,
+                                            );
+                                          },
+                                        ),
                             ),
                           ],
                         ),

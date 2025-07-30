@@ -14,9 +14,14 @@ class IdFoundScreen extends StatelessWidget {
       ),
     );
 
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    final userName = arguments?['name'] ?? '사용자'; // arguments가 null일 경우를 대비한 기본값
+    final foundId = arguments?['id'] ?? '알 수 없음';   // arguments가 null일 경우를 대비한 기본값
+
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final statusBarHeight = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -65,7 +70,11 @@ class IdFoundScreen extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: () {
-                    // TODO: 로고 터치 시 동작
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/login',
+                      (route) => false,
+                    );
                   },
                   child: const Text(
                     'KHU:FARM',
@@ -83,17 +92,16 @@ class IdFoundScreen extends StatelessWidget {
 
           // 콘텐츠
           Padding(
+            // ✨ 1. 기존 bottom 여백에 시스템 padding 값을 더해줍니다.
             padding: EdgeInsets.only(
               top: statusBarHeight + 20,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 30,
+              bottom: 30 + bottomPadding,
             ),
             child: Column(
               children: [
                 const Spacer(),
-
-                // 마스코트 이미지
                 Image.asset(
                   'assets/mascot/login_mascot.png',
                   width: 80,
@@ -101,23 +109,20 @@ class IdFoundScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // 성공 메시지
-                const Text(
-                  'OOO님의 아이디는',
+                // ✨ 2. 전달받은 이름과 아이디로 텍스트를 동적으로 변경합니다.
+                Text(
+                  '$userName님의 아이디는',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                const Text(
-                  'aaaa1234입니다.',
+                Text(
+                  '$foundId입니다.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 12),
-
                 const Spacer(),
-
-                // 로그인 하기 버튼
                 SizedBox(
                   width: double.infinity,
                   height: 48,

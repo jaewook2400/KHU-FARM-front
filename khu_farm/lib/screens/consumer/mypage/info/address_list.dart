@@ -19,10 +19,34 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
   List<Address> _addresses = [];
   bool _isLoading = true;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
-    _loadAddressesFromStorage();
+    _fetchAddresses(); // ✨ Storage 대신 API에서 바로 불러오도록 변경
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+  
+  // ✨ 2. 스크롤 감지 및 추가 데이터 요청 함수
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_addresses.isNotEmpty) {
+        // TODO: Address 모델의 ID 필드명(id)이 정확한지 확인해주세요.
+        _fetchAddresses(cursorId: _addresses.last.addressId);
+      }
+    }
   }
 
   Future<void> _loadAddressesFromStorage() async {
@@ -39,40 +63,58 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
     }
   }
 
-  Future<void> _fetchAddresses() async {
-    if (!mounted) setState(() => _isLoading = true);
-    
-    final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null) {
-      setState(() => _isLoading = false);
-      return;
-    }
+  Future<void> _fetchAddresses({int? cursorId}) async {
+    if (_isFetchingMore) return;
 
-    final headers = {'Authorization': 'Bearer $accessToken'};
-    final uri = Uri.parse('$baseUrl/address');
+    setState(() {
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
+    });
 
     try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing');
+
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/address').replace(queryParameters: {
+        'size': '10',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+      
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> addressJson = data['result']['content'];
           final newAddresses = addressJson.map((json) => Address.fromJson(json)).toList();
-          
-          // Save the newly fetched addresses to storage
-          await StorageService().saveAddresses(newAddresses);
 
           if (mounted) {
             setState(() {
-              _addresses = newAddresses;
+              if (cursorId == null) {
+                _addresses = newAddresses;
+              } else {
+                _addresses.addAll(newAddresses);
+              }
+              if (newAddresses.length < 10) {
+                _hasMore = false;
+              }
             });
           }
+          // 로컬 저장소에도 최신 목록 전체를 저장
+          await StorageService().saveAddresses(_addresses);
         }
+      } else {
+        throw Exception('HTTP Error: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching addresses: $e');
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isFetchingMore = false;
+        });
+      }
     }
   }
   
@@ -245,23 +287,28 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _addresses.isEmpty
                           ? const Center(child: Text('등록된 배송지가 없습니다.'))
-                          : ListView.separated( // Using ListView.separated for better spacing
+                          // ✨ 4. ListView.separated 수정
+                          : ListView.separated(
+                              controller: _scrollController, // 컨트롤러 연결
                               padding: EdgeInsets.zero,
-                              itemCount: _addresses.length,
+                              itemCount: _addresses.length + (_hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
+                                if (index == _addresses.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  );
+                                }
                                 final address = _addresses[index];
                                 return _AddressCard(
-                                  // --- This is updated ---
-                                  address: address, // Pass the full address object
+                                  address: address,
                                   onEdit: () => _navigateToEditScreen(address),
                                   onDelete: () {
                                     // TODO: Implement delete logic
                                   },
-                                  // --- End of update ---
                                 );
                               },
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(height: 12), // Space between cards
+                              separatorBuilder: (context, index) => const SizedBox(height: 12),
                             ),
                 ),
               ],

@@ -87,7 +87,7 @@ class TempPasswordSentScreen extends StatelessWidget {
               top: statusBarHeight + 20,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 30,
+              bottom: 30 + MediaQuery.of(context).padding.bottom,
             ),
             child: Column(
               children: [

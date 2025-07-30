@@ -19,32 +19,78 @@ class _RetailerReviewListScreenState extends State<RetailerReviewListScreen> {
   bool _isLoading = true;
   List<Review> _reviews = []; // 상태 변수를 Review 모델 리스트로 변경
 
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
     _fetchMyReviews();
+    // ✨ 2. 스크롤 리스너 추가
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_reviews.isNotEmpty) {
+        // 마지막 리뷰의 reviewId를 cursor로 사용
+        _fetchMyReviews(cursorId: _reviews.last.reviewResponse.reviewId);
+      }
+    }
   }
 
   // '내 리뷰 목록' API 호출 함수
-  Future<void> _fetchMyReviews() async {
-    final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null || !mounted) return;
+  Future<void> _fetchMyReviews({int? cursorId}) async {
+    if (_isFetchingMore) return;
 
-    final headers = {'Authorization': 'Bearer $accessToken'};
-    final uri = Uri.parse('$baseUrl/review/retrieve/my?size=1000'); //
+    setState(() {
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMore = true;
+    });
 
     try {
-      final response = await http.get(uri, headers: headers);
-      if (!mounted) return;
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing');
+      
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/review/retrieve/my').replace(queryParameters: {
+        'size': '10',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
 
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result']?['content'] != null) {
           final List<dynamic> itemsJson = data['result']['content'];
-          setState(() {
-            _reviews = itemsJson.map((json) => Review.fromJson(json)).toList();
-          });
+          final newReviews = itemsJson.map((json) => Review.fromJson(json)).toList();
+
+          if (mounted) {
+            setState(() {
+              if (cursorId == null) {
+                _reviews = newReviews;
+              } else {
+                _reviews.addAll(newReviews);
+              }
+              if (newReviews.length < 10) {
+                _hasMore = false;
+              }
+            });
+          }
         }
+      } else {
+        throw Exception('HTTP Error: ${response.statusCode}');
       }
     } catch (e) {
       print('Error fetching reviews: $e');
@@ -52,6 +98,7 @@ class _RetailerReviewListScreenState extends State<RetailerReviewListScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
+          _isFetchingMore = false;
         });
       }
     }
@@ -141,12 +188,18 @@ class _RetailerReviewListScreenState extends State<RetailerReviewListScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _reviews.isEmpty
                           ? const Center(child: Text('작성한 리뷰가 없습니다.'))
+                          // ✨ 5. ListView.builder 수정
                           : ListView.builder(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.08),
-                              itemCount: _reviews.length,
+                              controller: _scrollController, // 컨트롤러 연결
+                              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.08),
+                              itemCount: _reviews.length + (_hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
-                                // _ReviewItem에 Review 객체 전달
+                                if (index == _reviews.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 16.0),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  );
+                                }
                                 return _ReviewItem(review: _reviews[index]);
                               },
                             ),

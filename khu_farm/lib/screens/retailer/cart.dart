@@ -37,40 +37,77 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
   bool _isLoading = true;
   bool _isAllSelected = false;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _isFetchingMore = false;
+  bool _hasMore = true;
+
   @override
   void initState() {
     super.initState();
     _fetchCartItems();
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _fetchCartItems() async {
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      // 마지막 아이템의 cartId를 cursor로 사용
+      if (_cartItems.isNotEmpty) {
+        _fetchCartItems(cursorId: _cartItems.last.cartId);
+      }
+    }
+  }
+
+  Future<void> _fetchCartItems({int? cursorId}) async {
+    if (_isFetchingMore) return;
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) {
+        _isLoading = true;
+      } else {
+        _isFetchingMore = true;
+      }
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Error: Access token is missing.');
-        return;
-      }
+      if (accessToken == null) throw Exception('Token is missing.');
+      
       final headers = {'Authorization': 'Bearer $accessToken'};
-
-      final response = await http.get(Uri.parse('$baseUrl/cart'), headers: headers);
+      final uri = Uri.parse('$baseUrl/cart').replace(queryParameters: {
+        'size': '20', // 페이지 크기는 5로 고정
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+      
+      final response = await http.get(uri, headers: headers);
 
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> itemsJson = data['result']['fruitsWithCount']['content'];
+          final newItems = itemsJson.map((json) => CartItemData.fromJson(json)).toList();
+
           setState(() {
-            _cartItems = itemsJson.map((json) => CartItemData.fromJson(json)).toList();
-            // 기본적으로 모든 항목을 선택된 상태로 초기화
-            _selectedItems = {for (var item in _cartItems) item.fruit.id: true};
+            if (cursorId == null) {
+              _cartItems = newItems; // 첫 로딩이면 교체
+            } else {
+              _cartItems.addAll(newItems); // 추가 로딩이면 덧붙이기
+            }
+            
+            // 새로 추가된 아이템들도 선택 상태 맵에 추가
+            for (var item in newItems) {
+              _selectedItems[item.fruit.id] = true;
+            }
+            
+            if (newItems.length < 5) {
+              _hasMore = false;
+            }
             _updateSelectAllState();
           });
         }
       } else {
-        print('Cart API Error: ${response.statusCode}');
+        throw Exception('Cart API Error: ${response.statusCode}');
       }
     } catch (e) {
       print('An error occurred while fetching cart items: $e');
@@ -78,6 +115,7 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
       if(mounted) {
         setState(() {
           _isLoading = false;
+          _isFetchingMore = false;
         });
       }
     }
@@ -118,27 +156,39 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
     return total;
   }
   
-  // TODO: 수량 변경 API 연동
   Future<void> _updateQuantity(int cartId, bool increase) async {
+    final itemIndex = _cartItems.indexWhere((item) => item.cartId == cartId);
+    if (itemIndex == -1) return;
+
+    // 변경 전 원래 수량 저장
+    final originalCount = _cartItems[itemIndex].count;
+    
+    // UI를 먼저 낙관적으로 업데이트
+    setState(() {
+      if (increase) {
+        _cartItems[itemIndex].count++;
+      } else {
+        // 수량이 1보다 작아지지 않도록 방지
+        if (_cartItems[itemIndex].count > 1) {
+          _cartItems[itemIndex].count--;
+        }
+      }
+    });
+
     final accessToken = await StorageService.getAccessToken();
     if (accessToken == null) return;
 
     final headers = {'Authorization': 'Bearer $accessToken'};
-    // Determine the correct API endpoint based on the 'increase' flag
     final String action = increase ? 'increase' : 'decrease';
     final uri = Uri.parse('$baseUrl/cart/$cartId/$action');
 
     try {
-      // Use PATCH method for the API call
       final response = await http.patch(uri, headers: headers);
-
-      if (response.statusCode == 200) {
-        print('Quantity updated successfully.');
-        // On success, refresh the entire cart list
-        await _fetchCartItems();
-      } else {
-        print('Failed to update quantity: ${response.statusCode}');
-        print('Response: ${response.body}');
+      if (response.statusCode != 200) {
+        // API 호출 실패 시, UI를 원래대로 되돌림
+        setState(() {
+          _cartItems[itemIndex].count = originalCount;
+        });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('수량 변경에 실패했습니다.')),
@@ -146,39 +196,40 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
         }
       }
     } catch (e) {
+      // 네트워크 에러 등 발생 시에도 UI를 원래대로 되돌림
+      setState(() {
+        _cartItems[itemIndex].count = originalCount;
+      });
       print('An error occurred while updating quantity: $e');
     }
   }
 
-  // TODO: 장바구니 삭제 API 연동
   Future<void> _deleteItem(int cartId) async {
     final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null || accessToken.isEmpty) {
-      print('Error: Access token is missing.');
-      return;
-    }
+    if (accessToken == null) return;
 
     final headers = {'Authorization': 'Bearer $accessToken'};
     final uri = Uri.parse('$baseUrl/cart/$cartId/delete');
 
     try {
       final response = await http.delete(uri, headers: headers);
-
       if (response.statusCode == 200 || response.statusCode == 204) {
         print('Successfully deleted item from cart.');
-        // On success, refresh the cart list to show the change
-        await _fetchCartItems();
+        // API 성공 시, 로컬 리스트에서 해당 아이템 제거
+        setState(() {
+          _cartItems.removeWhere((item) => item.cartId == cartId);
+          _updateSelectAllState(); // 전체선택 상태 업데이트
+        });
       } else {
-        print('Failed to delete item. Status: ${response.statusCode}');
-        print('Response Body: ${utf8.decode(response.bodyBytes)}');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('삭제에 실패했습니다.')),
-          );
-        }
+        throw Exception('Failed to delete item');
       }
     } catch (e) {
       print('An error occurred while deleting cart item: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('삭제에 실패했습니다.')),
+        );
+      }
     }
   }
 
@@ -207,6 +258,13 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
         'cartIds': selectedCartIds,
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -369,24 +427,37 @@ class _RetailerCartScreenState extends State<RetailerCartScreen> {
 
                 // 상품 목록 (스크롤 영역)
                 Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _cartItems.isEmpty
-                          ? const Center(child: Text('장바구니에 담긴 상품이 없습니다.'))
-                          : ListView.builder(
-                              padding: const EdgeInsets.only(bottom: 160), // 하단 결제 영역만큼 여백 확보
-                              itemCount: _cartItems.length,
-                              itemBuilder: (context, index) {
-                                final item = _cartItems[index];
-                                return _CartListItem(
-                                  itemData: item,
-                                  isSelected: _selectedItems[item.fruit.id] ?? false,
-                                  onSelected: (isSelected) => _onItemSelect(item.fruit.id, isSelected),
-                                  onQuantityChanged: (cartId, increase) => _updateQuantity(item.cartId, increase),
-                                  onDelete: () => _deleteItem(item.cartId),
-                                );
-                              },
-                            ),
+                  child: Padding(
+                    // Padding이 Expanded 안으로 들어옵니다.
+                    padding: const EdgeInsets.only(bottom: 240.0), 
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _cartItems.isEmpty
+                            ? const Center(child: Text('장바구니에 담긴 상품이 없습니다.'))
+
+                          // ✨ 5. ListView.builder 수정
+                            : ListView.builder(
+                                controller: _scrollController,
+                                padding: EdgeInsets.zero, // 내부 패딩 제거
+                                itemCount: _cartItems.length + (_hasMore ? 1 : 0),
+                                itemBuilder: (context, index) {
+                                  if (index == _cartItems.length) {
+                                    return const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 16.0),
+                                      child: Center(child: CircularProgressIndicator()),
+                                    );
+                                  }
+                                  final item = _cartItems[index];
+                                  return _CartListItem(
+                                    itemData: item,
+                                    isSelected: _selectedItems[item.fruit.id] ?? false,
+                                    onSelected: (isSelected) => _onItemSelect(item.fruit.id, isSelected),
+                                    onQuantityChanged: (cartId, increase) => _updateQuantity(item.cartId, increase),
+                                    onDelete: () => _deleteItem(item.cartId),
+                                  );
+                                },
+                              ),
+                  ),
                 ),
               ],
             ),

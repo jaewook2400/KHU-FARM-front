@@ -18,276 +18,338 @@ class RetailerStockScreen extends StatefulWidget {
 
 class _RetailerStockScreenState extends State<RetailerStockScreen> {
   List<Fruit> _fruits = [];
-  List<Farm> _farms = [];
-  bool _isLoading = true;
+  final ScrollController _fruitScrollController = ScrollController();
+  bool _isFetchingMoreFruits = false;
+  bool _hasMoreFruits = true;
+  String? _currentFruitSearchKeyword;
   late final TextEditingController _searchFruitController;
+
+  // 농가 목록 상태
+  List<Farm> _farms = [];
+  final ScrollController _farmScrollController = ScrollController();
+  bool _isFetchingMoreFarms = false;
+  bool _hasMoreFarms = true;
+  String? _currentFarmSearchKeyword;
   late final TextEditingController _searchFarmController;
+
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _searchFruitController = TextEditingController();
     _searchFarmController = TextEditingController();
-    _fetchFruits();
-    _fetchFarms();
+    
+    _fruitScrollController.addListener(_onFruitScroll);
+    _farmScrollController.addListener(_onFarmScroll);
+
+    _loadInitialData();
   }
 
-  Future<void> _fetchFruits() async {
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoading = true);
+    await Future.wait([
+      _fetchFruits(),
+      _fetchFarms(),
+    ]);
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  void _onFruitScroll() {
+    if (_fruitScrollController.position.pixels >= _fruitScrollController.position.maxScrollExtent - 50 &&
+        _hasMoreFruits &&
+        !_isFetchingMoreFruits) {
+      final cursorId = _fruits.isNotEmpty ? _fruits.last.id : null;
+      if (cursorId == null) return;
+
+      if (_currentFruitSearchKeyword != null && _currentFruitSearchKeyword!.isNotEmpty) {
+        _searchFruits(_currentFruitSearchKeyword!, cursorId: cursorId);
+      } else {
+        _fetchFruits(cursorId: cursorId);
+      }
+    }
+  }
+
+  void _onFarmScroll() {
+    if (_farmScrollController.position.pixels >= _farmScrollController.position.maxScrollExtent - 50 &&
+        _hasMoreFarms &&
+        !_isFetchingMoreFarms) {
+      final cursorId = _farms.isNotEmpty ? _farms.last.id : null;
+      if (cursorId == null) return;
+      
+      if (_currentFarmSearchKeyword != null && _currentFarmSearchKeyword!.isNotEmpty) {
+        _searchFarms(_currentFarmSearchKeyword!, cursorId: cursorId);
+      } else {
+        _fetchFarms(cursorId: cursorId);
+      }
+    }
+  }
+
+
+  Future<void> _fetchFruits({int? cursorId}) async {
+    if (_isFetchingMoreFruits) return;
+    
+    if (cursorId == null) {
+      _currentFruitSearchKeyword = null;
+      _searchFruitController.clear();
+      _hasMoreFruits = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMoreFruits = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      
+      // ✨ wholesaleRetailCategoryId를 1로 설정
+      String url = '$baseUrl/fruits/get/1?size=5';
+      if (cursorId != null) url += '&cursorId=$cursorId';
 
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-      };
-
-      final response = await http.get(
-        Uri.parse('$baseUrl/fruits/get/1'),
-        headers: headers,
-      );
-
+      final response = await http.get(Uri.parse(url), headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? fruitList = result['content'];
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFruits = (data['result']['content'] as List)
+            .map((json) => Fruit.fromJson(json))
+            .toList();
 
-        if (fruitList != null) {
-          setState(() {
-            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
-            _isLoading = false;
-          });
-        } else {
-          print("The 'content' field in the server response is null.");
-          setState(() {
-            _fruits = [];
-            _isLoading = false;
-          });
-        }
-      } else {
-        print('API Error - Status Code: ${response.statusCode}');
-        print('API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
         setState(() {
-          _isLoading = false;
+          if (cursorId == null) {
+            _fruits = newFruits;
+          } else {
+            _fruits.addAll(newFruits);
+          }
+          if (newFruits.length < 5) {
+            _hasMoreFruits = false;
+          }
         });
+      } else {
+        throw Exception('Failed to load fruits');
       }
     } catch (e) {
-      print('An error occurred: $e');
-      setState(() {
-        _isLoading = false;
+      print('An error occurred in _fetchFruits: $e');
+    } finally {
+      if (mounted) setState(() {
+        if (cursorId == null) _isLoading = false;
+        _isFetchingMoreFruits = false;
       });
     }
   }
 
-  Future<void> _searchFruits(String keyword) async {
+  Future<void> _searchFruits(String keyword, {int? cursorId}) async {
+    if (_isFetchingMoreFruits) return;
+
+    if (cursorId == null) {
+      _fruits.clear();
+      _currentFruitSearchKeyword = keyword;
+      _hasMoreFruits = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMoreFruits = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
-
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-      };
-
-      // API 명세서에 따라 검색 키워드를 포함한 URL 구성
-      final response = await http.get(
-        Uri.parse('$baseUrl/fruits/search/1?searchKeyword=$keyword'),
-        headers: headers,
+      if (accessToken == null) throw Exception('Token is missing.');
+      
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      
+      // ✨ wholesaleRetailCategoryId를 1로 설정
+      final uri = Uri.parse('$baseUrl/fruits/search/1').replace(
+        queryParameters: {
+          'searchKeyword': keyword,
+          'size': '5',
+          if (cursorId != null) 'cursorId': cursorId.toString(),
+        },
       );
-
+      
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? fruitList = result['content'];
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFruits = (data['result']['content'] as List)
+            .map((json) => Fruit.fromJson(json))
+            .toList();
 
-        if (fruitList != null) {
-          setState(() {
-            _fruits = fruitList.map((json) => Fruit.fromJson(json)).toList();
-            _isLoading = false;
-          });
-        } else {
-          print("The 'content' field in the server response is null.");
-          setState(() {
-            _fruits = [];
-            _isLoading = false;
-          });
-        }
-      } else {
-        print('Search API Error - Status Code: ${response.statusCode}');
-        print('Search API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
         setState(() {
-          _isLoading = false;
+          _fruits.addAll(newFruits);
+          if (newFruits.length < 5) {
+            _hasMoreFruits = false;
+          }
         });
+      } else {
+        throw Exception('Failed to search fruits');
       }
     } catch (e) {
       print('An error occurred during search: $e');
-      setState(() {
-        _isLoading = false;
+    } finally {
+      if(mounted) setState(() {
+        if(cursorId == null) _isLoading = false;
+        _isFetchingMoreFruits = false;
       });
     }
   }
 
-  Future<void> _fetchFarms() async {
+  Future<void> _fetchFarms({int? cursorId}) async {
+    if (_isFetchingMoreFarms) return;
+
+    if (cursorId == null) {
+      _currentFarmSearchKeyword = null;
+      _searchFarmController.clear();
+      _hasMoreFarms = true;
+    }
+
     setState(() {
-      _isLoading = true;
+      if (cursorId != null) _isFetchingMoreFarms = true;
     });
 
     try {
       final accessToken = await StorageService.getAccessToken();
-
-      if (accessToken == null || accessToken.isEmpty) {
-        print('Authentication token is missing. Please log in.');
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-      };
-  
-      final uri = Uri.parse('$baseUrl/seller');
-      final response = await http.get(uri, headers: headers);
+      if (accessToken == null) throw Exception('Token is missing.');
       
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/seller').replace(queryParameters: {
+        'size': '5',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+      
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? farmList = result['content'];
-
-        if (farmList != null && farmList.isNotEmpty) {
-          setState(() {
-            final newFarms = farmList.map((json) => Farm.fromJson(json)).toList();
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFarms = (data['result']['content'] as List)
+            .map((json) => Farm.fromJson(json))
+            .toList();
+        
+        setState(() {
+          if (cursorId == null) {
+            _farms = newFarms;
+          } else {
             _farms.addAll(newFarms);
-          });
-        } else {
-          setState(() {
-            _farms = [];
-            _isLoading = false;
-          });
-        }
+          }
+          if (newFarms.length < 5) {
+            _hasMoreFarms = false;
+          }
+        });
       } else {
-        print('API Error - Status Code: ${response.statusCode}');
-        print('API Error - Response Body: ${utf8.decode(response.bodyBytes)}');
+        throw Exception('Failed to load farms');
       }
     } catch (e) {
       print('An error occurred during farm fetch: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isFetchingMoreFarms = false);
     }
   }
 
-  Future<void> _searchFarms(String keyword) async {
-    final String? token = await StorageService.getAccessToken();
-    if (token == null) {
-      print('로그인 정보가 없습니다.');
-      return;
+  // ✨ 4. 농가 검색 함수에 페이지네이션 적용
+  Future<void> _searchFarms(String keyword, {int? cursorId}) async {
+    if (_isFetchingMoreFarms) return;
+
+    if (cursorId == null) {
+      _farms.clear();
+      _currentFarmSearchKeyword = keyword;
+      _hasMoreFarms = true;
     }
 
-    // API 명세에 따라 searchKeyword만 쿼리 파라미터로 추가
-    final uri = Uri.parse('$baseUrl/seller/search').replace(
-      queryParameters: {'searchKeyword': keyword},
-    );
+    setState(() {
+      if (cursorId == null) _isLoading = true;
+      else _isFetchingMoreFarms = true;
+    });
 
     try {
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
 
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/seller/search').replace(queryParameters: {
+        'searchKeyword': keyword,
+        'size': '5',
+        if (cursorId != null) 'cursorId': cursorId.toString(),
+      });
+
+      final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        final Map<String, dynamic> result = data['result'];
-        final List<dynamic>? farmList = result['content'];
-        // 응답 본문의 'result' 필드에서 농가 목록을 추출하여 상태 업데이트
-        if (farmList != null && farmList.isNotEmpty) {
-          setState(() {
-            final newFarms = farmList.map((json) => Farm.fromJson(json)).toList();
-            _farms.addAll(newFarms);
-          });
-        } else {
-          setState(() {
-            _farms = [];
-            _isLoading = false;
-          });
-        }
-        print('농가 검색 성공: $_farms');
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newFarms = (data['result']['content'] as List)
+            .map((json) => Farm.fromJson(json))
+            .toList();
+        
+        setState(() {
+          _farms.addAll(newFarms);
+          if (newFarms.length < 5) {
+            _hasMoreFarms = false;
+          }
+        });
       } else {
-        print('농가 검색 실패 (${response.statusCode}): ${response.body}');
+        throw Exception('Failed to search farms');
       }
     } catch (e) {
-      print('네트워크 오류: $e');
+      print('An error occurred during farm search: $e');
+    } finally {
+      if (mounted) {
+        if (cursorId == null) _isLoading = false;
+        _isFetchingMoreFarms = false;
+      }
     }
   }
 
   Future<void> _addToWishlist(int fruitId) async {
-  final accessToken = await StorageService.getAccessToken();
-  if (accessToken == null) return;
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
 
-  final headers = {'Authorization': 'Bearer $accessToken'};
-  final uri = Uri.parse('$baseUrl/wishList/$fruitId/add');
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    final uri = Uri.parse('$baseUrl/wishList/$fruitId/add');
 
-  try {
-    final response = await http.post(uri, headers: headers);
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      print('찜 추가 성공');
-      // On success, refetch the entire list from the server
-      await _fetchFruits();
-    } else {
-      print('찜 추가 실패: ${response.statusCode}');
-      print('Response Body: ${utf8.decode(response.bodyBytes)}');
+    try {
+      final response = await http.post(uri, headers: headers);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('찜 추가 성공');
+        // On success, refetch the entire list from the server
+        await _fetchFruits();
+      } else {
+        print('찜 추가 실패: ${response.statusCode}');
+        print('Response Body: ${utf8.decode(response.bodyBytes)}');
+      }
+    } catch (e) {
+      print('찜 추가 에러: $e');
     }
-  } catch (e) {
-    print('찜 추가 에러: $e');
   }
-}
 
-Future<void> _removeFromWishlist(int fruitId) async {
-  final accessToken = await StorageService.getAccessToken();
-  if (accessToken == null) return;
+  Future<void> _removeFromWishlist(int fruitId) async {
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
 
-  final headers = {'Authorization': 'Bearer $accessToken'};
-  final uri = Uri.parse('$baseUrl/wishList/$fruitId/delete');
+    final headers = {'Authorization': 'Bearer $accessToken'};
+    final uri = Uri.parse('$baseUrl/wishList/$fruitId/delete');
 
-  try {
-    final response = await http.delete(uri, headers: headers);
-    if (response.statusCode == 200 || response.statusCode == 204) {
-      print('찜 삭제 성공');
-      // On success, refetch the entire list from the server
-      await _fetchFruits();
-    } else {
-      print('찜 삭제 실패: ${response.statusCode}');
-      print('Response Body: ${utf8.decode(response.bodyBytes)}');
+    try {
+      final response = await http.delete(uri, headers: headers);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        print('찜 삭제 성공');
+        // On success, refetch the entire list from the server
+        await _fetchFruits();
+      } else {
+        print('찜 삭제 실패: ${response.statusCode}');
+        print('Response Body: ${utf8.decode(response.bodyBytes)}');
+      }
+    } catch (e) {
+      print('찜 삭제 에러: $e');
     }
-  } catch (e) {
-    print('찜 삭제 에러: $e');
   }
-}
+
+  @override
+  void dispose() {
+    _fruitScrollController.removeListener(_onFruitScroll);
+    _fruitScrollController.dispose();
+    _farmScrollController.removeListener(_onFarmScroll);
+    _farmScrollController.dispose();
+    _searchFruitController.dispose();
+    _searchFarmController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -511,7 +573,7 @@ Future<void> _removeFromWishlist(int fruitId) async {
                                     onTap: () {
                                       Navigator.pushNamed(
                                         context,
-                                        '/retailer/daily/fruit',
+                                        '/retailer/stock/fruit',
                                         arguments: {
                                           // category 맵에서 fruitId를 가져옵니다.
                                           'fruitId': category['fruitId'],
@@ -567,13 +629,17 @@ Future<void> _removeFromWishlist(int fruitId) async {
                                   : _fruits.isEmpty
                                       ? const Center(child: Text('해당 과일이 없습니다.'))
                                       : ListView.builder(
-                                          itemCount: _fruits.length,
+                                          controller: _fruitScrollController, // ✨ 컨트롤러 연결
+                                          itemCount: _fruits.length + (_hasMoreFruits ? 1 : 0), // ✨ 아이템 카운트 수정
                                           itemBuilder: (context, index) {
+                                            if (index == _fruits.length) {
+                                              return const Padding(
+                                                padding: EdgeInsets.all(16.0),
+                                                child: Center(child: CircularProgressIndicator()),
+                                              );
+                                            }
                                             final fruit = _fruits[index];
-                                            return _buildProductItem(
-                                              context,
-                                              fruit: fruit,
-                                            );
+                                            return _buildProductItem(context, fruit: fruit);
                                           },
                                         ),
                             ),
@@ -621,22 +687,29 @@ Future<void> _removeFromWishlist(int fruitId) async {
                             // 농가 리스트
                             Expanded(
                               child: _isLoading
-                                ? const Center(child: CircularProgressIndicator())
-                                : _farms.isEmpty
-                                  ? const Center(child: Text('해당 농가가 없습니다.'))
-                                  : ListView.builder(
-                                    itemCount: _farms.length,
-                                    itemBuilder: (context, index) {
-                                      final farm = _farms[index];
-                                      return _FarmItem(
-                                        imagePath: farm.imageUrl,
-                                        producer: farm.brandName,
-                                        subtitle: farm.description,
-                                        liked: false,
-                                      );
-                                    },
-                                ),
+                                  ? const Center(child: CircularProgressIndicator())
+                                  : _farms.isEmpty
+                                      ? const Center(child: Text('해당 농가가 없습니다.'))
+                                      : ListView.builder(
+                                          controller: _farmScrollController, // ✨ 컨트롤러 연결
+                                          itemCount: _farms.length + (_hasMoreFarms ? 1 : 0), // ✨ 아이템 카운트 수정
+                                          itemBuilder: (context, index) {
+                                            if (index == _farms.length) {
+                                              return const Padding(
+                                                padding: EdgeInsets.all(16.0),
+                                                child: Center(child: CircularProgressIndicator()),
+                                              );
+                                            }
+                                            final farm = _farms[index];
+                                            return _FarmItem(
+                                              imagePath: farm.imageUrl,
+                                              producer: farm.brandName,
+                                              subtitle: farm.description,
+                                            );
+                                          },
+                                        ),
                             ),
+
                           ],
                         ),
                       ],
@@ -648,34 +721,34 @@ Future<void> _removeFromWishlist(int fruitId) async {
           ),
 
           // 채팅 모달 버튼 (고정)
-          Positioned(
-            bottom: screenWidth * 0.02,
-            right: screenWidth * 0.02,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade300),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: GestureDetector(
-                onTap: () {
-                  showChatbotModal(context);
-                },
-                child: Image.asset(
-                  'assets/chat/chatbot_icon.png',
-                  width: 68,
-                  height: 68,
-                ),
-              ),
-            ),
-          ),
+          // Positioned(
+          //   bottom: screenWidth * 0.02,
+          //   right: screenWidth * 0.02,
+          //   child: Container(
+          //     decoration: BoxDecoration(
+          //       shape: BoxShape.circle,
+          //       color: Colors.white,
+          //       border: Border.all(color: Colors.grey.shade300),
+          //       boxShadow: [
+          //         BoxShadow(
+          //           color: Colors.black.withOpacity(0.1),
+          //           blurRadius: 4,
+          //           offset: const Offset(0, 2),
+          //         ),
+          //       ],
+          //     ),
+          //     child: GestureDetector(
+          //       onTap: () {
+          //         showChatbotModal(context);
+          //       },
+          //       child: Image.asset(
+          //         'assets/chat/chatbot_icon.png',
+          //         width: 68,
+          //         height: 68,
+          //       ),
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
