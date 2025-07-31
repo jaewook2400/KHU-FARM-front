@@ -5,14 +5,14 @@ import 'package:http/http.dart' as http;
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 
-class ConsumerEditPwScreen extends StatefulWidget {
-  const ConsumerEditPwScreen({super.key});
+class RetailerEditPwScreen extends StatefulWidget {
+  const RetailerEditPwScreen({super.key});
 
   @override
-  State<ConsumerEditPwScreen> createState() => _ConsumerEditPwScreenState();
+  State<RetailerEditPwScreen> createState() => _RetailerEditPwScreenState();
 }
 
-class _ConsumerEditPwScreenState extends State<ConsumerEditPwScreen> {
+class _RetailerEditPwScreenState extends State<RetailerEditPwScreen> {
   late TextEditingController _currentCtrl;
   late TextEditingController _newCtrl;
   late TextEditingController _confirmCtrl;
@@ -95,7 +95,7 @@ class _ConsumerEditPwScreenState extends State<ConsumerEditPwScreen> {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true) {
           // 성공 시 success 화면으로 이동
-          Navigator.pushNamed(context, '/consumer/mypage/info/edit/pw/success');
+          Navigator.pushNamed(context, '/retailer/mypage/info/edit/pw/success');
         } else {
           // isSuccess가 false일 때 (비밀번호 불일치 등)
           _showErrorDialog('현재 비밀번호가 다르거나 새 비밀번호가 서로 다릅니다.');
@@ -188,7 +188,7 @@ class _ConsumerEditPwScreenState extends State<ConsumerEditPwScreen> {
                   onTap: () {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
-                      '/consumer/main',
+                      '/retailer/main',
                       (route) => false,
                     );
                   },
@@ -208,7 +208,7 @@ class _ConsumerEditPwScreenState extends State<ConsumerEditPwScreen> {
                       onTap: () {
                         Navigator.pushNamed(
                           context,
-                          '/consumer/notification/list',
+                          '/retailer/notification/list',
                         );
                       },
                       child: Image.asset(
@@ -220,7 +220,7 @@ class _ConsumerEditPwScreenState extends State<ConsumerEditPwScreen> {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/consumer/dib/list');
+                        Navigator.pushNamed(context, '/retailer/dib/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -231,7 +231,7 @@ class _ConsumerEditPwScreenState extends State<ConsumerEditPwScreen> {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/consumer/cart/list');
+                        Navigator.pushNamed(context, '/retailer/cart/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',

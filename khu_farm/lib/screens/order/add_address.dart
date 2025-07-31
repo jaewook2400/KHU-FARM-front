@@ -6,17 +6,17 @@ import 'package:khu_farm/screens/address_search.dart';
 import 'package:http/http.dart' as http;
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
-import 'package:khu_farm/model/address.dart';
+import 'package:khu_farm/model/user_info.dart';
 
-class FarmerEditAddressScreen extends StatefulWidget {
-  const FarmerEditAddressScreen({super.key});
+class OrderAddAddressScreen extends StatefulWidget {
+  const OrderAddAddressScreen({super.key});
 
   @override
-  State<FarmerEditAddressScreen> createState() =>
-      _FarmerEditAddressScreenStatus();
+  State<OrderAddAddressScreen> createState() =>
+      _OrderAddAddressScreenStatus();
 }
 
-class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
+class _OrderAddAddressScreenStatus extends State<OrderAddAddressScreen> {
   final TextEditingController _postalCtrl = TextEditingController();
   final TextEditingController _addressCtrl = TextEditingController();
   final TextEditingController _detailCtrl = TextEditingController();
@@ -26,12 +26,12 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
   bool _isDefault = false;
   bool _canSave = false;
 
-  Address? _initialAddress;
-  bool _isInitialized = false;
+  UserInfo? _userInfo;
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     // Add listeners to all controllers to check if the form is valid
     _postalCtrl.addListener(_validateForm);
     _addressCtrl.addListener(_validateForm);
@@ -41,25 +41,51 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
     _phoneCtrl.addListener(_validateForm);
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (!_isInitialized) {
-      // arguments를 Address 타입으로 받아옴
-      final address = ModalRoute.of(context)!.settings.arguments as Address?;
-      if (address != null) {
-        _initialAddress = address;
-        // 컨트롤러에 기존 주소 정보 채우기
-        _postalCtrl.text = address.portCode;
-        _addressCtrl.text = address.address;
-        _detailCtrl.text = address.detailAddress;
-        _labelCtrl.text = address.addressName;
-        _recipientCtrl.text = address.recipient;
-        _phoneCtrl.text = address.phoneNumber;
-        _isDefault = address.isDefault;
-      }
-      _isInitialized = true;
-      _validateForm(); // 초기 데이터로 버튼 활성화 여부 체크
+  String _getMainRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/main';
+      case 'ROLE_BUSINESS':
+        return '/retailer/main';
+      case 'ROLE_FARMER':
+        return '/farmer/main';
+      default:
+        return '/';
+    }
+  }
+
+  String _getDibsRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/dib/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/dib/list';
+      case 'ROLE_FARMER':
+        return '/farmer/dib/list';
+      default:
+        return '/';
+    }
+  }
+
+  String _getCartRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/cart/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/cart/list';
+      case 'ROLE_FARMER':
+        return '/farmer/cart/list';
+      default:
+        return '/';
+    }
+  }
+
+  Future<void> _loadUserInfo() async {
+    final userInfo = await StorageService().getUserInfo();
+    if (mounted) {
+      setState(() {
+        _userInfo = userInfo;
+      });
     }
   }
 
@@ -105,87 +131,46 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
     _validateForm();
   }
 
-  Future<void> _updateAddress() async {
-    // 수정 대상 주소가 없으면 함수 종료
-    if (_initialAddress == null) return;
-    
-    // 로딩 모달창 표시
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Dialog(
-        child: Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 20),
-              Text("배송지 변경 중..."),
-            ],
-          ),
-        ),
-      ),
-    );
+  Future<void> _saveAddress() async {
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) return;
+
+    final headers = {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json',
+    };
+    final uri = Uri.parse('$baseUrl/address/create');
+    final body = jsonEncode({
+      "addressName": _labelCtrl.text,
+      "portCode": _postalCtrl.text,
+      "address": _addressCtrl.text,
+      "detailAddress": _detailCtrl.text,
+      "recipient": _recipientCtrl.text,
+      "phoneNumber": _phoneCtrl.text,
+      "isDefault": _isDefault,
+    });
 
     try {
-      final accessToken = await StorageService.getAccessToken();
-      if (accessToken == null) throw Exception('Token is missing');
-
-      final headers = {
-        'Authorization': 'Bearer $accessToken',
-        'Content-Type': 'application/json',
-      };
-      final uri = Uri.parse('$baseUrl/address/update/${_initialAddress!.addressId}'); // addressId를 경로에 포함
-      final body = jsonEncode({
-        "addressName": _labelCtrl.text,
-        "portCode": _postalCtrl.text,
-        "address": _addressCtrl.text,
-        "detailAddress": _detailCtrl.text,
-        "recipient": _recipientCtrl.text,
-        "phoneNumber": _phoneCtrl.text,
-        "isDefault": _isDefault,
-      });
-
-      final response = await http.patch(uri, headers: headers, body: body); // POST -> PATCH로 변경
-
-      if (mounted) Navigator.of(context).pop(); // 로딩 모달창 닫기
-
-      if (response.statusCode == 200) {
-        // 성공 시 success 화면으로 이동
-        final result = await Navigator.pushNamed(
-          context,
-          '/farmer/mypage/info/edit/address/success',
-        );
-        if (result == true && mounted) {
-          Navigator.pop(context, true);
+      final response = await http.post(uri, headers: headers, body: body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (_) => const _SuccessDialog(),
+          );
         }
       } else {
-        // 실패 시 에러 모달창 표시
-        _showErrorDialog('주소 변경에 실패했습니다. 입력 정보를 확인해주세요.');
+        print('Failed to save address: ${response.statusCode}');
+        print('Response: ${response.body}');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('저장에 실패했습니다. 다시 시도해주세요.')),
+          );
+        }
       }
     } catch (e) {
-      if (mounted) Navigator.of(context).pop();
-      print('Error updating address: $e');
-      _showErrorDialog('네트워크 오류가 발생했습니다.');
+      print('Error saving address: $e');
     }
-  }
-
-  // ✨ 에러 메시지를 보여주는 모달 함수
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('오류'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -245,13 +230,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/farmer/main',
-                      (route) => false,
-                    );
-                  },
+                  onTap: () => Navigator.pushNamedAndRemoveUntil(context, _getMainRoute(), (route) => false),
                   child: const Text(
                     'KHU:FARM',
                     textAlign: TextAlign.center,
@@ -268,7 +247,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
                     //   onTap: () {
                     //     Navigator.pushNamed(
                     //       context,
-                    //       '/farmer/notification/list',
+                    //       '/consumer/notification/list',
                     //     );
                     //   },
                     //   child: Image.asset(
@@ -279,25 +258,13 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
                     // ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
+                      onTap: () => Navigator.pushNamed(context, _getDibsRoute()),
+                      child: Image.asset('assets/top_icons/dibs.png', width: 24, height: 24),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
+                      onTap: () => Navigator.pushNamed(context, _getCartRoute()),
+                      child: Image.asset('assets/top_icons/cart.png', width: 24, height: 24),
                     ),
                   ],
                 ),
@@ -331,8 +298,8 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
                     const Text(
                       '배송지 변경',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     const Spacer(),
@@ -390,7 +357,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
               height: 48,
               child: ElevatedButton(
                 // --- This is updated ---
-                onPressed: _canSave ? _updateAddress : null,
+                onPressed: _canSave ? _saveAddress : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6FCF4B),
                   disabledBackgroundColor: Colors.grey.shade300,

@@ -8,15 +8,15 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/model/address.dart';
 
-class FarmerEditAddressScreen extends StatefulWidget {
-  const FarmerEditAddressScreen({super.key});
+class RetailerEditAddressScreen extends StatefulWidget {
+  const RetailerEditAddressScreen({super.key});
 
   @override
-  State<FarmerEditAddressScreen> createState() =>
-      _FarmerEditAddressScreenStatus();
+  State<RetailerEditAddressScreen> createState() =>
+      _RetailerEditAddressScreenStatus();
 }
 
-class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
+class _RetailerEditAddressScreenStatus extends State<RetailerEditAddressScreen> {
   final TextEditingController _postalCtrl = TextEditingController();
   final TextEditingController _addressCtrl = TextEditingController();
   final TextEditingController _detailCtrl = TextEditingController();
@@ -155,7 +155,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
         // 성공 시 success 화면으로 이동
         final result = await Navigator.pushNamed(
           context,
-          '/farmer/mypage/info/edit/address/success',
+          '/retailer/mypage/info/edit/address/success',
         );
         if (result == true && mounted) {
           Navigator.pop(context, true);
@@ -248,7 +248,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
                   onTap: () {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
-                      '/farmer/main',
+                      '/retailer/main',
                       (route) => false,
                     );
                   },
@@ -268,7 +268,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
                     //   onTap: () {
                     //     Navigator.pushNamed(
                     //       context,
-                    //       '/farmer/notification/list',
+                    //       '/retailer/notification/list',
                     //     );
                     //   },
                     //   child: Image.asset(
@@ -280,7 +280,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/farmer/dib/list');
+                        Navigator.pushNamed(context, '/retailer/dib/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/dibs.png',
@@ -291,7 +291,7 @@ class _FarmerEditAddressScreenStatus extends State<FarmerEditAddressScreen> {
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
-                        Navigator.pushNamed(context, '/farmer/cart/list');
+                        Navigator.pushNamed(context, '/retailer/cart/list');
                       },
                       child: Image.asset(
                         'assets/top_icons/cart.png',

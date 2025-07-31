@@ -41,15 +41,60 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
     super.dispose();
   }
 
+  Future<void> _navigateToEditAddress() async {
+    if (_shippingAddress == null) return;
+
+    // 수정 화면으로 이동하고, 수정된 Address 객체를 반환받을 때까지 기다립니다.
+    final updatedAddress = await Navigator.pushNamed(
+      context,
+      '/order/edit/address', // TODO: 실제 라우트 경로 확인 필요
+      arguments: _shippingAddress,
+    );
+
+    // 수정된 Address 객체가 반환되면, 화면의 배송지 정보를 업데이트합니다.
+    if (updatedAddress != null && updatedAddress is Address) {
+      setState(() {
+        _shippingAddress = updatedAddress;
+      });
+    }
+  }
+  
+  Future<void> _navigateAndSelectAddress() async {
+    // 주소 목록/수정 화면으로 이동하고, 결과를 기다립니다.
+    final result = await Navigator.pushNamed(
+      context,
+      '/order/address', // ✨ 요청하신 경로로 변경
+      arguments: _shippingAddress,
+    );
+
+    // 주소 목록 화면에서 새로운 주소를 선택했거나, 수정 화면에서 주소를 수정한 경우
+    // Address 객체가 반환됩니다.
+    if (result != null && result is Address) {
+      setState(() {
+        _shippingAddress = result;
+      });
+    }
+  }
+
   Future<void> _loadInitialData() async {
     final addresses = await StorageService().getAddresses();
     final userInfo = await StorageService().getUserInfo();
+    Address? defaultAddress; // 로컬 변수로 기본 주소 저장
+
+    if (addresses != null && addresses.isNotEmpty) {
+      try {
+        // isDefault가 true인 첫 번째 주소를 찾습니다.
+        defaultAddress = addresses.firstWhere((addr) => addr.isDefault);
+      } catch (e) {
+        // 기본 주소가 없으면 defaultAddress는 null로 유지됩니다.
+        // 이 경우, 화면에는 "배송지를 선택해주세요"가 표시됩니다.
+      }
+    }
+
     if (mounted) {
       setState(() {
         _userInfo = userInfo;
-        if (addresses != null && addresses.isNotEmpty) {
-          _shippingAddress = addresses.firstWhere((addr) => addr.isDefault, orElse: () => addresses.first);
-        }
+        _shippingAddress = defaultAddress; // 찾은 주소 또는 null로 상태 업데이트
       });
     }
   }
@@ -249,8 +294,7 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
   }
 
   String _getMainRoute() {
-    final userType = _userInfo?.userType;
-    switch (userType) {
+    switch (_userInfo?.userType) {
       case 'ROLE_INDIVIDUAL':
         return '/consumer/main';
       case 'ROLE_BUSINESS':
@@ -258,7 +302,32 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
       case 'ROLE_FARMER':
         return '/farmer/main';
       default:
-        // 혹시 userType이 없거나 일치하지 않을 경우 기본 경로
+        return '/';
+    }
+  }
+
+  String _getDibsRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/dib/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/dib/list';
+      case 'ROLE_FARMER':
+        return '/farmer/dib/list';
+      default:
+        return '/';
+    }
+  }
+
+  String _getCartRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/cart/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/cart/list';
+      case 'ROLE_FARMER':
+        return '/farmer/cart/list';
+      default:
         return '/';
     }
   }
@@ -336,14 +405,7 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
-                  onTap: () {
-                    final route = _getMainRoute();
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      route,
-                      (route) => false,
-                    );
-                  },
+                  onTap: () => Navigator.pushNamedAndRemoveUntil(context, _getMainRoute(), (route) => false),
                   child: const Text(
                     'KHU:FARM',
                     textAlign: TextAlign.center,
@@ -356,40 +418,28 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
                 ),
                 Row(
                   children: [
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/farmer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
+                    const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
+                      onTap: () => Navigator.pushNamed(context, _getDibsRoute()),
+                      child: Image.asset('assets/top_icons/dibs.png', width: 24, height: 24),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
+                      onTap: () => Navigator.pushNamed(context, _getCartRoute()),
+                      child: Image.asset('assets/top_icons/cart.png', width: 24, height: 24),
                     ),
                   ],
                 ),
@@ -435,9 +485,16 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionHeader('배송지', actionText: '배송지 변경 >'),
+                        _buildSectionHeader(
+                          '배송지',
+                          actionText: '배송지 변경 >',
+                          onActionTap: _navigateAndSelectAddress,
+                        ),
                         // _shippingAddress 상태 변수를 위젯에 전달
-                        _buildShippingInfoCard(address: _shippingAddress),
+                        _buildShippingInfoCard(
+                          address: _shippingAddress,
+                          onEdit: _navigateToEditAddress,
+                        ),
                         const SizedBox(height: 18),
                         const Divider(),
                         const SizedBox(height: 6),
@@ -546,7 +603,7 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, {String? actionText}) {
+  Widget _buildSectionHeader(String title, {String? actionText, VoidCallback? onActionTap}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
@@ -554,21 +611,25 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
         children: [
           Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           if (actionText != null)
-            Text(actionText, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+            GestureDetector(
+              onTap: onActionTap,
+              child: Text(actionText, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildShippingInfoCard({Address? address}) {
+  Widget _buildShippingInfoCard({Address? address, required VoidCallback onEdit}) {
     if (address == null) {
       return Container(
+        width: double.infinity, // 카드가 부모의 너비를 채우도록 설정
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: const Center(child: Text('배송지 정보를 불러오는 중...')),
+        child: const Center(child: Text('배송지를 선택해주세요.')), // 요청된 문구로 변경
       );
     }
 
@@ -590,12 +651,11 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton(
-              onPressed: () { /* TODO: 수정 기능 */ },
+              onPressed: onEdit, // ✨ 콜백 함수 연결
               child: const Text('수정'),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                side: BorderSide(color: Colors.grey.shade400)
-              ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  side: BorderSide(color: Colors.grey.shade400)),
             ),
           )
         ],

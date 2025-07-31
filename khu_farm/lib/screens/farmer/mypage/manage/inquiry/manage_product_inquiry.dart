@@ -8,47 +8,54 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/model/inquiry.dart'; 
 import 'package:khu_farm/model/fruit.dart';
 
-class FarmerManageInquiryScreen extends StatefulWidget {
-  const FarmerManageInquiryScreen({super.key});
+class FarmerManageProductInquiryScreen extends StatefulWidget {
+  const FarmerManageProductInquiryScreen({super.key});
 
   @override
-  State<FarmerManageInquiryScreen> createState() =>
-      _FarmerManageInquiryScreenState();
+  State<FarmerManageProductInquiryScreen> createState() =>
+      _FarmerManageProductInquiryScreenState();
 }
 
-class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
+class _FarmerManageProductInquiryScreenState extends State<FarmerManageProductInquiryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+  late Fruit _fruit;
+  bool _isInitialized = false;
   bool _isLoading = true;
 
   List<Inquiry> _unansweredInquiries = [];
-  List<Fruit> _unansweredInquiriesFruits = [];
   final ScrollController _unansweredScrollController = ScrollController();
   bool _isFetchingMoreUnanswered = false;
   bool _hasMoreUnanswered = true;
 
-  List<Fruit> _allProducts = [];
-  final ScrollController _allProductsScrollController = ScrollController();
-  bool _isFetchingMoreProducts = false;
-  bool _hasMoreProducts = true;
+  List<Inquiry> _answeredInquiries = [];
+  final ScrollController _answeredScrollController = ScrollController();
+  bool _isFetchingMoreAnswered = false;
+  bool _hasMoreAnswered = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _unansweredScrollController.addListener(_onUnansweredScroll);
-    _allProductsScrollController.addListener(_onAllProductsScroll); 
-    _loadInitialData();
+    _answeredScrollController.addListener(_onAnsweredScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _fruit = ModalRoute.of(context)!.settings.arguments as Fruit;
+      _loadInitialData();
+      _isInitialized = true;
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _unansweredScrollController.removeListener(_onUnansweredScroll);
     _unansweredScrollController.dispose();
-    _allProductsScrollController.removeListener(_onAllProductsScroll); // ✨ 리스너 해제
-    _allProductsScrollController.dispose();
+    _answeredScrollController.dispose();
     super.dispose();
   }
 
@@ -62,12 +69,12 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
     }
   }
 
-  void _onAllProductsScroll() {
-    if (_allProductsScrollController.position.pixels >= _allProductsScrollController.position.maxScrollExtent - 50 &&
-        _hasMoreProducts &&
-        !_isFetchingMoreProducts) {
-      if (_allProducts.isNotEmpty) {
-        _fetchAllProducts(cursorId: _allProducts.last.id);
+  void _onAnsweredScroll() {
+    if (_answeredScrollController.position.pixels >= _answeredScrollController.position.maxScrollExtent - 50 &&
+        _hasMoreAnswered &&
+        !_isFetchingMoreAnswered) {
+      if (_answeredInquiries.isNotEmpty) {
+        _fetchAnsweredInquiries(cursorId: _answeredInquiries.last.inquiryId);
       }
     }
   }
@@ -76,15 +83,15 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
     setState(() => _isLoading = true);
     await Future.wait([
       _fetchUnansweredInquiries(),
-      _fetchAllProducts(), // ✨ 전체 문의 -> 전체 상품 조회로 변경
+      _fetchAnsweredInquiries(),
     ]);
     if (mounted) setState(() => _isLoading = false);
   }
-  
-  // ✨ 두 종류의 문의 데이터를 모두 가져오는 통합 함수
+
   Future<void> _fetchUnansweredInquiries({int? cursorId}) async {
     if (_isFetchingMoreUnanswered) return;
-    
+    if (cursorId == null) _hasMoreUnanswered = true;
+
     setState(() {
       if (cursorId != null) _isFetchingMoreUnanswered = true;
     });
@@ -94,35 +101,19 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
       if (token == null) throw Exception('Token is missing');
       
       final headers = {'Authorization': 'Bearer $token'};
-      final uri = Uri.parse('$baseUrl/inquiry/seller/notAnswered').replace(
-        queryParameters: {
-          'size': '10',
-          if (cursorId != null) 'cursorId': cursorId.toString(),
-        },
+      final uri = Uri.parse('$baseUrl/inquiry/seller/${_fruit.id}/notAnswered').replace(
+        queryParameters: {'size': '5', if (cursorId != null) 'cursorId': cursorId.toString()},
       );
 
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result']?['content'] != null) {
-          final items = (data['result']['content'] as List)
-              .map((item) => Inquiry.fromJson(item))
-              .toList();
-          final fruitItems = (data['result']['content'] as List)
-              .map((item) => Fruit.fromJson(item['fruitResponse']))
-              .toList();
-          
+          final items = (data['result']['content'] as List).map((i) => Inquiry.fromJson(i)).toList();
           setState(() {
-            if (cursorId == null) {
-              _unansweredInquiries = items;
-              _unansweredInquiriesFruits = fruitItems;
-            } else {
-              _unansweredInquiries.addAll(items);
-              _unansweredInquiriesFruits.addAll(fruitItems);
-            }
-            if (items.length < 10) {
-              _hasMoreUnanswered = false;
-            }
+            if (cursorId == null) _unansweredInquiries = items;
+            else _unansweredInquiries.addAll(items);
+            if (items.length < 5) _hasMoreUnanswered = false;
           });
         }
       } else {
@@ -135,51 +126,41 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
     }
   }
 
-  Future<void> _fetchAllProducts({int? cursorId}) async {
-    if (_isFetchingMoreProducts) return;
-    
+  Future<void> _fetchAnsweredInquiries({int? cursorId}) async {
+    if (_isFetchingMoreAnswered) return;
+    if (cursorId == null) _hasMoreAnswered = true;
+
     setState(() {
-      if (cursorId != null) _isFetchingMoreProducts = true;
+      if (cursorId != null) _isFetchingMoreAnswered = true;
     });
 
     try {
       final token = await StorageService.getAccessToken();
       if (token == null) throw Exception('Token is missing');
-      
-      final headers = {'Authorization': 'Bearer $token'};
-      final uri = Uri.parse('$baseUrl/fruits/seller').replace(
-        queryParameters: {
-          'size': '5',
-          if (cursorId != null) 'cursorId': cursorId.toString(),
-        },
-      );
 
+      final headers = {'Authorization': 'Bearer $token'};
+      final uri = Uri.parse('$baseUrl/inquiry/seller/${_fruit.id}/answered').replace(
+        queryParameters: {'size': '5', if (cursorId != null) 'cursorId': cursorId.toString()},
+      );
+      
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result']?['content'] != null) {
-          final items = (data['result']['content'] as List)
-              .map((item) => Fruit.fromJson(item))
-              .toList();
-          
+          final items = (data['result']['content'] as List).map((i) => Inquiry.fromJson(i)).toList();
           setState(() {
-            if (cursorId == null) {
-              _allProducts = items;
-            } else {
-              _allProducts.addAll(items);
-            }
-            if (items.length < 5) {
-              _hasMoreProducts = false;
-            }
+            if (cursorId == null) _answeredInquiries = items;
+            else _answeredInquiries.addAll(items);
+            if (items.length < 5) _hasMoreAnswered = false;
           });
         }
       } else {
-        throw Exception('Failed to fetch all products');
+        throw Exception('Failed to fetch answered inquiries');
       }
     } catch (e) {
-      print('Error fetching all products: $e');
+      print('Error fetching answered inquiries: $e');
     } finally {
-      if (mounted) setState(() => _isFetchingMoreProducts = false);
+      if (mounted) setState(() => _isFetchingMoreAnswered = false);
     }
   }
 
@@ -193,7 +174,7 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
       ),
     );
 
-    print(_unansweredInquiriesFruits);
+    final fruit = ModalRoute.of(context)!.settings.arguments as Fruit;
 
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -338,7 +319,12 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
                     ),
                   ],
                 ),
-
+                const SizedBox(height: 16),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 0),
+                  child: _ProductInfoCard(fruit: fruit),
+                ),
+                const SizedBox(height: 16),
                 TabBar(
                   controller: _tabController,
                   labelColor: Colors.black,
@@ -346,17 +332,15 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
                   indicatorColor: Colors.black,
                   tabs: const [
                     Tab(text: '답변 전'),
-                    Tab(text: '전체 보기'),
+                    Tab(text: '답변 완료'),
                   ],
                 ),
-                const SizedBox(height: 16),
-                
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildUnansweredList(),
-                      _buildAllProductsList(),
+                      _buildUnansweredInquiriesTab(screenWidth),
+                      _buildAnsweredInquiriesTab(screenWidth),
                     ],
                   ),
                 ),
@@ -368,87 +352,172 @@ class _FarmerManageInquiryScreenState extends State<FarmerManageInquiryScreen>
     );
   }
 
-  Widget _buildUnansweredList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  /// '답변 전' 탭 위젯
+  Widget _buildUnansweredInquiriesTab(double screenWidth) {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    
+    // ✨ 1. 데이터가 비어있는지 먼저 확인합니다.
     if (_unansweredInquiries.isEmpty) {
       return const Center(child: Text('답변 전 문의가 없습니다.'));
     }
+
+    // 데이터가 있을 경우에만 ListView를 생성합니다.
     return ListView.builder(
-      controller: _unansweredScrollController, // 컨트롤러 연결
-      padding: EdgeInsets.zero,
-      itemCount: _unansweredInquiries.length + (_hasMoreUnanswered ? 1 : 0),
+      controller: _unansweredScrollController,
+      padding: EdgeInsets.symmetric(horizontal: 0, vertical: 24),
+      itemCount: 1 + _unansweredInquiries.length + (_hasMoreUnanswered ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index == _unansweredInquiries.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(child: CircularProgressIndicator()),
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _SectionHeader(title: '답변 전', color: Colors.red.shade400),
+              ],
+            ),
           );
         }
-        final inquiry = _unansweredInquiries[index];
-        final fruit = _unansweredInquiriesFruits[index]; // Inquiry 객체 안의 fruit 사용
-        return _InquiryCard(
-          inquiry: inquiry,
-          fruit: fruit,
-          onRefresh: _loadInitialData,);
+        if (index == _unansweredInquiries.length + 1) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final inquiry = _unansweredInquiries[index - 1];
+        return _InquiryItemCard(
+          inquiry: inquiry, 
+          fruit: _fruit, 
+          onRefresh: _loadInitialData, 
+        );
       },
     );
   }
 
-  /// "전체 보기" 탭을 위한 위젯
-  Widget _buildAllProductsList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+  /// '답변 완료' 탭 위젯
+  Widget _buildAnsweredInquiriesTab(double screenWidth) {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+
+    // ✨ 2. 데이터가 비어있는지 먼저 확인합니다.
+    if (_answeredInquiries.isEmpty) {
+      return const Center(child: Text('답변 완료된 문의가 없습니다.'));
     }
-    if (_allProducts.isEmpty) {
-      return const Center(child: Text('등록된 상품이 없습니다.'));
-    }
+
+    // 데이터가 있을 경우에만 ListView를 생성합니다.
     return ListView.builder(
-      controller: _allProductsScrollController,
-      padding: EdgeInsets.zero,
-      itemCount: _allProducts.length + (_hasMoreProducts ? 1 : 0),
+      controller: _answeredScrollController,
+      padding: EdgeInsets.symmetric(horizontal: 0, vertical: 24),
+      itemCount: 1 + _answeredInquiries.length + (_hasMoreAnswered ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index == _allProducts.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(child: CircularProgressIndicator()),
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _SectionHeader(title: '답변 완료', color: Colors.green.shade400),
+              ],
+            ),
           );
         }
-        final product = _allProducts[index];
-        return _ProductInquiryCard(
-          product: product,
-          onTap: () {
-            Navigator.pushNamed(context, '/farmer/mypage/manage/inquiry/product', arguments: product);
-          },
+        if (index == _answeredInquiries.length + 1) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final inquiry = _answeredInquiries[index - 1];
+        return _InquiryItemCard(
+          inquiry: inquiry, 
+          fruit: _fruit, 
+          onRefresh: _loadInitialData,
         );
       },
     );
   }
 }
 
-class _InquiryCard extends StatelessWidget {
-  final Inquiry inquiry;
-  final Fruit fruit; // Inquiry 객체 안의 fruit 사용
-  final VoidCallback onRefresh; // 새로고침 콜백 함수
-
-  const _InquiryCard({required this.inquiry, required this.fruit, required this.onRefresh});
+class _ProductInfoCard extends StatelessWidget {
+  final Fruit fruit;
+  const _ProductInfoCard({required this.fruit});
 
   @override
   Widget build(BuildContext context) {
+    final formatter = NumberFormat('#,###');
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.shade200,
+              blurRadius: 4,
+              offset: const Offset(0, 2))
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(fruit.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(fruit.brandName ?? '농가 불명', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 12),
+                Text(
+                  '${formatter.format(fruit.price)}원 / ${fruit.weight}kg',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(fruit.squareImageUrl, width: 80, height: 80, fit: BoxFit.cover),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// '답변 전', '답변 완료' 섹션 헤더
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final Color color;
+  const _SectionHeader({required this.title, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+/// 문의/답변 카드
+class _InquiryItemCard extends StatelessWidget {
+  final Inquiry inquiry;
+  final Fruit fruit; // ✨ fruit 객체를 받도록 추가
+  final VoidCallback onRefresh;
+  const _InquiryItemCard({required this.inquiry, required this.fruit, required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    // ✨ GestureDetector로 감싸서 탭 이벤트 처리
     return GestureDetector(
-      onTap: () async {
+      onTap: () async { // ✨ 3. async 추가
         // 상세 화면으로 이동하고, 결과를 기다립니다.
         final result = await Navigator.pushNamed(
           context,
           '/farmer/mypage/manage/inquiry/detail',
-          arguments: {
-            'fruit': fruit, // Inquiry 객체 안의 fruit 사용
-            'inquiry': inquiry,
-          },
+          arguments: { 'fruit': fruit, 'inquiry': inquiry },
         );
 
-        // 상세 화면에서 true를 반환받으면, 새로고침 콜백을 실행합니다.
+        // ✨ 4. 상세 화면에서 true를 반환받으면, 새로고침 콜백을 실행합니다.
         if (result == true) {
           onRefresh();
         }
@@ -486,79 +555,6 @@ class _InquiryCard extends StatelessWidget {
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// A card for displaying a product in the "View All" list
-class _ProductInquiryCard extends StatelessWidget {
-  final Fruit product;
-  final VoidCallback onTap;
-  const _ProductInquiryCard({required this.product, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final formatter = NumberFormat('#,###');
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade200,
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            )
-          ],
-        ),
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.network(
-                    product.widthImageUrl,
-                    height: 150,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) => Container(height: 150, color: Colors.grey[200]),
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  left: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      product.brandName ?? '브랜드 없음',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(product.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text('${formatter.format(product.price)}원', style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
             ),
           ],
         ),

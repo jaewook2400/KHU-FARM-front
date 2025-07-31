@@ -59,7 +59,7 @@ class FruitWithCount extends Fruit {
 
 // The main data model for the cart order screen
 class CartOrderData {
-  final Address address;
+  final Address? address;
   final List<FruitWithCount> products;
 
   CartOrderData({required this.address, required this.products});
@@ -70,8 +70,13 @@ class CartOrderData {
         productList.map((i) => FruitWithCount.fromJson(i)).toList();
 
     return CartOrderData(
-      address: Address.fromJson(json['addressResponse']),
-      products: products,
+      address: json['addressResponse'] != null
+          ? Address.fromJson(json['addressResponse'])
+          : null,
+      products: (json['fruitResponseWithCount'] as List? ?? [])
+          .map((item) => FruitWithCount.fromJson(item))
+          .toList(),
+
     );
   }
 }

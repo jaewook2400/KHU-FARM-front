@@ -104,4 +104,9 @@ class Fruit {
       isWishList: isWishList ?? this.isWishList,
     );
   }
+
+  @override
+  String toString() {
+    return 'Fruit(id: $id, title: "$title", price: $price, stock: $stock, isWishList: $isWishList, wishListId: $wishListId)';
+  }
 }

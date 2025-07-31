@@ -3,31 +3,43 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:khu_farm/model/address.dart';
+import 'package:khu_farm/model/user_info.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 
 
-class ConsumerAddressListScreen extends StatefulWidget {
-  const ConsumerAddressListScreen({super.key});
+class OrderAddressListScreen extends StatefulWidget {
+  const OrderAddressListScreen({super.key});
 
   @override
-  State<ConsumerAddressListScreen> createState() =>
-      _ConsumerAddressListScreenState();
+  State<OrderAddressListScreen> createState() =>
+      _OrderAddressListScreenState();
 }
 
-class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
+class _OrderAddressListScreenState extends State<OrderAddressListScreen> {
   List<Address> _addresses = [];
   bool _isLoading = true;
 
   final ScrollController _scrollController = ScrollController();
   bool _isFetchingMore = false;
   bool _hasMore = true;
+  UserInfo? _userInfo;
 
   @override
   void initState() {
     super.initState();
+    _loadUserInfo();
     _fetchAddresses(); // ✨ Storage 대신 API에서 바로 불러오도록 변경
     _scrollController.addListener(_onScroll);
+  }
+
+  Future<void> _loadUserInfo() async {
+    final userInfo = await StorageService().getUserInfo();
+    if (mounted) {
+      setState(() {
+        _userInfo = userInfo;
+      });
+    }
   }
 
   @override
@@ -122,13 +134,19 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
     // 수정 화면으로 이동하고, 돌아올 때까지 기다립니다.
     final result = await Navigator.pushNamed(
       context,
-      '/consumer/mypage/info/edit/address/edit',
+      '/order/edit/address',
       arguments: address,
     );
 
     // 수정 화면에서 어떤 변경이 있었을 수 있으므로, 돌아오면 목록을 새로고침합니다.
-    if (result == true && mounted) {
-      _fetchAddresses();
+    if (result != null && result is Address && mounted) {
+      // ✨ 로컬 리스트에서 해당 주소를 찾아 교체하고 화면을 갱신합니다.
+      setState(() {
+        final index = _addresses.indexWhere((a) => a.addressId == result.addressId);
+        if (index != -1) {
+          _addresses[index] = result;
+        }
+      });
     }
   }
 
@@ -251,6 +269,45 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
     );
   }
 
+  String _getMainRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/main';
+      case 'ROLE_BUSINESS':
+        return '/retailer/main';
+      case 'ROLE_FARMER':
+        return '/farmer/main';
+      default:
+        return '/';
+    }
+  }
+
+  String _getDibsRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/dib/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/dib/list';
+      case 'ROLE_FARMER':
+        return '/farmer/dib/list';
+      default:
+        return '/';
+    }
+  }
+
+  String _getCartRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/cart/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/cart/list';
+      case 'ROLE_FARMER':
+        return '/farmer/cart/list';
+      default:
+        return '/';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // 상태바, 화면 크기 변수 고정
@@ -310,13 +367,7 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/consumer/main',
-                      (route) => false,
-                    );
-                  },
+                  onTap: () => Navigator.pushNamedAndRemoveUntil(context, _getMainRoute(), (route) => false),
                   child: const Text(
                     'KHU:FARM',
                     textAlign: TextAlign.center,
@@ -344,25 +395,13 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
                     // ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/consumer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
+                      onTap: () => Navigator.pushNamed(context, _getDibsRoute()),
+                      child: Image.asset('assets/top_icons/dibs.png', width: 24, height: 24),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/consumer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
+                      onTap: () => Navigator.pushNamed(context, _getCartRoute()),
+                      child: Image.asset('assets/top_icons/cart.png', width: 24, height: 24),
                     ),
                   ],
                 ),
@@ -394,7 +433,7 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      '배송지 관리',
+                      '배송지 변경',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -409,23 +448,21 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
                       ? const Center(child: CircularProgressIndicator())
                       : _addresses.isEmpty
                           ? const Center(child: Text('등록된 배송지가 없습니다.'))
-                          // ✨ 4. ListView.separated 수정
                           : ListView.separated(
-                              controller: _scrollController, // 컨트롤러 연결
+                              controller: _scrollController,
                               padding: EdgeInsets.zero,
                               itemCount: _addresses.length + (_hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
                                 if (index == _addresses.length) {
-                                  return const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16.0),
-                                    child: Center(child: CircularProgressIndicator()),
-                                  );
+                                  // ... (로딩 인디케이터)
                                 }
                                 final address = _addresses[index];
                                 return _AddressCard(
                                   address: address,
                                   onEdit: () => _navigateToEditScreen(address),
                                   onDelete: () => _deleteAddress(address),
+                                  // ✨ 1. onSelect 콜백에 Navigator.pop 전달
+                                  onSelect: () => Navigator.pop(context, address),
                                 );
                               },
                               separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -446,7 +483,7 @@ class _ConsumerAddressListScreenState extends State<ConsumerAddressListScreen> {
                 onPressed: () async {
                   await Navigator.pushNamed(
                     context,
-                    '/consumer/mypage/info/edit/address/add',
+                    '/order/address/add',
                   );
                   _fetchAddresses();
                 },
@@ -473,15 +510,18 @@ class _AddressCard extends StatelessWidget {
   final Address address;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onSelect; // ✨ onSelect 콜백 추가
 
   const _AddressCard({
     required this.address,
     required this.onEdit,
     required this.onDelete,
+    required this.onSelect, // ✨ 생성자에 onSelect 추가
   });
 
   @override
   Widget build(BuildContext context) {
+    // ✨ 카드 전체를 감싸던 GestureDetector는 제거합니다.
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -505,10 +545,11 @@ class _AddressCard extends StatelessWidget {
             style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
           ),
           const SizedBox(height: 16),
+          // ✨ 3. 버튼들을 포함하는 Row 레이아웃 수정
           Row(
             children: [
               OutlinedButton(
-                onPressed: onEdit, // Connect the callback
+                onPressed: onEdit,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0x3333334B)),
                   shape: RoundedRectangleBorder(
@@ -519,7 +560,7 @@ class _AddressCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               OutlinedButton(
-                onPressed: onDelete, // Connect the callback
+                onPressed: onDelete,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0x3333334B)),
                   shape: RoundedRectangleBorder(
@@ -527,6 +568,18 @@ class _AddressCard extends StatelessWidget {
                   ),
                 ),
                 child: const Text('삭제', style: TextStyle(color: Colors.black)),
+              ),
+              const Spacer(), // ✨ 왼쪽 버튼들과 오른쪽 버튼 사이의 공간을 채움
+              ElevatedButton( // ✨ '선택' 버튼 추가
+                onPressed: onSelect,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6FCF4B),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text('선택'),
               ),
             ],
           ),

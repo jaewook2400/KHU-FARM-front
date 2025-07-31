@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
 class FarmerEditPwScreen extends StatefulWidget {
   const FarmerEditPwScreen({super.key});
@@ -13,20 +17,115 @@ class _FarmerEditPwScreenState extends State<FarmerEditPwScreen> {
   late TextEditingController _newCtrl;
   late TextEditingController _confirmCtrl;
 
+  bool _isButtonEnabled = false;
+
   @override
   void initState() {
     super.initState();
     _currentCtrl = TextEditingController();
     _newCtrl = TextEditingController();
     _confirmCtrl = TextEditingController();
+    _currentCtrl.addListener(_updateButtonState);
+    _newCtrl.addListener(_updateButtonState);
+    _confirmCtrl.addListener(_updateButtonState);
   }
 
   @override
   void dispose() {
+    _currentCtrl.removeListener(_updateButtonState);
+    _newCtrl.removeListener(_updateButtonState);
+    _confirmCtrl.removeListener(_updateButtonState);
     _currentCtrl.dispose();
     _newCtrl.dispose();
     _confirmCtrl.dispose();
     super.dispose();
+  }
+
+  // ✨ 3. 모든 필드가 비어있지 않으면 버튼을 활성화하는 함수
+  void _updateButtonState() {
+    if (mounted) {
+      setState(() {
+        _isButtonEnabled = _currentCtrl.text.isNotEmpty &&
+                            _newCtrl.text.isNotEmpty &&
+                            _confirmCtrl.text.isNotEmpty;
+      });
+    }
+  }
+
+  Future<void> _changePassword() async {
+    // 로딩 모달창 표시
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Dialog(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("비밀번호 변경 중..."),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing');
+
+      final headers = {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      };
+      final uri = Uri.parse('$baseUrl/auth/changePassword');
+      final body = jsonEncode({
+        'currentPassword': _currentCtrl.text,
+        'newPassword': _newCtrl.text,
+        'confirmNewPassword': _confirmCtrl.text,
+      });
+
+      final response = await http.post(uri, headers: headers, body: body);
+      
+      if(mounted) Navigator.of(context).pop(); // 로딩 모달창 닫기
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['isSuccess'] == true) {
+          // 성공 시 success 화면으로 이동
+          Navigator.pushNamed(context, '/farmer/mypage/info/edit/pw/success');
+        } else {
+          // isSuccess가 false일 때 (비밀번호 불일치 등)
+          _showErrorDialog('현재 비밀번호가 다르거나 새 비밀번호가 서로 다릅니다.');
+        }
+      } else {
+        // HTTP 에러
+        _showErrorDialog('현재 비밀번호가 다르거나 새 비밀번호가 서로 다릅니다.');
+      }
+    } catch (e) {
+      if(mounted) Navigator.of(context).pop(); // 네트워크 에러 시에도 로딩 모달창 닫기
+      print('Error changing password: $e');
+      _showErrorDialog('네트워크 오류가 발생했습니다.');
+    }
+  }
+
+  // ✨ 5. 에러 메시지를 보여주는 모달 함수
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('오류'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('확인'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -152,7 +251,7 @@ class _FarmerEditPwScreenState extends State<FarmerEditPwScreen> {
               top: statusBarHeight + screenHeight * 0.06 + 20,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 20,
+              bottom:  MediaQuery.of(context).padding.bottom + 20,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,12 +391,12 @@ class _FarmerEditPwScreenState extends State<FarmerEditPwScreen> {
                   width: double.infinity,
                   height: 48,
                   child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: 비밀번호 변경 로직
-                      Navigator.pop(context);
-                    },
+                    // ✨ 6. onPressed에 _changePassword 연결 및 활성화 상태 적용
+                    onPressed: _isButtonEnabled ? _changePassword : null,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF6FCF4B),
+                      // 비활성화 시 색상 지정
+                      disabledBackgroundColor: Colors.grey.shade400,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),

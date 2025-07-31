@@ -1,18 +1,24 @@
 // order_success.dart
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/model/user_info.dart';
 import 'package:khu_farm/services/storage_service.dart';
 
-class OrderFailScreen extends StatefulWidget {
-  const OrderFailScreen({super.key});
+class OrderEditAddressSuccessScreen extends StatefulWidget {
+  const OrderEditAddressSuccessScreen({super.key});
 
   @override
-  State<OrderFailScreen> createState() => _OrderFailScreenState();
+  State<OrderEditAddressSuccessScreen> createState() =>
+      _OrderEditAddressSuccessScreenState();
 }
 
-class _OrderFailScreenState extends State<OrderFailScreen> {
+class _OrderEditAddressSuccessScreenState
+    extends State<OrderEditAddressSuccessScreen> {
+
   UserInfo? _userInfo;
 
   @override
@@ -21,7 +27,6 @@ class _OrderFailScreenState extends State<OrderFailScreen> {
     _loadUserInfo();
   }
 
-  /// StorageService에서 사용자 정보를 불러와 상태를 업데이트합니다.
   Future<void> _loadUserInfo() async {
     final userInfo = await StorageService().getUserInfo();
     if (mounted) {
@@ -31,7 +36,7 @@ class _OrderFailScreenState extends State<OrderFailScreen> {
     }
   }
 
-  /// 저장된 사용자 유형에 따라 올바른 메인 페이지로 이동합니다.
+  // ✨ 1. User Role에 따라 동적으로 라우트를 반환하는 함수들
   String _getMainRoute() {
     switch (_userInfo?.userType) {
       case 'ROLE_INDIVIDUAL':
@@ -41,7 +46,7 @@ class _OrderFailScreenState extends State<OrderFailScreen> {
       case 'ROLE_FARMER':
         return '/farmer/main';
       default:
-        return '/';
+        return '/'; // 기본값 (혹은 로그인 화면)
     }
   }
 
@@ -114,7 +119,8 @@ class _OrderFailScreenState extends State<OrderFailScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
-                  onTap: () => Navigator.pushNamedAndRemoveUntil(context, _getMainRoute(), (route) => false),
+                  onTap: () => Navigator.pushNamedAndRemoveUntil(
+                      context, _getMainRoute(), (route) => false),
                   child: const Text(
                     'KHU:FARM',
                     textAlign: TextAlign.center,
@@ -142,13 +148,17 @@ class _OrderFailScreenState extends State<OrderFailScreen> {
                     // ),
                     const SizedBox(width: 12),
                     GestureDetector(
+                      // ✨ 3. 찜 목록 아이콘 클릭 시 동적 라우트 적용
                       onTap: () => Navigator.pushNamed(context, _getDibsRoute()),
-                      child: Image.asset('assets/top_icons/dibs.png', width: 24, height: 24),
+                      child: Image.asset('assets/top_icons/dibs.png',
+                          width: 24, height: 24),
                     ),
                     const SizedBox(width: 12),
                     GestureDetector(
+                      // ✨ 4. 장바구니 아이콘 클릭 시 동적 라우트 적용
                       onTap: () => Navigator.pushNamed(context, _getCartRoute()),
-                      child: Image.asset('assets/top_icons/cart.png', width: 24, height: 24),
+                      child: Image.asset('assets/top_icons/cart.png',
+                          width: 24, height: 24),
                     ),
                   ],
                 ),
@@ -158,56 +168,36 @@ class _OrderFailScreenState extends State<OrderFailScreen> {
           
           // --- This is the updated content section ---
           Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // 마스코트 이미지
-                  Image.asset(
-                    'assets/mascot/login_mascot.png',
-                    height: 100,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/mascot/login_mascot.png', height: 100),
+                const SizedBox(height: 24),
+                const Text(
+                  '배송지 변경이 완료되었습니다.',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 24,
+            right: 24,
+            bottom: 20 + MediaQuery.of(context).padding.bottom,
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF6FCF4B),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                  const SizedBox(height: 24),
-
-                  // 성공 메시지
-                  const Text(
-                    '주문이 실패했습니다.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // 주문 번호
-                  Text(
-                    '지속적으로 문제가 발생할 시 관리자에게 문의해주세요',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 40), // 콘텐츠와 버튼 사이 간격
-
-                  // "메인 페이지로 돌아가기" 버튼
-                  SizedBox(
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pushNamedAndRemoveUntil(context, _getMainRoute(), (route) => false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6FCF4B),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: const Text(
-                        '메인 페이지로 돌아가기',
-                        style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
+                child: const Text(
+                  '돌아가기',
+                  style: TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
           ),

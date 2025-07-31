@@ -32,26 +32,43 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
   }
 
   /// 저장된 사용자 유형에 따라 올바른 메인 페이지로 이동합니다.
-  void _navigateToMainPage() {
-    String route = '/login'; // 기본값은 로그인 화면
-    if (_userInfo != null) {
-      switch (_userInfo!.userType) {
-        case 'ROLE_INDIVIDUAL':
-          route = '/consumer/main';
-          break;
-        case 'ROLE_BUSINESS':
-          route = '/retailer/main';
-          break;
-        case 'ROLE_FARMER':
-          route = '/farmer/main';
-          break;
-        case 'ADMIN':
-          route = '/admin/daily';
-          break;
-      }
+  String _getMainRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/main';
+      case 'ROLE_BUSINESS':
+        return '/retailer/main';
+      case 'ROLE_FARMER':
+        return '/farmer/main';
+      default:
+        return '/';
     }
-    // 모든 화면 스택을 제거하고 해당 라우트로 이동합니다.
-    Navigator.pushNamedAndRemoveUntil(context, route, (route) => false);
+  }
+
+  String _getDibsRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/dib/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/dib/list';
+      case 'ROLE_FARMER':
+        return '/farmer/dib/list';
+      default:
+        return '/';
+    }
+  }
+
+  String _getCartRoute() {
+    switch (_userInfo?.userType) {
+      case 'ROLE_INDIVIDUAL':
+        return '/consumer/cart/list';
+      case 'ROLE_BUSINESS':
+        return '/retailer/cart/list';
+      case 'ROLE_FARMER':
+        return '/farmer/cart/list';
+      default:
+        return '/';
+    }
   }
 
   void _navigateToOrderListPage() {
@@ -122,7 +139,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
-                  onTap: _navigateToMainPage,
+                  onTap: () => Navigator.pushNamedAndRemoveUntil(context, _getMainRoute(), (route) => false),
                   child: const Text(
                     'KHU:FARM',
                     textAlign: TextAlign.center,
@@ -132,6 +149,33 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                       color: Colors.white,
                     ),
                   ),
+                ),
+                Row(
+                  children: [
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     Navigator.pushNamed(
+                    //       context,
+                    //       '/consumer/notification/list',
+                    //     );
+                    //   },
+                    //   child: Image.asset(
+                    //     'assets/top_icons/notice.png',
+                    //     width: 24,
+                    //     height: 24,
+                    //   ),
+                    // ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, _getDibsRoute()),
+                      child: Image.asset('assets/top_icons/dibs.png', width: 24, height: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, _getCartRoute()),
+                      child: Image.asset('assets/top_icons/cart.png', width: 24, height: 24),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -194,7 +238,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen> {
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: _navigateToMainPage,
+                      onPressed: () => Navigator.pushNamedAndRemoveUntil(context, _getMainRoute(), (route) => false),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6FCF4B),
                         shape: RoundedRectangleBorder(

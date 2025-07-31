@@ -118,15 +118,137 @@ class _RetailerAddressListScreenState extends State<RetailerAddressListScreen> {
     }
   }
   
-  void _navigateToEditScreen(Address address) {
-    Navigator.pushNamed(
+  void _navigateToEditScreen(Address address) async {
+    // 수정 화면으로 이동하고, 돌아올 때까지 기다립니다.
+    final result = await Navigator.pushNamed(
       context,
       '/retailer/mypage/info/edit/address/edit',
-      arguments: address, // Pass the full address object
-    ).then((_) {
-      // Refresh the list when returning from the edit screen
+      arguments: address,
+    );
+
+    // 수정 화면에서 어떤 변경이 있었을 수 있으므로, 돌아오면 목록을 새로고침합니다.
+    if (result == true && mounted) {
       _fetchAddresses();
-    });
+    }
+  }
+
+  Future<void> _deleteAddress(Address addressToDelete) async {
+    // 1-1. 삭제 확인 모달창을 띄우고 결과를 기다림
+    final bool? confirmed = await _showDeleteConfirmDialog();
+    if (confirmed != true) return; // '아니오'를 누르면 아무것도 하지 않음
+
+    // 1-2. '예'를 누르면 API 호출
+    try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing');
+
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      final uri = Uri.parse('$baseUrl/address/delete/${addressToDelete.addressId}');
+
+      final response = await http.delete(uri, headers: headers);
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        // 1-3. API 성공 시, 로컬 리스트에서 해당 주소 제거
+        setState(() {
+          _addresses.removeWhere((address) => address.addressId == addressToDelete.addressId);
+        });
+        
+        // 1-4. 삭제 성공 모달창 표시
+        await _showDeleteSuccessDialog();
+
+      } else {
+        throw Exception('Failed to delete address: ${response.body}');
+      }
+    } catch (e) {
+      print('Error deleting address: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('삭제에 실패했습니다. 다시 시도해주세요.')),
+        );
+      }
+    }
+  }
+  
+  // ✨ 2. 삭제 확인 모달창
+  Future<bool?> _showDeleteConfirmDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('선택하신 배송지를\n정말 삭제하시겠습니까?', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 20),
+              Image.asset('assets/mascot/login_mascot.png', height: 60), // TODO: mascot 이미지 경로 확인
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(false), // 아니오
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: const Text('아니오', style: TextStyle(color: Colors.black)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(true), // 예
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6FCF4B),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      ),
+                      child: const Text('예'),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ✨ 3. 삭제 성공 모달창
+  Future<void> _showDeleteSuccessDialog() {
+    return showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('삭제되었습니다.', style: TextStyle(fontSize: 16)),
+              const SizedBox(height: 20),
+              Image.asset('assets/mascot/login_mascot.png', height: 60),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(), // 닫기
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6FCF4B),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
+                  child: const Text('닫기'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -303,9 +425,7 @@ class _RetailerAddressListScreenState extends State<RetailerAddressListScreen> {
                                 return _AddressCard(
                                   address: address,
                                   onEdit: () => _navigateToEditScreen(address),
-                                  onDelete: () {
-                                    // TODO: Implement delete logic
-                                  },
+                                  onDelete: () => _deleteAddress(address),
                                 );
                               },
                               separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -385,31 +505,31 @@ class _AddressCard extends StatelessWidget {
             style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
           ),
           const SizedBox(height: 16),
-          // Row(
-          //   children: [
-          //     OutlinedButton(
-          //       onPressed: onEdit, // Connect the callback
-          //       style: OutlinedButton.styleFrom(
-          //         side: const BorderSide(color: Color(0x3333334B)),
-          //         shape: RoundedRectangleBorder(
-          //           borderRadius: BorderRadius.circular(30),
-          //         ),
-          //       ),
-          //       child: const Text('수정', style: TextStyle(color: Colors.black)),
-          //     ),
-          //     const SizedBox(width: 8),
-          //     OutlinedButton(
-          //       onPressed: onDelete, // Connect the callback
-          //       style: OutlinedButton.styleFrom(
-          //         side: const BorderSide(color: Color(0x3333334B)),
-          //         shape: RoundedRectangleBorder(
-          //           borderRadius: BorderRadius.circular(30),
-          //         ),
-          //       ),
-          //       child: const Text('삭제', style: TextStyle(color: Colors.black)),
-          //     ),
-          //   ],
-          // ),
+          Row(
+            children: [
+              OutlinedButton(
+                onPressed: onEdit, // Connect the callback
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0x3333334B)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text('수정', style: TextStyle(color: Colors.black)),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton(
+                onPressed: onDelete, // Connect the callback
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0x3333334B)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text('삭제', style: TextStyle(color: Colors.black)),
+              ),
+            ],
+          ),
         ],
       ),
     );

@@ -297,9 +297,6 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
   }
 
   Future<void> _addToWishlist(int fruitId) async {
-    // ✨ 1. API 호출 전 현재 스크롤 위치 저장
-    final offset = _fruitScrollController.offset;
-
     final accessToken = await StorageService.getAccessToken();
     if (accessToken == null) return;
 
@@ -309,20 +306,21 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
     try {
       final response = await http.post(uri, headers: headers);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('찜 추가 성공');
-        // ✨ 2. 목록을 새로고침 (첫 페이지만 불러옴)
-        await _fetchFruits();
-        
-        // ✨ 3. 화면이 다시 그려진 후, 저장했던 위치로 스크롤 이동
-        if (mounted) {
-          // addPostFrameCallback을 사용해 build가 끝난 후 스크롤을 이동시킵니다.
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            // 스크롤 가능한 범위 내에 있을 경우에만 이동
-            if (offset <= _fruitScrollController.position.maxScrollExtent) {
-              _fruitScrollController.jumpTo(offset);
-            }
-          });
-        }
+        // API 성공 시, 응답에서 새로운 wishListId를 파싱
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newWishListId = data['result'] as int;
+
+        // 로컬 _fruits 리스트에서 해당 과일을 찾아 상태 업데이트
+        setState(() {
+          final index = _fruits.indexWhere((fruit) => fruit.id == fruitId);
+          if (index != -1) {
+            _fruits[index] = _fruits[index].copyWith(
+              isWishList: true,
+              wishListId: newWishListId,
+            );
+          }
+        });
+        print('찜 추가 성공 (로컬 업데이트)');
       } else {
         print('찜 추가 실패: ${response.statusCode}');
         print('Response Body: ${utf8.decode(response.bodyBytes)}');
@@ -333,9 +331,6 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
   }
 
   Future<void> _removeFromWishlist(int wishListId) async {
-    // ✨ 1. API 호출 전 현재 스크롤 위치 저장
-    final offset = _fruitScrollController.offset;
-
     final accessToken = await StorageService.getAccessToken();
     if (accessToken == null) return;
 
@@ -345,20 +340,20 @@ class _FarmerStockScreenState extends State<FarmerStockScreen> {
     try {
       final response = await http.delete(uri, headers: headers);
       if (response.statusCode == 200 || response.statusCode == 204) {
-        print('찜 삭제 성공');
-        // ✨ 2. 목록을 새로고침
-        await _fetchFruits();
-
-        // ✨ 3. 저장했던 위치로 스크롤 이동
-        if (mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (offset <= _fruitScrollController.position.maxScrollExtent) {
-              _fruitScrollController.jumpTo(offset);
-            }
-          });
-        }
+        // API 성공 시, 로컬 _fruits 리스트에서 해당 과일을 찾아 상태 업데이트
+        setState(() {
+          final index = _fruits.indexWhere((fruit) => fruit.wishListId == wishListId);
+          if (index != -1) {
+            _fruits[index] = _fruits[index].copyWith(
+              isWishList: false,
+              wishListId: -1, // 기본값으로 초기화
+            );
+          }
+        });
+        print('찜 삭제 성공 (로컬 업데이트)');
       } else {
         print('찜 삭제 실패: ${response.statusCode}');
+        print('Response Body: ${utf8.decode(response.bodyBytes)}');
       }
     } catch (e) {
       print('찜 삭제 에러: $e');

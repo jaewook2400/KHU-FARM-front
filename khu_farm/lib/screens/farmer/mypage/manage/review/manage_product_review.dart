@@ -1,54 +1,62 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/constants.dart';
-import 'package:khu_farm/model/review.dart';
+import 'package:khu_farm/model/review.dart'; 
 import 'package:khu_farm/model/fruit.dart';
 
-class FarmerManageReviewScreen extends StatefulWidget {
-  const FarmerManageReviewScreen({super.key});
+class FarmerManageProductReviewScreen extends StatefulWidget {
+  const FarmerManageProductReviewScreen({super.key});
 
   @override
-  State<FarmerManageReviewScreen> createState() =>
-      _FarmerManageReviewScreenState();
+  State<FarmerManageProductReviewScreen> createState() =>
+      _FarmerManageProductReviewScreenState();
 }
 
-class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
+class _FarmerManageProductReviewScreenState extends State<FarmerManageProductReviewScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late Fruit _fruit;
+  bool _isInitialized = false;
   bool _isLoading = true;
 
-  // '답변 전' 리뷰 상태
+  // ✨ 1. 상태 변수를 Inquiry -> ReviewInfo로 변경
   List<ReviewInfo> _unansweredReviews = [];
   final ScrollController _unansweredScrollController = ScrollController();
   bool _isFetchingMoreUnanswered = false;
   bool _hasMoreUnanswered = true;
 
-  // '전체 보기' 리뷰 상태 (기존 로직 유지)
-  List<Fruit> _allProducts = [];
-  final ScrollController _allProductsScrollController = ScrollController();
-  bool _isFetchingMoreProducts = false;
-  bool _hasMoreProducts = true;
+  List<ReviewInfo> _answeredReviews = [];
+  final ScrollController _answeredScrollController = ScrollController();
+  bool _isFetchingMoreAnswered = false;
+  bool _hasMoreAnswered = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _unansweredScrollController.addListener(_onUnansweredScroll);
-    _allProductsScrollController.addListener(_onAllProductsScroll); // ✨ 리스너 추가
-    _fetchData();
+    _answeredScrollController.addListener(_onAnsweredScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      _fruit = ModalRoute.of(context)!.settings.arguments as Fruit;
+      _loadInitialData();
+      _isInitialized = true;
+    }
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _unansweredScrollController.removeListener(_onUnansweredScroll);
     _unansweredScrollController.dispose();
-    _allProductsScrollController.removeListener(_onAllProductsScroll); // ✨ 리스너 해제
-    _allProductsScrollController.dispose();
+    _answeredScrollController.dispose();
     super.dispose();
   }
 
@@ -57,39 +65,32 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
         _hasMoreUnanswered &&
         !_isFetchingMoreUnanswered) {
       if (_unansweredReviews.isNotEmpty) {
-        _fetchUnansweredReviews(
-            _unansweredReviews.last.reviewId as String, // Assuming reviewId is String
-            cursorId: _unansweredReviews.last.reviewId);
+        _fetchUnansweredReviews(cursorId: _unansweredReviews.last.reviewId);
       }
     }
   }
 
-  void _onAllProductsScroll() {
-    if (_allProductsScrollController.position.pixels >= _allProductsScrollController.position.maxScrollExtent - 50 &&
-        _hasMoreProducts &&
-        !_isFetchingMoreProducts) {
-      if (_allProducts.isNotEmpty) {
-        _fetchAllProducts(cursorId: _allProducts.last.id);
+  void _onAnsweredScroll() {
+    if (_answeredScrollController.position.pixels >= _answeredScrollController.position.maxScrollExtent - 50 &&
+        _hasMoreAnswered &&
+        !_isFetchingMoreAnswered) {
+      if (_answeredReviews.isNotEmpty) {
+        _fetchAnsweredReviews(cursorId: _answeredReviews.last.reviewId);
       }
     }
   }
 
-  Future<void> _fetchData() async {
-    if (mounted) setState(() => _isLoading = true);
-    final String? token = await StorageService.getAccessToken();
-    if (token == null) {
-      if (mounted) setState(() => _isLoading = false);
-      return;
-    }
+  Future<void> _loadInitialData() async {
+    setState(() => _isLoading = true);
     await Future.wait([
-      _fetchUnansweredReviews(token),
-      _fetchAllProducts(token: token), // ✨ 전체 리뷰 -> 전체 상품 조회로 변경
+      _fetchUnansweredReviews(),
+      _fetchAnsweredReviews(),
     ]);
     if (mounted) setState(() => _isLoading = false);
   }
 
-  // '답변 전' 리뷰를 가져오는 API 호출
-  Future<void> _fetchUnansweredReviews(String token, {int? cursorId}) async {
+  // ✨ 2. API 호출 함수를 '답변 전 리뷰' 조회로 변경
+  Future<void> _fetchUnansweredReviews({int? cursorId}) async {
     if (_isFetchingMoreUnanswered) return;
     if (cursorId == null) _hasMoreUnanswered = true;
 
@@ -98,30 +99,23 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
     });
 
     try {
+      final token = await StorageService.getAccessToken();
+      if (token == null) throw Exception('Token is missing');
+      
       final headers = {'Authorization': 'Bearer $token'};
-      final uri = Uri.parse('$baseUrl/review/seller/notAnswered').replace(
-        queryParameters: {
-          'size': '5',
-          if (cursorId != null) 'cursorId': cursorId.toString(),
-        },
+      final uri = Uri.parse('$baseUrl/review/seller/${_fruit.id}/notAnswered').replace(
+        queryParameters: {'size': '5', if (cursorId != null) 'cursorId': cursorId.toString()},
       );
 
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result']?['content'] != null) {
-          final items = (data['result']['content'] as List)
-              .map((item) => ReviewInfo.fromJson(item))
-              .toList();
+          final items = (data['result']['content'] as List).map((i) => ReviewInfo.fromJson(i)).toList();
           setState(() {
-            if (cursorId == null) {
-              _unansweredReviews = items;
-            } else {
-              _unansweredReviews.addAll(items);
-            }
-            if (items.length < 5) {
-              _hasMoreUnanswered = false;
-            }
+            if (cursorId == null) _unansweredReviews = items;
+            else _unansweredReviews.addAll(items);
+            if (items.length < 5) _hasMoreUnanswered = false;
           });
         }
       } else {
@@ -130,59 +124,49 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
     } catch (e) {
       print('Error fetching unanswered reviews: $e');
     } finally {
-      if(mounted) setState(() => _isFetchingMoreUnanswered = false);
+      if (mounted) setState(() => _isFetchingMoreUnanswered = false);
     }
   }
 
-  // ✨ '전체' 리뷰를 가져오는 API 호출
-  Future<void> _fetchAllProducts({String? token, int? cursorId}) async {
-    if (_isFetchingMoreProducts) return;
-    if (cursorId == null) _hasMoreProducts = true;
+  // ✨ 3. API 호출 함수를 '답변 완료 리뷰' 조회로 변경
+  Future<void> _fetchAnsweredReviews({int? cursorId}) async {
+    if (_isFetchingMoreAnswered) return;
+    if (cursorId == null) _hasMoreAnswered = true;
 
     setState(() {
-      if (cursorId != null) _isFetchingMoreProducts = true;
+      if (cursorId != null) _isFetchingMoreAnswered = true;
     });
 
     try {
-      final accessToken = token ?? await StorageService.getAccessToken();
-      if (accessToken == null) throw Exception('Token is missing');
-      
-      final headers = {'Authorization': 'Bearer $accessToken'};
-      final uri = Uri.parse('$baseUrl/fruits/seller').replace(
-        queryParameters: {
-          'size': '5',
-          if (cursorId != null) 'cursorId': cursorId.toString(),
-        },
-      );
+      final token = await StorageService.getAccessToken();
+      if (token == null) throw Exception('Token is missing');
 
+      final headers = {'Authorization': 'Bearer $token'};
+      final uri = Uri.parse('$baseUrl/review/seller/${_fruit.id}/answered').replace(
+        queryParameters: {'size': '5', if (cursorId != null) 'cursorId': cursorId.toString()},
+      );
+      
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result']?['content'] != null) {
-          final items = (data['result']['content'] as List)
-              .map((item) => Fruit.fromJson(item))
-              .toList();
-          
+          final items = (data['result']['content'] as List).map((i) => ReviewInfo.fromJson(i)).toList();
           setState(() {
-            if (cursorId == null) {
-              _allProducts = items;
-            } else {
-              _allProducts.addAll(items);
-            }
-            if (items.length < 5) {
-              _hasMoreProducts = false;
-            }
+            if (cursorId == null) _answeredReviews = items;
+            else _answeredReviews.addAll(items);
+            if (items.length < 5) _hasMoreAnswered = false;
           });
         }
       } else {
-        throw Exception('Failed to fetch all products');
+        throw Exception('Failed to fetch answered reviews');
       }
     } catch (e) {
-      print('Error fetching all products: $e');
+      print('Error fetching answered reviews: $e');
     } finally {
-      if (mounted) setState(() => _isFetchingMoreProducts = false);
+      if (mounted) setState(() => _isFetchingMoreAnswered = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -193,6 +177,8 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
         statusBarBrightness: Brightness.light,
       ),
     );
+
+    final fruit = ModalRoute.of(context)!.settings.arguments as Fruit;
 
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -329,7 +315,7 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      '리뷰 관리',
+                      '받은 문의',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -337,7 +323,12 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
                     ),
                   ],
                 ),
-
+                const SizedBox(height: 16),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 0),
+                  child: _ProductInfoCard(fruit: fruit),
+                ),
+                const SizedBox(height: 16),
                 TabBar(
                   controller: _tabController,
                   labelColor: Colors.black,
@@ -345,16 +336,15 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
                   indicatorColor: Colors.black,
                   tabs: const [
                     Tab(text: '답변 전'),
-                    Tab(text: '전체 보기'),
+                    Tab(text: '답변 완료'),
                   ],
                 ),
-                const SizedBox(height: 16),
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildUnansweredList(),
-                      _buildAllProductsList(),
+                      _buildUnansweredReviewsTab(screenWidth), 
+                      _buildAnsweredReviewsTab(screenWidth),
                     ],
                   ),
                 ),
@@ -366,83 +356,155 @@ class _FarmerManageReviewScreenState extends State<FarmerManageReviewScreen>
     );
   }
 
-  Widget _buildUnansweredList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  Widget _buildUnansweredReviewsTab(double screenWidth) {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
     if (_unansweredReviews.isEmpty) {
-      return const Center(child: Text('답변을 기다리는 리뷰가 없습니다.'));
+      return const Center(child: Text('답변 전 리뷰가 없습니다.'));
     }
     return ListView.builder(
       controller: _unansweredScrollController,
-      padding: EdgeInsets.zero,
-      itemCount: _unansweredReviews.length + (_hasMoreUnanswered ? 1 : 0),
+      padding: EdgeInsets.symmetric(
+          horizontal: 0, vertical: 24),
+      itemCount:
+          1 + _unansweredReviews.length + (_hasMoreUnanswered ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index == _unansweredReviews.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(child: CircularProgressIndicator()),
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _SectionHeader(title: '답변 전', color: Colors.red.shade400),
+              ],
+            ),
           );
         }
-        return _ReviewCard(review: _unansweredReviews[index], onRefresh: _fetchData);
+        if (index == _unansweredReviews.length + 1) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final review = _unansweredReviews[index - 1];
+        // ✨ 상세 화면으로 이동하는 로직을 포함한 카드 생성
+        return _ReviewItemCard(
+            review: review,
+            fruit: _fruit,
+            onRefresh: _loadInitialData);
       },
     );
   }
 
-  /// "전체 보기" 탭 UI
-  Widget _buildAllProductsList() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+  // ✨ 5. '답변 완료 리뷰' 탭 위젯으로 변경
+  Widget _buildAnsweredReviewsTab(double screenWidth) {
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_answeredReviews.isEmpty) {
+      return const Center(child: Text('답변 완료된 리뷰가 없습니다.'));
     }
-    if (_allProducts.isEmpty) {
-      return const Center(child: Text('등록된 상품이 없습니다.'));
-    }
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            controller: _allProductsScrollController,
-            padding: EdgeInsets.zero,
-            itemCount: _allProducts.length + (_hasMoreProducts ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == _allProducts.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-              final product = _allProducts[index];
-              // ✨ 2. onTap 콜백에 내비게이션 및 새로고침 로직 추가
-              return _ProductReviewCard(
-                product: product,
-                onTap: () async {
-                  // 상세 화면으로 이동하고, 결과를 기다립니다.
-                  final result = await Navigator.pushNamed(
-                    context,
-                    '/farmer/mypage/manage/review/product',
-                    arguments: product,
-                  );
-                  // 상세 화면에서 돌아왔을 때 결과가 true이면, 데이터 새로고침
-                  if (result == true) {
-                    _fetchData();
-                  }
-                },
-              );
-            },
-          ),
-        ),
-      ],
+    return ListView.builder(
+      controller: _answeredScrollController,
+      padding: EdgeInsets.symmetric(
+          horizontal: 0, vertical: 24),
+      itemCount: 1 + _answeredReviews.length + (_hasMoreAnswered ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _SectionHeader(title: '답변 완료', color: Colors.green.shade400),
+              ],
+            ),
+          );
+        }
+        if (index == _answeredReviews.length + 1) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final review = _answeredReviews[index - 1];
+        // ✨ 상세 화면으로 이동하는 로직을 포함한 카드 생성
+        return _ReviewItemCard(
+            review: review,
+            fruit: _fruit,
+            onRefresh: _loadInitialData);
+      },
     );
   }
 }
 
-/// 리뷰 카드 위젯 (답변 표시 기능 추가)
-class _ReviewCard extends StatelessWidget {
+class _ProductInfoCard extends StatelessWidget {
+  final Fruit fruit;
+  const _ProductInfoCard({required this.fruit});
+
+  @override
+  Widget build(BuildContext context) {
+    final formatter = NumberFormat('#,###');
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.shade200,
+              blurRadius: 4,
+              offset: const Offset(0, 2))
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(fruit.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Text(fruit.brandName ?? '농가 불명', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 12),
+                Text(
+                  '${formatter.format(fruit.price)}원 / ${fruit.weight}kg',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(fruit.squareImageUrl, width: 80, height: 80, fit: BoxFit.cover),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// '답변 전', '답변 완료' 섹션 헤더
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final Color color;
+  const _SectionHeader({required this.title, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+    );
+  }
+}
+
+/// 문의/답변 카드
+class _ReviewItemCard extends StatelessWidget {
   final ReviewInfo review;
+  final Fruit fruit;
   final VoidCallback onRefresh;
 
-  const _ReviewCard({
+  const _ReviewItemCard({
     required this.review,
+    required this.fruit,
     required this.onRefresh,
   });
 
@@ -514,7 +576,7 @@ class _ReviewCard extends StatelessWidget {
                                 5,
                                 (i) => Icon(
                                   Icons.star,
-                                  color: i < review.rating ? Colors.red : Colors.grey.shade300,
+                                  color: i < review.rating ? Colors.amber : Colors.grey.shade300,
                                   size: 16,
                                 ),
                               ),
@@ -539,86 +601,6 @@ class _ReviewCard extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ],
-        ),
-      )
-    );
-  }
-}
-
-class _ProductReviewCard extends StatelessWidget {
-  final Fruit product;
-  final VoidCallback onTap; // ✨ onTap 콜백 추가
-
-  const _ProductReviewCard({required this.product, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final formatter = NumberFormat('#,###');
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(16)),
-                  child: Image.network(
-                    product.widthImageUrl,
-                    height: 140,
-                    width: double.infinity, // ✨ 1. 이 줄을 추가하여 가로를 꽉 채웁니다.
-                    fit: BoxFit.cover,
-                    errorBuilder: (c, e, s) =>
-                        Container(height: 140, color: Colors.grey[200]),
-                  ),
-                ),
-                Positioned(
-                  bottom: 8,
-                  left: 12,
-                  child: Text(
-                    product.brandName ?? '알 수 없음',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        shadows: [Shadow(blurRadius: 2)]),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      product.title,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    '${formatter.format(product.price)}원',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
             ),
           ],
         ),

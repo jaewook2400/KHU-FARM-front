@@ -311,6 +311,7 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
     const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
     final currentStatusInfo =
         statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
+    print(trackingData.currentStateText);
     int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
 
     final invoiceFullText = '운송장 번호 : ${sellerOrder.deliveryCompany} ${sellerOrder.deliveryNumber} (눌러서 복사)';

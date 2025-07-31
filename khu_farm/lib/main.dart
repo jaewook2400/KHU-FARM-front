@@ -4,6 +4,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:khu_farm/screens/consumer/daily/daily_fruit.dart';
 import 'package:khu_farm/screens/consumer/mypage/info/address_list.dart';
+import 'package:khu_farm/screens/consumer/mypage/info/edit_address_success.dart';
+import 'package:khu_farm/screens/consumer/mypage/info/edit_pw_success.dart';
+import 'package:khu_farm/screens/consumer/mypage/order/add_review.dart';
 import 'package:khu_farm/screens/consumer/mypage/order/order.dart';
 import 'package:khu_farm/screens/consumer/mypage/review/review.dart';
 import 'package:khu_farm/screens/farmer/laicos.dart';
@@ -13,11 +16,15 @@ import 'package:khu_farm/screens/farmer/mypage/csc/personal_inquiry/personal_inq
 import 'package:khu_farm/screens/farmer/mypage/info/add_address.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/address_list.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/edit_address.dart';
+import 'package:khu_farm/screens/farmer/mypage/info/edit_address_success.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/edit_profile.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/edit_pw.dart';
+import 'package:khu_farm/screens/farmer/mypage/info/edit_pw_success.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/info_list.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/inquiry_detail.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/manage_inquiry_detail.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/manage_product_inquiry.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/manage_inquiry.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/reply_success.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_number.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_status.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/order/manage_order.dart';
@@ -29,12 +36,20 @@ import 'package:khu_farm/screens/farmer/mypage/manage/product/edit_product.dart'
 import 'package:khu_farm/screens/farmer/mypage/manage/product/edit_product_detail.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/edit_product_preview.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/manage_product.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/review/manage_product_review.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/review/manage_review.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/review/manage_review_detail.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/review/reply_success.dart';
+import 'package:khu_farm/screens/farmer/mypage/order/add_review.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order.dart';
 import 'package:khu_farm/screens/farmer/mypage/review/review.dart';
+import 'package:khu_farm/screens/order/add_address.dart';
+import 'package:khu_farm/screens/order/address_list.dart';
 import 'package:khu_farm/screens/order/cart_order.dart';
 import 'package:khu_farm/screens/order/direct_order.dart';
 import 'package:khu_farm/screens/address_search.dart';
+import 'package:khu_farm/screens/order/edit_address.dart';
+import 'package:khu_farm/screens/order/edit_address_success.dart';
 import 'package:khu_farm/screens/order/order_fail.dart';
 import 'package:khu_farm/screens/order/order_success.dart';
 import 'package:khu_farm/screens/order/payment.dart';
@@ -48,6 +63,10 @@ import 'package:khu_farm/screens/retailer/mypage/csc/personal_inquiry/add_inquir
 import 'package:khu_farm/screens/retailer/mypage/csc/personal_inquiry/personal_inquiry_list.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/add_address.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/address_list.dart';
+import 'package:khu_farm/screens/retailer/mypage/info/edit_address.dart';
+import 'package:khu_farm/screens/retailer/mypage/info/edit_address_success.dart';
+import 'package:khu_farm/screens/retailer/mypage/info/edit_pw.dart';
+import 'package:khu_farm/screens/retailer/mypage/info/edit_pw_success.dart';
 import 'package:khu_farm/screens/retailer/mypage/mypage.dart';
 import 'package:khu_farm/screens/retailer/mypage/order/add_review.dart';
 import 'package:khu_farm/screens/retailer/mypage/order/order.dart';
@@ -158,6 +177,10 @@ class MyApp extends StatelessWidget {
         '/order/cart': (context) => const CartOrderScreen(),
         '/order/success': (context) => const OrderSuccessScreen(),
         '/order/fail': (context) => const OrderFailScreen(),
+        '/order/address': (context) => const OrderAddressListScreen(),
+        '/order/address/add': (context) => const OrderAddAddressScreen(),
+        '/order/edit/address': (context) => const OrderEditAddressScreen(),
+        '/order/edit/address/success': (context) => const OrderEditAddressSuccessScreen(),
         '/postcode/search': (context) => const AddressSearchScreen(),
         '/consumer/main': (context) => const ConsumerMainScreen(),
         '/consumer/notification/list':
@@ -174,15 +197,22 @@ class MyApp extends StatelessWidget {
             (context) => const ConsumerEditProfileScreen(),
         '/consumer/mypage/info/edit/pw':
             (context) => const ConsumerEditPwScreen(),
+        '/consumer/mypage/info/edit/pw/success':
+            (context) => const ConsumerEditPasswordSuccessScreen(),
         '/consumer/mypage/info/edit/address':
             (context) => const ConsumerAddressListScreen(),
         '/consumer/mypage/info/edit/address/add':
             (context) => const ConsumerAddAddressScreen(),
+        '/consumer/mypage/info/edit/address/edit': (context) => const ConsumerEditAddressScreen(),
+        '/consumer/mypage/info/edit/address/success':
+            (context) => const ConsumerEditAddressSuccessScreen(),
         '/consumer/mypage/info/cancel':
             (context) => const ConsumerAccountCancellationScreen(),
         '/consumer/mypage/info/cancel/success':
             (context) => const ConsumerAccountCancelledScreen(),
         '/consumer/mypage/order': (context) => const ConsumerOrderListScreen(),
+        '/consumer/mypage/order/review/add':
+            (context) => const ConsumerAddReviewScreen(),
         '/consumer/mypage/review': (context) => const ConsumerReviewListScreen(),
         '/consumer/mypage/inquiry/personal':
             (context) => const ConsumerPersonalInquiryListScreen(),
@@ -201,10 +231,18 @@ class MyApp extends StatelessWidget {
         '/retailer/laicos': (context) => const RetailerLaicosScreen(),
         '/retailer/mypage': (context) => const RetailerMypageScreen(),
         '/retailer/mypage/info': (context) => const ConsumerInfoListScreen(),
+        '/retailer/mypage/info/edit/pw':
+            (context) => const RetailerEditPwScreen(),
+        '/retailer/mypage/info/edit/pw/success':
+            (context) => const RetailerEditPasswordSuccessScreen(),
         '/retailer/mypage/info/edit/address':
             (context) => const RetailerAddressListScreen(),
         '/retailer/mypage/info/edit/address/add':
             (context) => const RetailerAddAddressScreen(),
+        '/retailer/mypage/info/edit/address/edit':
+            (context) => const RetailerEditAddressScreen(),
+            '/retailer/mypage/info/edit/address/success':
+            (context) => const RetailerEditAddressSuccessScreen(),
         '/retailer/mypage/order': (context) => const RetailerOrderListScreen(),
         '/retailer/mypage/inquiry/personal':
             (context) => const RetailerPersonalInquiryListScreen(),
@@ -230,9 +268,11 @@ class MyApp extends StatelessWidget {
         '/farmer/mypage/info': (context) => const FarmerInfoListScreen(),
         '/farmer/mypage/info/edit/profile': (context) => const FarmerEditProfileScreen(),
         '/farmer/mypage/info/edit/pw': (context) => const FarmerEditPwScreen(),
+        '/farmer/mypage/info/edit/pw/success': (context) => const FarmerEditPasswordSuccessScreen(),
         '/farmer/mypage/info/edit/address': (context) => const FarmerAddressListScreen(),
-        '/farmer/mypage/info/edit/address/add': (context) => const FarmerAddAddressScreen(),
         '/farmer/mypage/info/edit/address/edit': (context) => const FarmerEditAddressScreen(),
+        '/farmer/mypage/info/edit/address/success': (context) => const FarmerEditAddressSuccessScreen(),
+        '/farmer/mypage/info/edit/address/add': (context) => const FarmerAddAddressScreen(),
         '/farmer/mypage/manage': (context) => const FarmerManageListScreen(),
         '/farmer/mypage/manage/product': (context) => const FarmerManageProductListScreen(),
         '/farmer/mypage/manage/product/add': (context) => FarmerAddProductScreen(),
@@ -245,13 +285,20 @@ class MyApp extends StatelessWidget {
         '/farmer/mypage/manage/product/delete': (context) => const FarmerDeleteProductScreen(),
         '/farmer/mypage/manage/product/delete/success': (context) => const FarmerDeleteProductSuccessScreen(),
         '/farmer/mypage/manage/review': (context) => const FarmerManageReviewScreen(),
+        '/farmer/mypage/manage/review/product': (context) => const FarmerManageProductReviewScreen(),
+        '/farmer/mypage/manage/review/detail': (context) => const FarmerManageReviewDetailScreen(),
+        '/farmer/mypage/manage/review/reply/success': (context) => const FarmerAddReviewReplySuccessScreen(),
         '/farmer/mypage/manage/inquiry': (context) => FarmerManageInquiryScreen(),
+        '/farmer/mypage/manage/inquiry/product': (context) => const FarmerManageProductInquiryScreen(),
         '/farmer/mypage/manage/inquiry/detail': (context) => const FarmerManageInquiryDetailScreen(),
+        '/farmer/mypage/manage/inquiry/reply/success': (context) => const FarmerAddInquiryReplySuccessScreen(),
         '/farmer/mypage/manage/order': (context) => const FarmerManageOrderListScreen(),
         '/farmer/mypage/manage/order/detail': (context) => const FarmerManageOrderDetailScreen(),
         '/farmer/mypage/manage/order/delnum': (context) => const FarmerManageOrderDeliveryNumberScreen(),
         '/farmer/mypage/manage/order/delstat': (context) => const FarmerManageOrderDeliveryStatusScreen(),
         '/farmer/mypage/order': (context) => FarmerOrderListScreen(),
+        '/farmer/mypage/order/review/add':
+            (context) => const FarmerAddReviewScreen(),
         '/farmer/mypage/review': (context) => const FarmerReviewListScreen(),
         '/farmer/mypage/inquiry/personal':
             (context) => const FarmerPersonalInquiryListScreen(),

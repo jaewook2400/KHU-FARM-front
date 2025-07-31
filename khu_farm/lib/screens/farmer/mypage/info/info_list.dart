@@ -133,7 +133,7 @@ class FarmerInfoListScreen extends StatelessWidget {
               top: statusBarHeight + screenHeight * 0.06 + 20,
               left: screenWidth * 0.08,
               right: screenWidth * 0.08,
-              bottom: 20,
+              bottom: MediaQuery.of(context).padding.bottom + 20,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,15 +175,15 @@ class FarmerInfoListScreen extends StatelessWidget {
                   //     },
                   //   ),
                   // const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                  //   _OptionItem(
-                  //     label: '비밀번호 수정',
-                  //     onTap: () {
-                  //       Navigator.pushNamed(
-                  //         context,
-                  //         '/farmer/mypage/info/edit/pw',
-                  //       );
-                  //     },
-                  //   ),
+                    _OptionItem(
+                      label: '비밀번호 수정',
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/farmer/mypage/info/edit/pw',
+                        );
+                      },
+                    ),
                   // const Divider(height: 1, color: Color(0xFFEEEEEE)),
                     _OptionItem(
                       label: '배송지 관리',

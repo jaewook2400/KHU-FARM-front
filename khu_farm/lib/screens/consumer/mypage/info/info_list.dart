@@ -175,15 +175,15 @@ class ConsumerInfoListScreen extends StatelessWidget {
                   //     },
                   //   ),
                   // const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                  //   _OptionItem(
-                  //     label: '비밀번호 수정',
-                  //     onTap: () {
-                  //       Navigator.pushNamed(
-                  //         context,
-                  //         '/consumer/mypage/info/edit/pw',
-                  //       );
-                  //     },
-                  //   ),
+                    _OptionItem(
+                      label: '비밀번호 수정',
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/mypage/info/edit/pw',
+                        );
+                      },
+                    ),
                   // const Divider(height: 1, color: Color(0xFFEEEEEE)),
                     _OptionItem(
                       label: '배송지 관리',

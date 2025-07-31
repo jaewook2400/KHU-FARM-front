@@ -1,5 +1,19 @@
 import 'package:khu_farm/model/order.dart';
 
+class ReviewReply {
+  final String content;
+
+  ReviewReply({
+    required this.content,
+  });
+
+  factory ReviewReply.fromJson(Map<String, dynamic> json) {
+    return ReviewReply(
+      content: json['content'] ?? '',
+    );
+  }
+}
+
 class ReviewInfo {
   final int reviewId;
   final String title;
@@ -23,7 +37,7 @@ class ReviewInfo {
 
   factory ReviewInfo.fromJson(Map<String, dynamic> json) {
     return ReviewInfo(
-      reviewId: json['id'] ?? 0,
+      reviewId: json['reviewId'] ?? json['id'] ?? 0,
       title: json['title'] ?? '',
       userId: json['userId'] ?? '알 수 없음',
       content: json['content'] ?? '',
@@ -37,7 +51,7 @@ class ReviewInfo {
   // ✨ toString() 메서드 추가
   @override
   String toString() {
-    return 'ReviewInfo(title: $title, userId: $userId, content: $content, imageUrl: $imageUrl, rating: $rating, createdAt: $createdAt, replyContent: $replyContent)';
+    return 'ReviewInfo(reviewId: $reviewId, title: $title, userId: $userId, content: $content, imageUrl: $imageUrl, rating: $rating, createdAt: $createdAt, replyContent: $replyContent)';
   }
 }
 

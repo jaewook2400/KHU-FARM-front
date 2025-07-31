@@ -308,9 +308,21 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
     try {
       final response = await http.post(uri, headers: headers);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('찜 추가 성공');
-        // On success, refetch the entire list from the server
-        await _fetchFruits();
+        // API 성공 시, 응답에서 새로운 wishListId를 파싱
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        final newWishListId = data['result'] as int;
+
+        // 로컬 _fruits 리스트에서 해당 과일을 찾아 상태 업데이트
+        setState(() {
+          final index = _fruits.indexWhere((fruit) => fruit.id == fruitId);
+          if (index != -1) {
+            _fruits[index] = _fruits[index].copyWith(
+              isWishList: true,
+              wishListId: newWishListId,
+            );
+          }
+        });
+        print('찜 추가 성공 (로컬 업데이트)');
       } else {
         print('찜 추가 실패: ${response.statusCode}');
         print('Response Body: ${utf8.decode(response.bodyBytes)}');
@@ -320,20 +332,27 @@ class _RetailerDailyScreenState extends State<RetailerDailyScreen> {
     }
   }
 
-  Future<void> _removeFromWishlist(int fruitId) async {
+  Future<void> _removeFromWishlist(int wishListId) async {
     final accessToken = await StorageService.getAccessToken();
     if (accessToken == null) return;
 
     final headers = {'Authorization': 'Bearer $accessToken'};
-    final uri = Uri.parse('$baseUrl/wishList/$fruitId/delete');
-    print(uri);
+    final uri = Uri.parse('$baseUrl/wishList/$wishListId/delete');
 
     try {
       final response = await http.delete(uri, headers: headers);
       if (response.statusCode == 200 || response.statusCode == 204) {
-        print('찜 삭제 성공');
-        // On success, refetch the entire list from the server
-        await _fetchFruits();
+        // API 성공 시, 로컬 _fruits 리스트에서 해당 과일을 찾아 상태 업데이트
+        setState(() {
+          final index = _fruits.indexWhere((fruit) => fruit.wishListId == wishListId);
+          if (index != -1) {
+            _fruits[index] = _fruits[index].copyWith(
+              isWishList: false,
+              wishListId: -1, // 기본값으로 초기화
+            );
+          }
+        });
+        print('찜 삭제 성공 (로컬 업데이트)');
       } else {
         print('찜 삭제 실패: ${response.statusCode}');
         print('Response Body: ${utf8.decode(response.bodyBytes)}');
