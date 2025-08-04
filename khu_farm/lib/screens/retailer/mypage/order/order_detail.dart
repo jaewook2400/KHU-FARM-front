@@ -274,7 +274,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                   const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
                                   const SizedBox(height: 8),
                                   TextButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/retailer/mypage/order/refund',
+                                        arguments: widget.order, // order 정보를 argument로 전달
+                                      );
+                                    },
                                     child: const Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
                                       children: [

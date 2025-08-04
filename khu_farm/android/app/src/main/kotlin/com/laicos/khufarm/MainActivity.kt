@@ -1,4 +1,4 @@
-package com.example.khu_farm
+package com.laicos.khufarm
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -313,16 +313,16 @@ class _ConsumerHarvestScreenState extends State<ConsumerHarvestScreen> {
               iconPath: 'assets/bottom_navigator/select/harvest.png',
               onTap: () {},
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/consumer/laicos',
-            //       ModalRoute.withName("/consumer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/consumer/laicos',
+                  ModalRoute.withName("/consumer/main"),
+                );
+              },
+            ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {

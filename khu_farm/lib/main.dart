@@ -29,6 +29,9 @@ import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_number.dart
 import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_status.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/order/manage_order.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/order/order_detail.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_accept.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_detail.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_reject.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/add_product_success.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/delete_product.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/delete_product_success.dart';
@@ -70,6 +73,8 @@ import 'package:khu_farm/screens/retailer/mypage/info/edit_pw_success.dart';
 import 'package:khu_farm/screens/retailer/mypage/mypage.dart';
 import 'package:khu_farm/screens/retailer/mypage/order/add_review.dart';
 import 'package:khu_farm/screens/retailer/mypage/order/order.dart';
+import 'package:khu_farm/screens/retailer/mypage/order/refund.dart';
+import 'package:khu_farm/screens/retailer/mypage/order/refund_success.dart';
 import 'package:khu_farm/screens/retailer/mypage/review/review.dart';
 import 'package:khu_farm/screens/retailer/stock/stock.dart';
 import 'package:khu_farm/screens/retailer/stock/stock_fruit.dart';
@@ -244,6 +249,9 @@ class MyApp extends StatelessWidget {
             '/retailer/mypage/info/edit/address/success':
             (context) => const RetailerEditAddressSuccessScreen(),
         '/retailer/mypage/order': (context) => const RetailerOrderListScreen(),
+        '/retailer/mypage/order/refund': (context) => const RetailerRefundScreen(),
+        '/retailer/mypage/order/refund/success':
+            (context) => const RetailerRefundSuccessScreen(),
         '/retailer/mypage/inquiry/personal':
             (context) => const RetailerPersonalInquiryListScreen(),
         '/retailer/mypage/inquiry/personal/add':
@@ -296,6 +304,9 @@ class MyApp extends StatelessWidget {
         '/farmer/mypage/manage/order/detail': (context) => const FarmerManageOrderDetailScreen(),
         '/farmer/mypage/manage/order/delnum': (context) => const FarmerManageOrderDeliveryNumberScreen(),
         '/farmer/mypage/manage/order/delstat': (context) => const FarmerManageOrderDeliveryStatusScreen(),
+        '/farmer/mypage/manage/order/refund': (context) => const FarmerManageOrderRefundScreen(),
+        '/farmer/mypage/manage/order/refund/accept': (context) => const FarmerAcceptRefundSuccessScreen(),
+        '/farmer/mypage/manage/order/refund/reject': (context) => const FarmerRejectRefundSuccessScreen(),
         '/farmer/mypage/order': (context) => FarmerOrderListScreen(),
         '/farmer/mypage/order/review/add':
             (context) => const FarmerAddReviewScreen(),

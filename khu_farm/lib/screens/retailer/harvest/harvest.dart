@@ -323,16 +323,16 @@ class _RetailerHarvestScreenState extends State<RetailerHarvestScreen> {
               iconPath: 'assets/bottom_navigator/select/harvest.png',
               onTap: () {},
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/retailer/laicos',
-            //       ModalRoute.withName("/retailer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/retailer/laicos',
+                  ModalRoute.withName("/retailer/main"),
+                );
+              },
+            ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {

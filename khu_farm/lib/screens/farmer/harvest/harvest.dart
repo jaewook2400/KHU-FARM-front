@@ -323,16 +323,16 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
               iconPath: 'assets/bottom_navigator/select/harvest.png',
               onTap: () {},
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/farmer/laicos',
-            //       ModalRoute.withName("/farmer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/farmer/laicos',
+                  ModalRoute.withName("/farmer/main"),
+                );
+              },
+            ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {

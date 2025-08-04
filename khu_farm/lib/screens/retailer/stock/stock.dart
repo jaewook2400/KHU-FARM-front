@@ -421,16 +421,16 @@ class _RetailerStockScreenState extends State<RetailerStockScreen> {
                 );
               },
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/retailer/laicos',
-            //       ModalRoute.withName("/retailer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/retailer/laicos',
+                  ModalRoute.withName("/retailer/main"),
+                );
+              },
+            ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {

@@ -117,16 +117,16 @@ class _FarmerMainScreenState extends State<FarmerMainScreen> {
                 );
               },
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/farmer/laicos',
-            //       ModalRoute.withName("/farmer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/farmer/laicos',
+                  ModalRoute.withName("/farmer/main"),
+                );
+              },
+            ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/mypage.png',
               onTap: () {

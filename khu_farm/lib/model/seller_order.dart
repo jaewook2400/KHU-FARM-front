@@ -19,6 +19,7 @@ class SellerOrder {
   final String? orderRequest;
   final String createdAt;
   final String status;
+  final String refundReason;
 
   SellerOrder({
     required this.orderId,
@@ -38,6 +39,7 @@ class SellerOrder {
     this.orderRequest,
     required this.createdAt,
     required this.status,
+    required this.refundReason,
   });
 
   factory SellerOrder.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class SellerOrder {
       orderRequest: json['orderRequest'],
       createdAt: json['createdAt'] ?? '',
       status: json['deliveryStatus'] ?? '알 수 없음', 
+      refundReason: json['refundReason'] ?? '',
     );
   }
 
@@ -81,7 +84,8 @@ class SellerOrder {
         'deliveryNumber: $deliveryNumber, '
         'orderRequest: $orderRequest, '
         'createdAt: $createdAt, '
-        'status: $status'
+        'status: $status, ' 
+        'refundReason: $refundReason'
         ')';
   }
 }

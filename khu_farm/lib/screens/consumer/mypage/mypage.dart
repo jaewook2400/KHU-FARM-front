@@ -89,16 +89,16 @@ class _ConsumerMypageScreenState extends State<ConsumerMypageScreen> {
                 );
               },
             ),
-            // _NavItem(
-            //   iconPath: 'assets/bottom_navigator/unselect/laicos.png',
-            //   onTap: () {
-            //     Navigator.pushNamedAndRemoveUntil(
-            //       context,
-            //       '/consumer/laicos',
-            //       ModalRoute.withName("/consumer/main"),
-            //     );
-            //   },
-            // ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/laicos.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/consumer/laicos',
+                  ModalRoute.withName("/consumer/main"),
+                );
+              },
+            ),
             _NavItem(
               iconPath: 'assets/bottom_navigator/select/mypage.png',
               onTap: () {},
@@ -322,9 +322,6 @@ class _ConsumerMypageScreenState extends State<ConsumerMypageScreen> {
                   //     );
                   //   },
                   // ),
-                  const SizedBox(height: 40),
-                  const Divider(),
-                  const SizedBox(height: 20),
                   _buildBusinessInfoFooter(),
                   const SizedBox(height: 20),
                 ],
@@ -341,7 +338,12 @@ class _ConsumerMypageScreenState extends State<ConsumerMypageScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '개별 판매자가 등록한 모든 거래에 대한 배송, 교환, 환불 민원 등의 의무와 책임은 각 판매자가 부담하며, 경우에 따라 \'쿠팜(KHUFARM)\'은 통신판매중개업자로서 그 절차를 보조할 수 있습니다. 자세한 문의는 판매 상품 내 \'문의\'로 남겨주시면 빠른 시일 내 순차적으로 도와 드리겠습니다.',
+          '※ ‘판매 상품 문의’가 아닌 ‘앱 관련 문의’는 ‘ansy00@khu.ac.kr’로 남겨 주세요.',
+          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ),
+        const SizedBox(height: 60),
+        Text(
+          '모든 거래에 대한 책임과 배송·교환·환불 민원은 쿠팜에서 접수·관리하며, 실제 처리(재배송·수거 등)는 협력 출고처가 수행합니다.\n문의: ansy00@khu.ac.kr, 0502-1949-1224',
           style: TextStyle(fontSize: 12, color: Colors.grey[600]),
         ),
         const SizedBox(height: 16),

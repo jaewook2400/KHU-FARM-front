@@ -63,9 +63,16 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
     if (_isFetchingMore) return;
 
     setState(() {
-      if (cursorId == null) _isLoading = true;
-      else _isFetchingMore = true;
+      if (cursorId == null) {
+        _isLoading = true;
+        // ✨ 새로고침 시 기존 데이터를 비우고, 페이지네이션 상태를 초기화
+        _orders = [];
+        _hasMore = true;
+      } else {
+        _isFetchingMore = true;
+      }
     });
+
 
     try {
       final accessToken = await StorageService.getAccessToken();
@@ -378,6 +385,18 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
                                         arguments: order,
                                       );
                                     },
+                                    onRefund: () async {
+                                      final result = await Navigator.pushNamed(
+                                        context,
+                                        '/farmer/mypage/manage/order/refund',
+                                        arguments: order,
+                                      );
+
+                                      // 환불 화면에서 true(승인) 또는 false(거절)를 반환받으면 목록 새로고침
+                                      if (result == true || result == false) {
+                                        _fetchSellerOrders();
+                                      }
+                                    },
                                   ),
                                 );
                                 // --- End of update ---
@@ -427,16 +446,23 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
 }
 
 class _OrderInfoCard extends StatelessWidget {
-  final SellerOrder order; // Use the new SellerOrder model
+  final SellerOrder order;
   final VoidCallback onEditTrackingNumber;
   final VoidCallback onTrackDelivery;
-  const _OrderInfoCard({required this.order, required this.onEditTrackingNumber, required this.onTrackDelivery});
+  // ✨ 2. onRefund 콜백 추가
+  final VoidCallback onRefund;
+
+  const _OrderInfoCard(
+      {required this.order,
+      required this.onEditTrackingNumber,
+      required this.onTrackDelivery,
+      required this.onRefund}); // ✨ 3. 생성자에 onRefund 추가
 
   @override
   Widget build(BuildContext context) {
-    final DeliveryStatus status = statusMap[order.status] ?? statusMap['알 수 없음']!;
-    print(order.status);
-    
+    final DeliveryStatus status =
+        statusMap[order.status] ?? statusMap['알 수 없음']!;
+
     String formattedDate = '';
     try {
       if (order.createdAt.isNotEmpty) {
@@ -450,16 +476,15 @@ class _OrderInfoCard extends StatelessWidget {
     final bool isTrackingNumberRegistered =
         order.deliveryNumber != null && order.deliveryNumber != '미등록';
 
+    final bool isRefundPending = order.status == '환불 대기';
 
     return Card(
       elevation: 2,
       shadowColor: Colors.black26,
       margin: const EdgeInsets.only(bottom: 16),
-      // --- 🖼️ 이 부분이 수정되었습니다 ---
-      color: Colors.white, // 1. 배경색 흰색으로 설정
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        // 2. 테두리 색상을 어두운 회색으로 설정
         side: BorderSide(color: Colors.grey.shade400, width: 1.0),
       ),
       child: Padding(
@@ -506,10 +531,23 @@ class _OrderInfoCard extends StatelessWidget {
               children: [
                 _actionButton(
                   isTrackingNumberRegistered ? '송장번호 수정' : '송장번호 입력',
-                  onPressed: onEditTrackingNumber, // 콜백 연결
+                  onPressed: onEditTrackingNumber,
                 ),
                 _actionButton('배송 현황 확인', onPressed: onTrackDelivery),
-                _actionButton('환불', onPressed: () => {}),
+                isRefundPending
+                    ? ElevatedButton(
+                        // ✨ 4. onPressed에 콜백 함수 연결
+                        onPressed: onRefund,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: const Text('환불'),
+                      )
+                    : _actionButton('환불', onPressed: null),
               ],
             ),
           ],
@@ -518,17 +556,20 @@ class _OrderInfoCard extends StatelessWidget {
     );
   }
 
-  Widget _actionButton(String label, {required VoidCallback onPressed}) {
+  Widget _actionButton(String label, {VoidCallback? onPressed}) {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.grey.shade700,
-        side: BorderSide(color: Colors.grey.shade600),
+        disabledForegroundColor: Colors.grey.shade400,
+        side: BorderSide(
+          color:
+              onPressed != null ? Colors.grey.shade600 : Colors.grey.shade300,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(30),
         ),
       ),
-      // 텍스트 폰트 사이즈를 기본값으로 되돌립니다.
       child: Text(label),
     );
   }

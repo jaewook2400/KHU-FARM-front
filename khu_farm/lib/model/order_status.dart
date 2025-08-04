@@ -26,8 +26,9 @@ const Map<String, DeliveryStatus> statusMap = {
 
   // 매핑되지 않는 기타 상태들 (stepName을 비워둠)
   '주문 취소': DeliveryStatus('주문 취소', '', Colors.red),
-  '주문 실패': DeliveryStatus('주문 실패', '', Colors.redAccent),
-  '환불 대기': DeliveryStatus('환불 대기', '', Colors.purple),
+  '주문 실패': DeliveryStatus('주문 실패', '', Colors.purple),
+  '환불 대기': DeliveryStatus('환불 대기', '', Colors.red),
+  '환불 거부': DeliveryStatus('환불 거부', '', Colors.grey),
   '부분 환불': DeliveryStatus('부분 환불', '', Colors.deepOrange),
   '알 수 없음': DeliveryStatus('알 수 없음', '', Colors.black),
 };
