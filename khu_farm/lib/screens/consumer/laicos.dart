@@ -54,16 +54,6 @@ class ConsumerLaicosScreen extends StatelessWidget {
               },
             ),
             _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/stock.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/consumer/stock',
-                  ModalRoute.withName("/consumer/main"),
-                );
-              },
-            ),
-            _NavItem(
               iconPath: 'assets/bottom_navigator/unselect/harvest.png',
               onTap: () {
                 Navigator.pushNamedAndRemoveUntil(

@@ -310,16 +310,6 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
               },
             ),
             _NavItem(
-              iconPath: 'assets/bottom_navigator/unselect/stock.png',
-              onTap: () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/farmer/stock',
-                  ModalRoute.withName("/farmer/main"),
-                );
-              },
-            ),
-            _NavItem(
               iconPath: 'assets/bottom_navigator/select/harvest.png',
               onTap: () {},
             ),
@@ -455,9 +445,9 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
             top: statusBarHeight + screenHeight * 0.06 + 20,
             left: screenWidth * 0.08,
             right: screenWidth * 0.08,
-            bottom: 0,
+            bottom: 80,
             child: DefaultTabController(
-              length: 3,
+              length: 2,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -499,7 +489,6 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                     tabs: const [
                       Tab(text: '만보기'),
                       Tab(text: '출석체크'),
-                      Tab(text: '리뷰'),
                     ],
                   ),
 
@@ -554,133 +543,115 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                         ),
 
                         // 출석체크
-                        Column(
-                          children: [
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: 200,
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _isAttending || _hasAttendedToday ? null : _handleAttendance,
-                                // ✨ 버튼 스타일을 디자인 시안에 맞게 수정
-                                style: ButtonStyle(
-                                  // 버튼 상태에 따라 배경색 변경
-                                  backgroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                                    if (states.contains(MaterialState.disabled)) {
-                                      return Colors.white; // 비활성화 상태: 흰색
-                                    }
-                                    return const Color(0xFF6FCF4B); // 활성화 상태: 초록색
-                                  }),
-                                  // 버튼 상태에 따라 글자/아이콘 색상 변경
-                                  foregroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                                    if (states.contains(MaterialState.disabled)) {
-                                      return Colors.grey; // 비활성화 상태: 회색
-                                    }
-                                    return Colors.white; // 활성화 상태: 흰색
-                                  }),
-                                  // 비활성화 상태일 때만 테두리 추가
-                                  side: MaterialStateProperty.resolveWith<BorderSide>((states) {
-                                    if (states.contains(MaterialState.disabled)) {
-                                      return BorderSide(color: Colors.grey.shade300, width: 1);
-                                    }
-                                    return BorderSide.none;
-                                  }),
-                                  shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: 200,
+                                height: 48,
+                                child: ElevatedButton(
+                                  onPressed: _isAttending || _hasAttendedToday
+                                      ? null
+                                      : _handleAttendance,
+                                  style: ElevatedButton.styleFrom(
+                                    disabledBackgroundColor: Colors.white,
+                                    backgroundColor: const Color(0xFF6FCF4B),
+                                    foregroundColor: Colors.white,
+                                    disabledForegroundColor: Colors.grey,
+                                    side: BorderSide(
+                                      color: _isAttending || _hasAttendedToday
+                                          ? Colors.grey.shade300
+                                          : Colors.transparent,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(30),
+                                    ),
                                   ),
-                                  elevation: MaterialStateProperty.resolveWith<double>((states){
-                                    if (states.contains(MaterialState.disabled)) return 0;
-                                    return 2; // 활성화 상태일 때 약간의 그림자
-                                  }),
+                                  child: _isAttending
+                                      ? const SizedBox(
+                                          height: 24,
+                                          width: 24,
+                                          child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 3),
+                                        )
+                                      : Text(_hasAttendedToday
+                                          ? '오늘의 포인트 수령 완료'
+                                          : '출석하기'),
                                 ),
-                                child: _isAttending
-                                    ? const SizedBox(
-                                        height: 24,
-                                        width: 24,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-                                      )
-                                    : Text(_hasAttendedToday ? '오늘의 포인트 수령 완료' : '출석하기'),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              // ✨ 5. TableCalendar 위젯 수정
-                              child: _isCalendarLoading
-                                  ? const Center(child: CircularProgressIndicator())
+                              const SizedBox(height: 16),
+                              _isCalendarLoading
+                                  ? const Center(
+                                      child: CircularProgressIndicator())
                                   : TableCalendar(
                                       firstDay: DateTime.utc(2020, 1, 1),
                                       lastDay: DateTime.utc(2030, 12, 31),
                                       focusedDay: _focusedDay,
                                       calendarFormat: CalendarFormat.month,
-                                      
-                                      // 사용자가 날짜를 직접 선택할 수 없도록 onDaySelected를 비워둡니다.
-                                      onDaySelected: (selectedDay, focusedDay) {},
-
-                                      // 달력이 넘어갈 때마다 해당 월의 출석 데이터를 새로 불러옵니다.
+                                      headerStyle: const HeaderStyle(
+                                        formatButtonVisible: false,
+                                        titleCentered: true,
+                                      ),
+                                      calendarStyle: const CalendarStyle(
+                                        todayDecoration: BoxDecoration(
+                                          color: Color(0xFFC8E6C9),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        selectedDecoration: BoxDecoration(
+                                          color: Color(0xFF6FCF4B),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      onDaySelected:
+                                          (selectedDay, focusedDay) {},
                                       onPageChanged: (focusedDay) {
                                         setState(() {
                                           _focusedDay = focusedDay;
                                         });
                                         _fetchAttendance(focusedDay);
                                       },
-                                      
-                                      // _attendedDays에 포함된 날짜에만 선택된 스타일을 적용합니다.
                                       selectedDayPredicate: (day) {
                                         return _attendedDays.contains(day);
                                       },
-
-                                      headerStyle: const HeaderStyle(
-                                        formatButtonVisible: false,
-                                        titleCentered: true,
-                                      ),
-                                      calendarStyle: const CalendarStyle(
-                                        // 오늘 날짜 스타일
-                                        todayDecoration: BoxDecoration(
-                                          color: Color(0xFFC8E6C9), // 연한 초록색
-                                          shape: BoxShape.circle,
-                                        ),
-                                        // 출석한 날짜(선택된 날짜) 스타일
-                                        selectedDecoration: BoxDecoration(
-                                          color: Color(0xFF6FCF4B), // 진한 초록색
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
                                     ),
-                            ),
-                          ],
-                        ),
-
-                        // 리뷰
-                        SingleChildScrollView(
-                          padding: EdgeInsets.only(bottom: 90),
-                          child: Column(
-                            children: const [
-                              ReviewCard(
-                                imagePath: 'assets/mascot/login_mascot.png',
-                                title: '제품제목',
-                                rating: 5.0,
-                                content: '너무너무너무내용내용내용내용내용내용내용내용내용내용...',
-                                claimed: false,
-                              ),
-                              SizedBox(height: 12),
-                              ReviewCard(
-                                imagePath: 'assets/mascot/login_mascot.png',
-                                title: '제품제목',
-                                rating: 5.0,
-                                content: '너무너무너무내용내용내용내용내용내용내용내용내용내용...',
-                                claimed: true,
-                              ),
-                              SizedBox(height: 12),
-                              ReviewCard(
-                                imagePath: 'assets/mascot/login_mascot.png',
-                                title: '제품제목',
-                                rating: 5.0,
-                                content: '너무너무너무내용내용내용내용내용내용내용내용내용내용...',
-                                claimed: true,
-                              ),
                             ],
                           ),
                         ),
+                        
+
+                        // 리뷰
+                        // SingleChildScrollView(
+                        //   padding: EdgeInsets.only(bottom: 90),
+                        //   child: Column(
+                        //     children: const [
+                        //       ReviewCard(
+                        //         imagePath: 'assets/mascot/login_mascot.png',
+                        //         title: '제품제목',
+                        //         rating: 5.0,
+                        //         content: '너무너무너무내용내용내용내용내용내용내용내용내용내용...',
+                        //         claimed: false,
+                        //       ),
+                        //       SizedBox(height: 12),
+                        //       ReviewCard(
+                        //         imagePath: 'assets/mascot/login_mascot.png',
+                        //         title: '제품제목',
+                        //         rating: 5.0,
+                        //         content: '너무너무너무내용내용내용내용내용내용내용내용내용내용...',
+                        //         claimed: true,
+                        //       ),
+                        //       SizedBox(height: 12),
+                        //       ReviewCard(
+                        //         imagePath: 'assets/mascot/login_mascot.png',
+                        //         title: '제품제목',
+                        //         rating: 5.0,
+                        //         content: '너무너무너무내용내용내용내용내용내용내용내용내용내용...',
+                        //         claimed: true,
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
