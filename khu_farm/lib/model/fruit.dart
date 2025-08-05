@@ -49,7 +49,7 @@ class Fruit {
       price: json['price'] as int,
       weight: int.tryParse(json['weight'].toString()) ?? 0,
       deliveryCompany: json['deliveryCompany']?.toString(), // Safely convert to String
-      deliveryDay: json['deliveryDay'],       // Safely convert to String
+      deliveryDay: json['deliveryDay'] as int,       // Safely convert to String
       ratingSum: json['ratingSum'] as int,
       ratingCount: json['ratingCount'] as int,
       description: json['description'] as String,
@@ -107,6 +107,6 @@ class Fruit {
 
   @override
   String toString() {
-    return 'Fruit(id: $id, title: "$title", price: $price, stock: $stock, isWishList: $isWishList, wishListId: $wishListId)';
+    return 'Fruit(id: $id, title: "$title", price: $price, stock: $stock, isWishList: $isWishList, wishListId: $wishListId, deliveryDay: $deliveryDay, deliveryCompany: $deliveryCompany)';
   }
 }

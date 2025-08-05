@@ -347,12 +347,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         statusBarBrightness: Brightness.light,
       ),
     );
+    print(widget.fruit);
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
     final double statusBarHeight = MediaQuery.of(context).padding.top;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
     const double buttonHeight = 50;
+
+    final int maxDelivery = widget.fruit.deliveryDay;
+    final DateTime now = DateTime.now();
+    final DateTime estimatedShipDate = now.add(Duration(days: maxDelivery));
+    final String formattedDate = DateFormat('MM.dd(E)', 'ko_KR').format(estimatedShipDate);
 
     void _showPurchaseModal() {
       final int unitPrice = widget.fruit.price;
@@ -795,12 +801,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(
-                                    '${widget.fruit.deliveryDay ?? ''} 이내 판매자 발송 예정',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey[700]),
-                                  ),
+                                  Text('$formattedDate 이내 판매자 발송 예정', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                                 ],
                               ),
                               Text(

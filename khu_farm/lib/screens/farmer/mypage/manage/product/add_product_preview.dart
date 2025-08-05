@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:flutter_quill_extensions/flutter_quill_extensions.dart' as quill_ext;
@@ -62,7 +63,7 @@ class _FarmerAddProductPreviewScreen
     final int    price = int.parse(args['price'] as String);
     final int weight = int.parse(args['weight'] as String);
     final String deliveryCompany = args['courier']   as String;
-    final int    deliveryDay = int.parse(args['normalShipping'] as String);
+    final int    deliveryDay = int.parse(args['maxDelivery'] as String);
     final int    stock = int.parse(args['stock'] as String);
     final dynamic contentArg = args['content'];
     final String description = contentArg is String
@@ -182,6 +183,11 @@ class _FarmerAddProductPreviewScreen
     final String weight = args['weight'] as String;
     final String stock = args['stock'] as String;
     final String courier = args['courier'] as String;
+
+    final int maxDelivery = int.parse(args['maxDelivery'] as String);
+    final DateTime now = DateTime.now();
+    final DateTime estimatedShipDate = now.add(Duration(days: maxDelivery));
+    final String formattedDate = DateFormat('MM.dd(E)', 'ko_KR').format(estimatedShipDate);
 
     final mediaQuery = MediaQuery.of(context);
 
@@ -383,7 +389,7 @@ class _FarmerAddProductPreviewScreen
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Text('01.01(월)이내 판매자 발송 예정', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                            Text('$formattedDate 이내 판매자 발송 예정', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                             const Spacer(),
                             Text('남은 재고 : $stock 박스', style: const TextStyle(fontSize: 12, color: Colors.grey)),
                           ],
