@@ -41,7 +41,7 @@ android {
     }
 
     signingConfigs {
-    create("release") { // <-- 이렇게 수정하세요.
+    create("release") {
         if (keystorePropertiesFile.exists()) {
             keyAlias = keystoreProperties.getProperty("keyAlias")
             keyPassword = keystoreProperties.getProperty("keyPassword")
