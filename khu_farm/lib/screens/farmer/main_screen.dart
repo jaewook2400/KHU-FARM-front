@@ -256,50 +256,51 @@ class _FarmerMainScreenState extends State<FarmerMainScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // 1) 오늘의 날씨 카드
-                FutureBuilder<WeatherData>(
-                  future: _weatherDataFuture,
-                  builder: (context, snapshot) {
-                    // 기본 카드 디자인
-                    Widget weatherContent;
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      weatherContent = const CircularProgressIndicator(strokeWidth: 2);
-                    } else if (snapshot.hasError) {
-                      weatherContent = const Text('날씨 오류', style: TextStyle(fontSize: 12));
-                    } else if (snapshot.hasData) {
-                      final weather = snapshot.data!;
-                      weatherContent = Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          const Text('오늘의 날씨', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                          const SizedBox(height: 8),
-                          Image.asset(_getWeatherIconPath(weather.pty, weather.sky), width: 32, height: 32),
-                          const SizedBox(height: 4),
-                          Text('${weather.tempMax}°C / ${weather.tempMin}°C', style: const TextStyle(fontSize: 13)),
-                        ],
-                      );
-                    } else {
-                      weatherContent = const Text('날씨 정보 없음', style: TextStyle(fontSize: 12));
-                    }
+                // FutureBuilder<WeatherData>(
+                //   future: _weatherDataFuture,
+                //   builder: (context, snapshot) {
+                //     // 기본 카드 디자인
+                //     Widget weatherContent;
+                //     if (snapshot.connectionState == ConnectionState.waiting) {
+                //       weatherContent = const CircularProgressIndicator(strokeWidth: 2);
+                //     } else if (snapshot.hasError) {
+                //       weatherContent = const Text('날씨 오류', style: TextStyle(fontSize: 12));
+                //     } else if (snapshot.hasData) {
+                //       final weather = snapshot.data!;
+                //       weatherContent = Column(
+                //         crossAxisAlignment: CrossAxisAlignment.center,
+                //         children: [
+                //           const Text('오늘의 날씨', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                //           const SizedBox(height: 8),
+                //           Image.asset(_getWeatherIconPath(weather.pty, weather.sky), width: 32, height: 32),
+                //           const SizedBox(height: 4),
+                //           Text('${weather.tempMax}°C / ${weather.tempMin}°C', style: const TextStyle(fontSize: 13)),
+                //         ],
+                //       );
+                //     } else {
+                //       weatherContent = const Text('날씨 정보 없음', style: TextStyle(fontSize: 12));
+                //     }
 
-                    return Container(
-                      width: screenWidth * 0.4,
-                      alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: weatherContent,
-                    );
-                  },
-                ),
+                //     return Container(
+                //       width: screenWidth * 0.4,
+                //       alignment: Alignment.center,
+                //       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                //       decoration: BoxDecoration(
+                //         color: Colors.white,
+                //         borderRadius: BorderRadius.circular(12),
+                //         boxShadow: [
+                //           BoxShadow(
+                //             color: Colors.black.withOpacity(0.05),
+                //             blurRadius: 8,
+                //             offset: const Offset(0, 4),
+                //           ),
+                //         ],
+                //       ),
+                //       child: weatherContent,
+                //     );
+                //   },
+                // ),
+                const SizedBox(height: 80,),
 
                 const SizedBox(height: 40),
 

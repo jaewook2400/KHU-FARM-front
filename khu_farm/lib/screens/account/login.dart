@@ -92,7 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
         totalPurchaseWeight: valueResult['totalPurchaseWeight'],
         totalDiscountPrice: valueResult['totalDiscountPrice'],
         email: loginResult['email'], // From login API
-        phoneNumber: loginResult['phoneNumber'], // From login API
         userType: userType, // From login API
       );
 

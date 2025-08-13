@@ -16,7 +16,6 @@ class _ConsumerSignupScreenState extends State<ConsumerSignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _idController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
 
@@ -30,7 +29,6 @@ class _ConsumerSignupScreenState extends State<ConsumerSignupScreen> {
     _nameController.dispose();
     _emailController.dispose();
     _idController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     _passwordConfirmController.dispose();
     super.dispose();
@@ -51,7 +49,6 @@ class _ConsumerSignupScreenState extends State<ConsumerSignupScreen> {
       "name": _nameController.text,
       "email": _emailController.text,
       "userId": _idController.text,
-      "phoneNumber": _phoneController.text,
       "password": _passwordController.text,
       "passwordConfirm": _passwordConfirmController.text,
       "termsAgreed": [
@@ -322,11 +319,6 @@ class _ConsumerSignupScreenState extends State<ConsumerSignupScreen> {
                         _isIdCheckedAndAvailable = isAvailable;
                       });
                     },
-                  ),
-                  _LabeledTextField(
-                    label: '전화번호',
-                    hint: "'-'없이 10자리 숫자를 입력하세요.",
-                    controller: _phoneController,
                   ),
                   _LabeledTextField(
                     label: '비밀번호',

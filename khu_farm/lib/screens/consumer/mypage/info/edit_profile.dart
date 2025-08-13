@@ -213,11 +213,6 @@ class _ConsumerEditProfileScreenState extends State<ConsumerEditProfileScreen> {
                         ),
                         const SizedBox(height: 16),
                         // 전화번호
-                        _LabeledField(
-                          label: '전화번호',
-                          controller: _phoneCtrl,
-                          hint: "'-' 없이 숫자만 입력하세요.",
-                        ),
 
                         const SizedBox(height: 24),
                         // 계정 삭제하기

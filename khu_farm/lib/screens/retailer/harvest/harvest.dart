@@ -310,6 +310,16 @@ class _RetailerHarvestScreenState extends State<RetailerHarvestScreen> {
               },
             ),
             _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/stock.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/retailer/stock',
+                  ModalRoute.withName("/retailer/main"),
+                );
+              },
+            ),
+            _NavItem(
               iconPath: 'assets/bottom_navigator/select/harvest.png',
               onTap: () {},
             ),

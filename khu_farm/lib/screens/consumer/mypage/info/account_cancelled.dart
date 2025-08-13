@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
 class ConsumerAccountCancelledScreen extends StatelessWidget {
   const ConsumerAccountCancelledScreen({super.key});
@@ -68,7 +69,7 @@ class ConsumerAccountCancelledScreen extends StatelessWidget {
                   onTap: () {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
-                      '/consumer/main',
+                      '/',
                       (route) => false,
                     );
                   },
@@ -137,7 +138,7 @@ class ConsumerAccountCancelledScreen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Image.asset(
-                      'assets/mascot/login_mascot.png',
+                      'assets/mascot/sad_mascot.png',
                       width: screenWidth * 0.2,
                       height: screenWidth * 0.2,
                     ),
@@ -170,15 +171,21 @@ class ConsumerAccountCancelledScreen extends StatelessWidget {
             child: SizedBox(
               height: 48,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/',
-                    (route) => false,
-                  );
+                onPressed: () async {
+                  // 1. StorageService에 저장된 모든 데이터 삭제
+                  await StorageService().clearAllData();
+
+                  // 2. 위젯이 마운트 상태인지 확인 후 화면 이동
+                  if (context.mounted) {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/', // 로그인 또는 시작 화면으로 이동
+                      (route) => false,
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6FCF4B),
+                  backgroundColor: const Color(0xFFE84C4C),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

@@ -56,10 +56,18 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                 ),
                 const Spacer(),
                 Stack(
-                  clipBehavior: Clip.none, // Stack 밖으로 이미지가 나갈 수 있도록 설정
+                  clipBehavior: Clip.none, // 이미지가 밖으로 나갈 수 있도록 설정
                   alignment: Alignment.center,
                   children: [
-                    // '닫기' 버튼
+                    // 1. 마스코트 이미지를 먼저 배치 (아래에 깔림)
+                    Positioned(
+                      bottom: 25, // 버튼 위로 살짝 올라오도록 위치 조정
+                      child: Image.asset(
+                        'assets/mascot/main_mascot.png', // TODO: 실제 마스코트 이미지 경로 확인
+                        height: 80,
+                      ),
+                    ),
+                    // 2. '닫기' 버튼을 나중에 배치 (마스코트 위에 그려짐)
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -75,14 +83,6 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                           ),
                         ),
                         child: const Text('닫기', style: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                    // 마스코트 이미지
-                    Positioned(
-                      bottom: 25, // 버튼 위로 살짝 올라오도록 위치 조정
-                      child: Image.asset(
-                        'assets/mascot/main_mascot.png', // TODO: 실제 마스코트 이미지 경로 확인
-                        height: 80,
                       ),
                     ),
                   ],
@@ -305,6 +305,16 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                 Navigator.pushNamedAndRemoveUntil(
                   context,
                   '/farmer/daily',
+                  ModalRoute.withName("/farmer/main"),
+                );
+              },
+            ),
+            _NavItem(
+              iconPath: 'assets/bottom_navigator/unselect/stock.png',
+              onTap: () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/farmer/stock',
                   ModalRoute.withName("/farmer/main"),
                 );
               },
@@ -551,9 +561,10 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                                 width: 200,
                                 height: 48,
                                 child: ElevatedButton(
-                                  onPressed: _isAttending || _hasAttendedToday
-                                      ? null
-                                      : _handleAttendance,
+                                  onPressed: () => _showAttendanceSuccessDialog(10),
+                                  // onPressed: _isAttending || _hasAttendedToday
+                                  //     ? null
+                                  //     : _handleAttendance,
                                   style: ElevatedButton.styleFrom(
                                     disabledBackgroundColor: Colors.white,
                                     backgroundColor: const Color(0xFF6FCF4B),

@@ -4,7 +4,6 @@ class UserInfo {
   final int userId;
   final String userName;
   final String email;
-  final String phoneNumber;
   final String userType;
   final int totalPoint;
   final int totalDonation;
@@ -16,7 +15,6 @@ class UserInfo {
     required this.userId,
     required this.userName,
     required this.email,
-    required this.phoneNumber,
     required this.userType,
     required this.totalPoint,
     required this.totalDonation,
@@ -31,7 +29,6 @@ class UserInfo {
       userId: json['userId'] ?? 0,
       userName: json['userName'] ?? 'N/A',
       email: json['email'] ?? '',
-      phoneNumber: json['phoneNumber'] ?? '',
       userType: json['userType'] ?? '',
       totalPoint: json['totalPoint'] ?? 0,
       totalDonation: json['totalDonation'] ?? 0,
@@ -47,7 +44,6 @@ class UserInfo {
       'userId': userId,
       'userName': userName,
       'email': email,
-      'phoneNumber': phoneNumber,
       'userType': userType,
       'totalPoint': totalPoint,
       'totalDonation': totalDonation,
@@ -61,7 +57,6 @@ class UserInfo {
     int? userId,
     String? userName,
     String? email,
-    String? phoneNumber,
     String? userType,
     int? totalPoint,
     int? totalDonation,
@@ -73,7 +68,6 @@ class UserInfo {
       userId: userId ?? this.userId,
       userName: userName ?? this.userName,
       email: email ?? this.email,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
       userType: userType ?? this.userType,
       totalPoint: totalPoint ?? this.totalPoint,
       totalDonation: totalDonation ?? this.totalDonation,
