@@ -146,6 +146,10 @@
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>현재 위치의 날씨 정보를 표시하기 위해 권한이 필요합니다.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>현재 위치의 날씨 정보를 표시하기 위해 권한이 필요합니다.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>과일 등록 시 사진 첨부를 위해 사용자 갤러리 접근 권한이 필요합니다.</string>
 		<key>NSAppTransportSecurity</key>
 		<dict>
 			<!-- Allow Arbitrary Loads in Web Content 속성을 true로 설정 -->

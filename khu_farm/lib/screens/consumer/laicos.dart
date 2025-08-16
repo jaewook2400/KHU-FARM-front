@@ -144,19 +144,19 @@ class ConsumerLaicosScreen extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    // GestureDetector(
-                    //   onTap: () {
-                    //     Navigator.pushNamed(
-                    //       context,
-                    //       '/consumer/notification/list',
-                    //     );
-                    //   },
-                    //   child: Image.asset(
-                    //     'assets/top_icons/notice.png',
-                    //     width: 24,
-                    //     height: 24,
-                    //   ),
-                    // ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/notification/list',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/notice.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {
@@ -354,34 +354,34 @@ class ConsumerLaicosScreen extends StatelessWidget {
           ),
 
           // 채팅 모달 버튼 (고정)
-          // Positioned(
-          //   bottom: screenWidth * 0.02,
-          //   right: screenWidth * 0.02,
-          //   child: Container(
-          //     decoration: BoxDecoration(
-          //       shape: BoxShape.circle,
-          //       color: Colors.white,
-          //       border: Border.all(color: Colors.grey.shade300),
-          //       boxShadow: [
-          //         BoxShadow(
-          //           color: Colors.black.withOpacity(0.1),
-          //           blurRadius: 4,
-          //           offset: const Offset(0, 2),
-          //         ),
-          //       ],
-          //     ),
-          //     child: GestureDetector(
-          //       onTap: () {
-          //         showChatbotModal(context);
-          //       },
-          //       child: Image.asset(
-          //         'assets/chat/chatbot_icon.png',
-          //         width: 68,
-          //         height: 68,
-          //       ),
-          //     ),
-          //   ),
-          // ),
+          Positioned(
+            bottom: screenWidth * 0.02,
+            right: screenWidth * 0.02,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: GestureDetector(
+                onTap: () {
+                  showChatbotModal(context);
+                },
+                child: Image.asset(
+                  'assets/chat/chatbot_icon.png',
+                  width: 68,
+                  height: 68,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:khu_farm/screens/chatbot.dart';
 import 'package:khu_farm/screens/product_detail.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/model/fruit.dart';
@@ -389,19 +390,19 @@ class _FarmerDailyFruitScreenState extends State<FarmerDailyFruitScreen> {
                 ),
                 Row(
                   children: [
-                    // GestureDetector(
-                    //   onTap: () {
-                    //     Navigator.pushNamed(
-                    //       context,
-                    //       '/farmer/notification/list',
-                    //     );
-                    //   },
-                    //   child: Image.asset(
-                    //     'assets/top_icons/notice.png',
-                    //     width: 24,
-                    //     height: 24,
-                    //   ),
-                    // ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/farmer/notification/list',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/notice.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () async {
@@ -525,34 +526,34 @@ class _FarmerDailyFruitScreenState extends State<FarmerDailyFruitScreen> {
               ],
             ),
           ),
-          // Positioned(
-          //   bottom: screenWidth * 0.02,
-          //   right: screenWidth * 0.02,
-          //   child: Container(
-          //     decoration: BoxDecoration(
-          //       shape: BoxShape.circle,
-          //       color: Colors.white,
-          //       border: Border.all(color: Colors.grey.shade300),
-          //       boxShadow: [
-          //         BoxShadow(
-          //           color: Colors.black.withOpacity(0.1),
-          //           blurRadius: 4,
-          //           offset: const Offset(0, 2),
-          //         ),
-          //       ],
-          //     ),
-          //     child: GestureDetector(
-          //       onTap: () {
-          //         // TODO: 챗봇 모달 열기
-          //       },
-          //       child: Image.asset(
-          //         'assets/chat/chatbot_icon.png',
-          //         width: 68,
-          //         height: 68,
-          //       ),
-          //     ),
-          //   ),
-          // ),
+          Positioned(
+            bottom: screenWidth * 0.02,
+            right: screenWidth * 0.02,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(color: Colors.grey.shade300),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: GestureDetector(
+                onTap: () {
+                  showChatbotModal(context);
+                },
+                child: Image.asset(
+                  'assets/chat/chatbot_icon.png',
+                  width: 68,
+                  height: 68,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -133,19 +133,19 @@ class _OrderEditAddressSuccessScreenState
                 ),
                 Row(
                   children: [
-                    // GestureDetector(
-                    //   onTap: () {
-                    //     Navigator.pushNamed(
-                    //       context,
-                    //       '/consumer/notification/list',
-                    //     );
-                    //   },
-                    //   child: Image.asset(
-                    //     'assets/top_icons/notice.png',
-                    //     width: 24,
-                    //     height: 24,
-                    //   ),
-                    // ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/notification/list',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/notice.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       // ✨ 3. 찜 목록 아이콘 클릭 시 동적 라우트 적용

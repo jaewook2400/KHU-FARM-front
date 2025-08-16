@@ -152,7 +152,7 @@ class _RetailerReviewListScreenState extends State<RetailerReviewListScreen> {
                 ),
                 Row(
                   children: [
-                    // GestureDetector(onTap: () => Navigator.pushNamed(context, '/retailer/notification/list'), child: Image.asset('assets/top_icons/notice.png', width: 24, height: 24)),
+                    GestureDetector(onTap: () => Navigator.pushNamed(context, '/retailer/notification/list'), child: Image.asset('assets/top_icons/notice.png', width: 24, height: 24)),
                     const SizedBox(width: 12),
                     GestureDetector(onTap: () => Navigator.pushNamed(context, '/retailer/dib/list'), child: Image.asset('assets/top_icons/dibs.png', width: 24, height: 24)),
                     const SizedBox(width: 12),

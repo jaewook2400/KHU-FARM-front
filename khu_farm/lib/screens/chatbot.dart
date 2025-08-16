@@ -1,5 +1,10 @@
 import 'dart:async';
+import 'dart:convert'; // for jsonEncode/Decode
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http; // http package
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:khu_farm/constants.dart'; // baseUrl
+import 'package:khu_farm/services/storage_service.dart';
 
 // 메시지 데이터를 관리하기 위한 간단한 모델 클래스
 class ChatMessage {
@@ -39,6 +44,7 @@ class ChatbotScreen extends StatefulWidget {
 class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _textController = TextEditingController();
   final List<ChatMessage> _messages = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -50,21 +56,70 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   }
 
   // 메시지를 전송하는 함수
-  void _handleSubmitted(String text) {
-    if (text.trim().isEmpty) return;
+  void _handleSubmitted(String text) async {
+    if (text.trim().isEmpty || _isLoading) return;
 
     _textController.clear();
+
     setState(() {
       _messages.add(ChatMessage(text: text, isUser: true));
+      _messages.add(ChatMessage(text: '나쿠가 입력 중...', isUser: false)); // 로딩 메시지
+      _isLoading = true;
     });
 
-    // TODO: 실제 챗봇 응답 로직 구현
-    // 예시: 1초 후 봇이 응답하는 것처럼 시뮬레이션
-    Timer(const Duration(seconds: 1), () {
+    try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      // 2. API 요청 준비 (GET 쿼리 파라미터 구성)
+      final requestParams = {'question': text};
+      final encodedParams = Uri.encodeComponent(jsonEncode(requestParams));
+      final url= '$baseUrl/chatBot?question=$encodedParams';
+
+      // 3. API 호출
+      final response = await http.get(Uri.parse(url), headers: headers);
+
+      if (!mounted) return;
+
+      // 4. 로딩 인디케이터 제거
       setState(() {
-        _messages.add(ChatMessage(text: '"$text"에 대한 답변입니다.', isUser: false));
+        _messages.removeWhere((msg) => msg.text == '나쿠가 입력 중...');
       });
-    });
+
+      // 5. 결과 처리
+      if (response.statusCode == 200) {
+        // 한글 깨짐 방지를 위해 utf8로 디코딩
+        final decodedBody = jsonDecode(utf8.decode(response.bodyBytes));
+        final botAnswer = decodedBody['result'];
+
+        setState(() {
+          _messages.add(ChatMessage(text: botAnswer, isUser: false));
+        });
+      } else {
+        // API 에러 처리
+        print('Chatbot API Error: ${response.statusCode}');
+        setState(() {
+          _messages.add(ChatMessage(text: '죄송해요, 오류가 발생했어요.', isUser: false));
+        });
+      }
+    } catch (e) {
+      // 네트워크 등 기타 에러 처리
+      print('Chatbot Error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _messages.removeWhere((msg) => msg.text == '나쿠가 입력 중...');
+        _messages.add(ChatMessage(text: '네트워크에 문제가 있어요. 다시 시도해주세요.', isUser: false));
+      });
+    } finally {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+    }
+
   }
 
   @override
@@ -136,7 +191,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: OutlinedButton(
-        onPressed: () => _handleSubmitted(label),
+        onPressed: _isLoading ? null : () => _handleSubmitted(label),
         style: OutlinedButton.styleFrom(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
@@ -150,9 +205,20 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
 
   // 메시지 버블 위젯
   Widget _buildMessageBubble(ChatMessage message) {
-    return Align(
-      alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: message.isUser ? _userMessage(message) : _botMessage(message),
+    // 사용자 메시지는 왼쪽 여백, 봇 메시지는 오른쪽 여백을 주어 너비를 제한
+    Widget messageContent = message.isUser
+        ? _userMessage(message)
+        : Container(
+            margin: const EdgeInsets.only(right: 40.0), // 오른쪽 여백 40 추가
+            child: _botMessage(message),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Align(
+        alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: messageContent,
+      ),
     );
   }
 
@@ -164,20 +230,32 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       children: [
         Image.asset('assets/chat/chatbot_icon.png', width: 40, height: 40),
         const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('나쿠', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD4EDDA), // 연한 초록색
-                borderRadius: BorderRadius.circular(16),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('나쿠', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD4EDDA), // 연한 초록색
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                // Text 위젯을 MarkdownBody 위젯으로 변경
+                child: MarkdownBody(
+                  data: message.text,
+                  // 선택적: 기본 텍스트 스타일을 앱의 테마와 일치시키기
+                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                    p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.black87,
+                          fontSize: 18, // 필요시 폰트 사이즈 조정
+                        ),
+                  ),
+                ),
               ),
-              child: Text(message.text, style: const TextStyle(color: Colors.black87)),
-            ),
-          ],
+            ],
+          ),
         )
       ],
     );
@@ -193,7 +271,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade300),
       ),
-      child: Text(message.text, style: const TextStyle(color: Colors.black87)),
+      child: Text(message.text, style: const TextStyle(color: Colors.black87, fontSize: 18)),
     );
   }
 
@@ -219,8 +297,9 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           Expanded(
             child: TextField(
               controller: _textController,
+              enabled: !_isLoading,
               decoration: InputDecoration(
-                hintText: '채팅을 입력해 주세요.',
+                hintText: _isLoading ? '답변을 기다리는 중...' : '채팅을 입력해 주세요.',
                 fillColor: Colors.grey.shade100,
                 filled: true,
                 border: OutlineInputBorder(
@@ -235,7 +314,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.send, color: Colors.green),
-            onPressed: () => _handleSubmitted(_textController.text),
+            onPressed: _isLoading ? null : () => _handleSubmitted(_textController.text),
           ),
         ],
       ),

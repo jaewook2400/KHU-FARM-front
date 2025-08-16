@@ -251,19 +251,19 @@ class _FarmerManageProductReviewScreenState extends State<FarmerManageProductRev
                 ),
                 Row(
                   children: [
-                    // GestureDetector(
-                    //   onTap: () {
-                    //     Navigator.pushNamed(
-                    //       context,
-                    //       '/farmer/notification/list',
-                    //     );
-                    //   },
-                    //   child: Image.asset(
-                    //     'assets/top_icons/notice.png',
-                    //     width: 24,
-                    //     height: 24,
-                    //   ),
-                    // ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/farmer/notification/list',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/notice.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () {

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'services/notifiaction_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:khu_farm/services/storage_service.dart';
 import 'package:flutter_quill/flutter_quill.dart' as quill;
 import 'package:khu_farm/screens/consumer/daily/daily_fruit.dart';
 import 'package:khu_farm/screens/consumer/mypage/info/address_list.dart';
@@ -55,7 +59,6 @@ import 'package:khu_farm/screens/order/edit_address.dart';
 import 'package:khu_farm/screens/order/edit_address_success.dart';
 import 'package:khu_farm/screens/order/order_fail.dart';
 import 'package:khu_farm/screens/order/order_success.dart';
-import 'package:khu_farm/screens/order/payment.dart';
 import 'package:khu_farm/screens/retailer/cart.dart';
 import 'package:khu_farm/screens/retailer/daily/daily.dart';
 import 'package:khu_farm/screens/retailer/daily/daily_fruit.dart';
@@ -128,6 +131,8 @@ import 'screens/administrator/main_screen.dart';
 import 'screens/administrator/daily/daily.dart';
 
 void main() async {
+  await init();
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.white, // ← 상태바 배경 흰색
@@ -139,8 +144,101 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+Future<void> setupNotificationChannel() async {
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'fcm_default_channel', // id
+    'High Importance Notifications', // name (사용자에게 보이는 채널 이름)
+    description: 'This channel is used for important notifications.', // description (사용자에게 보이는 채널 설명)
+    importance: Importance.max,
+  );
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
+}
+
+Future init() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await _checkLoginStatusAndSaveFcmToken();
+  await setupNotificationChannel();
+}
+
+Future<void> _checkLoginStatusAndSaveFcmToken() async {
+  // StorageService에서 액세스 토큰을 가져옵니다.
+  final accessToken = await StorageService.getAccessToken();
+
+  // 토큰이 존재한다면 (즉, 로그인 상태라면)
+  if (accessToken != null) {
+    print('로그인 상태 확인: FCM 토큰을 서버에 저장합니다.');
+    await saveFcmTokenToServer();
+  } else {
+    print('로그아웃 상태 확인: FCM 토큰을 저장하지 않습니다.');
+  }
+}
+
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final firebaseMessaging;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+
+  String notificationTitle = "No Title";
+  String notificationBody = "No body";
+  String notificationData = "No data";
+
+  @override
+  void initState() {
+    super.initState();
+
+    _initializeLocalNotifications();
+
+    firebaseMessaging = FCM(flutterLocalNotificationsPlugin: flutterLocalNotificationsPlugin);
+
+    firebaseMessaging.setNotifications();
+    firebaseMessaging.bodyCtrl.stream.listen(_changedBody);
+    firebaseMessaging.titleCtrl.stream.listen(_changedTitle);
+    firebaseMessaging.streamCtrl.stream.listen(_changedData);
+  }
+
+  void _initializeLocalNotifications() {
+    // 1. 안드로이드 초기화 설정
+    // 'ic_notification'은 방금 drawable 폴더에 추가한 아이콘 파일의 이름입니다. (.png 확장자 제외)
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('ic_notification');
+
+    // 2. iOS 초기화 설정 (필요한 경우 권한 설정 추가)
+    const DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // 3. 초기화 설정 합치기
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
+
+    // 4. 플러그인 초기화
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  _changedData(String msg) => setState(() => notificationData = msg);
+  _changedTitle(String msg) => setState(() => notificationTitle = msg);
+  _changedBody(String msg) => setState(() => notificationBody = msg);
 
   @override
   Widget build(BuildContext context) {
