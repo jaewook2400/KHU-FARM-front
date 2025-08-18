@@ -205,6 +205,16 @@ class RetailerInfoListScreen extends StatelessWidget {
                           );
                       },
                     ),
+                    _OptionItem(
+                      label: '계정 탈퇴',
+                      color: Colors.red, // 색상 지정
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/consumer/mypage/info/cancel',
+                        );
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -219,9 +229,18 @@ class RetailerInfoListScreen extends StatelessWidget {
 class _OptionItem extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
-  const _OptionItem({required this.label, required this.onTap});
+  final Color? color; // 색상 파라미터 추가 (nullable)
+
+  const _OptionItem({
+    required this.label,
+    required this.onTap,
+    this.color, // 생성자에 추가
+  });
+
   @override
   Widget build(BuildContext context) {
+    final itemColor = color ?? const Color(0xFF333333);
+
     return Column(
       children: [
         InkWell(
@@ -231,8 +250,18 @@ class _OptionItem extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(label, style: const TextStyle(fontSize: 16)),
-                const Icon(Icons.chevron_right, size: 20),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: itemColor, // 텍스트 색상 적용
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: itemColor, // 아이콘 색상 적용
+                ),
               ],
             ),
           ),

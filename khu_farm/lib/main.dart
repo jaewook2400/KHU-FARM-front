@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:khu_farm/screens/farmer/mypage/info/account_cancellation.dart';
+import 'package:khu_farm/screens/farmer/mypage/info/account_cancelled.dart';
+import 'package:khu_farm/screens/retailer/mypage/info/account_cancellation.dart';
+import 'package:khu_farm/screens/retailer/mypage/info/account_cancelled.dart';
 import 'services/notifiaction_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:khu_farm/services/storage_service.dart';
@@ -344,8 +348,12 @@ class _MyAppState extends State<MyApp> {
             (context) => const RetailerAddAddressScreen(),
         '/retailer/mypage/info/edit/address/edit':
             (context) => const RetailerEditAddressScreen(),
-            '/retailer/mypage/info/edit/address/success':
+        '/retailer/mypage/info/edit/address/success':
             (context) => const RetailerEditAddressSuccessScreen(),
+        '/retailer/mypage/info/cancel':
+            (context) => const RetailerAccountCancellationScreen(),
+        '/retailer/mypage/info/cancel/success':
+            (context) => const RetailerAccountCancelledScreen(),
         '/retailer/mypage/order': (context) => const RetailerOrderListScreen(),
         '/retailer/mypage/order/refund': (context) => const RetailerRefundScreen(),
         '/retailer/mypage/order/refund/success':
@@ -379,6 +387,10 @@ class _MyAppState extends State<MyApp> {
         '/farmer/mypage/info/edit/address/edit': (context) => const FarmerEditAddressScreen(),
         '/farmer/mypage/info/edit/address/success': (context) => const FarmerEditAddressSuccessScreen(),
         '/farmer/mypage/info/edit/address/add': (context) => const FarmerAddAddressScreen(),
+        '/farmer/mypage/info/cancel':
+            (context) => const FarmerAccountCancellationScreen(),
+        '/farmer/mypage/info/cancel/success':
+            (context) => const FarmerAccountCancelledScreen(),
         '/farmer/mypage/manage': (context) => const FarmerManageListScreen(),
         '/farmer/mypage/manage/product': (context) => const FarmerManageProductListScreen(),
         '/farmer/mypage/manage/product/add': (context) => FarmerAddProductScreen(),
