@@ -45,10 +45,15 @@ dependencies:
   firebase_messaging: ^16.0.0
   flutter_local_notifications: ^19.4.0
 
+  flutter_launcher_icons: ^0.14.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "assets/app_icon.png"
 
 flutter:
   uses-material-design: true
@@ -103,6 +108,7 @@ flutter:
     - assets/harvest/fruit.png
     - assets/chat/chatbot_icon.png
     - assets/farm/temp_farm.jpg
+    - assets/app_icon.png
 
 flutter_native_splash:
   color: "#FFFFFF"
