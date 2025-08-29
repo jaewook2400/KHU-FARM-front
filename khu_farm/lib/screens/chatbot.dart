@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert'; // for jsonEncode/Decode
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http; // http package
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -45,6 +46,19 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   final TextEditingController _textController = TextEditingController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
+
+  void _copyToClipboard(String text) async {
+  await Clipboard.setData(ClipboardData(text: text));
+    HapticFeedback.selectionClick();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('복사했어요!'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -236,24 +250,29 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
             children: [
               const Text('나쿠', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4EDDA), // 연한 초록색
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                // Text 위젯을 MarkdownBody 위젯으로 변경
-                child: MarkdownBody(
-                  data: message.text,
-                  // 선택적: 기본 텍스트 스타일을 앱의 테마와 일치시키기
-                  styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-                    p: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.black87,
-                          fontSize: 18, // 필요시 폰트 사이즈 조정
-                        ),
+
+              // ⬇️ 여기부터 수정: InkWell로 감싸고 onLongPress로 복사
+              InkWell(
+                onLongPress: () => _copyToClipboard(message.text),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD4EDDA), // 연한 초록색
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: MarkdownBody(
+                    data: message.text,
+                    styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
+                      p: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.black87,
+                            fontSize: 18,
+                          ),
+                    ),
                   ),
                 ),
               ),
+              // ⬆️ 여기까지 수정
             ],
           ),
         )
