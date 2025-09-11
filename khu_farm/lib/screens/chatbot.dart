@@ -23,11 +23,16 @@ void showChatbotModal(BuildContext context) {
     backgroundColor: Colors.transparent,
     builder: (context) {
       return DraggableScrollableSheet(
-        initialChildSize: 0.8, // 초기 모달 높이
-        minChildSize: 0.4,     // 최소 모달 높이
-        maxChildSize: 0.9,     // 최대 모달 높이
+        initialChildSize: 0.8,
+        minChildSize: 0.6,
+        maxChildSize: 0.9,
         builder: (_, controller) {
-          return ChatbotScreen(scrollController: controller);
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom, // 키보드 높이만큼 패딩
+            ),
+            child: ChatbotScreen(scrollController: controller),
+          );
         },
       );
     },
