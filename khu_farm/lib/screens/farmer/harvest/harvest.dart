@@ -56,10 +56,10 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                 ),
                 const Spacer(),
                 Stack(
-                  clipBehavior: Clip.none, // 이미지가 밖으로 나갈 수 있도록 설정
+                  clipBehavior: Clip.none, // Stack 밖으로 이미지가 나갈 수 있도록 설정
                   alignment: Alignment.center,
                   children: [
-                    // 1. 마스코트 이미지를 먼저 배치 (아래에 깔림)
+                    // 마스코트 이미지
                     Positioned(
                       bottom: 25, // 버튼 위로 살짝 올라오도록 위치 조정
                       child: Image.asset(
@@ -67,7 +67,7 @@ class _FarmerHarvestScreenState extends State<FarmerHarvestScreen> {
                         height: 80,
                       ),
                     ),
-                    // 2. '닫기' 버튼을 나중에 배치 (마스코트 위에 그려짐)
+                    // '닫기' 버튼
                     SizedBox(
                       width: double.infinity,
                       height: 50,

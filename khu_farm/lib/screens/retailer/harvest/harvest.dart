@@ -59,6 +59,14 @@ class _RetailerHarvestScreenState extends State<RetailerHarvestScreen> {
                   clipBehavior: Clip.none, // Stack 밖으로 이미지가 나갈 수 있도록 설정
                   alignment: Alignment.center,
                   children: [
+                    // 마스코트 이미지
+                    Positioned(
+                      bottom: 25, // 버튼 위로 살짝 올라오도록 위치 조정
+                      child: Image.asset(
+                        'assets/mascot/main_mascot.png', // TODO: 실제 마스코트 이미지 경로 확인
+                        height: 80,
+                      ),
+                    ),
                     // '닫기' 버튼
                     SizedBox(
                       width: double.infinity,
@@ -75,14 +83,6 @@ class _RetailerHarvestScreenState extends State<RetailerHarvestScreen> {
                           ),
                         ),
                         child: const Text('닫기', style: TextStyle(fontSize: 16)),
-                      ),
-                    ),
-                    // 마스코트 이미지
-                    Positioned(
-                      bottom: 25, // 버튼 위로 살짝 올라오도록 위치 조정
-                      child: Image.asset(
-                        'assets/mascot/main_mascot.png', // TODO: 실제 마스코트 이미지 경로 확인
-                        height: 80,
                       ),
                     ),
                   ],

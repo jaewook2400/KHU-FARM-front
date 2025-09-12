@@ -437,7 +437,7 @@ class _SuccessDialog extends StatelessWidget {
               children: [
                 Positioned(
                   right: 8,
-                  top: 13,
+                  top: 33,
                   child: Image.asset(
                     'assets/mascot/login_mascot.png',
                     width: 50,
