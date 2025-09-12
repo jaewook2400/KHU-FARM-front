@@ -60,7 +60,7 @@ flutter:
   fonts:
     - family: LogoFont
       fonts:
-        - asset: assets/fonts/RixInooAriDuri Regular.ttf
+        - asset: assets/fonts/RixInooAriDuri-Regular.ttf
     - family: default
       fonts:
         - asset: assets/fonts/PRETENDARD-MEDIUM.OTF

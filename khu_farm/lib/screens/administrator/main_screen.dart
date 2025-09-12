@@ -1,6 +1,7 @@
 // 📄 lib/screens/signup_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:khu_farm/shared/text_styles.dart';
 
 class AdministratorMainScreen extends StatefulWidget {
   const AdministratorMainScreen({super.key});
@@ -226,14 +227,10 @@ class _AdministratorMainScreenState extends State<AdministratorMainScreen> {
                 const SizedBox(height: 40),
 
                 // 2) 환영 문구
-                const Text(
-                  'WELCOME TO\nKHU:FARM!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF6FCF4B),
-                  ),
+                Text(
+                    'WELCOME TO\nKHU:FARM!',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.mainpageText
                 ),
 
                 const SizedBox(height: 40),

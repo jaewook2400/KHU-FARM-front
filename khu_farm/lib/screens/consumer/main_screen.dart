@@ -6,6 +6,7 @@ import 'package:khu_farm/model/user_info.dart';
 import 'package:khu_farm/model/weather_data.dart';
 import 'package:intl/intl.dart';
 import 'package:khu_farm/services/weather_service.dart';
+import 'package:khu_farm/shared/text_styles.dart';
 
 
 class ConsumerMainScreen extends StatefulWidget {
@@ -296,14 +297,10 @@ class _ConsumerMainScreenState extends State<ConsumerMainScreen> {
                 const SizedBox(height: 40),
 
                 // 2) 환영 문구
-                const Text(
+                Text(
                   'WELCOME TO\nKHU:FARM!',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF6FCF4B),
-                  ),
+                  style: AppTextStyles.mainpageText
                 ),
 
                 const SizedBox(height: 40),
