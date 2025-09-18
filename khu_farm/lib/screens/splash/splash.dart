@@ -4,6 +4,7 @@ import 'package:khu_farm/model/user_info.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:khu_farm/constants.dart';
+import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,7 +36,8 @@ class _SplashScreenState extends State<SplashScreen> {
         final uri = Uri.parse('$baseUrl/auth/reissue');
         final headers = {'Authorization': 'Bearer $accessToken','Cookie': 'refresh_token=$refreshToken'};
 
-        final response = await http.post(uri, headers: headers);
+        final response = await http.post(uri, headers: headers)
+            .timeout(const Duration(seconds: 5)); // ← 상한 5초
 
         // 1. 토큰 재발급 성공
         if (response.statusCode == 200) {
