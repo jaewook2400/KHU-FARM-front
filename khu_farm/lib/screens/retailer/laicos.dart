@@ -273,6 +273,7 @@ class RetailerLaicosScreen extends StatelessWidget {
                               _MemberItem(member: Member('안소연', '테크 프로덕트팀 기획/제반 영역 총괄(PM)')),
                               _MemberItem(member: Member('김성욱', '경희대학교 컴퓨터공학과 졸업예정, 개발자')),
                               _MemberItem(member: Member('정지안', '경희대학교 컴퓨터공학과 석사과정, 개발자')),
+                              _MemberItem(member: Member('김재욱', '경희대학교 컴퓨터공학과 재학생, 개발자')),
                               _MemberItem(member: Member('서은지', '경희대학교 시각디자인학과 졸업, 디자이너')),
                               _MemberItem(member: Member('양희창', '테크 프로덕트팀 대외협력/마케팅')),
                               _MemberItem(member: Member('차연지', '테크 프로덕트팀 대외협력/마케팅')),
@@ -461,10 +462,21 @@ class _MemberItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // role에 "개발자" 또는 "디자이너"가 들어있으면 이름을 파란색으로 표시
+    final bool isDevOrDesigner =
+        member.role.contains('개발자') || member.role.contains('디자이너');
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(member.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: titleColor)),
+        Text(
+          member.name,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: isDevOrDesigner ? Colors.indigoAccent : titleColor,
+          ),
+        ),
         const SizedBox(width: 8),
         Expanded(child: Text(member.role, style: const TextStyle(fontSize: 14, color: textColor, height: 1.3))),
       ],
