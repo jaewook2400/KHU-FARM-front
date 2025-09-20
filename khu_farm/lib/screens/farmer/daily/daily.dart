@@ -577,7 +577,6 @@ class _FarmerDailyScreenState extends State<FarmerDailyScreen> {
                     indicatorColor: Colors.black,
                     tabs: const [Tab(text: '과일별'), Tab(text: '농가별')],
                   ),
-                  const SizedBox(height: 16),
 
                   // 탭뷰: Expanded로 감싸기
                   Expanded(
@@ -587,8 +586,13 @@ class _FarmerDailyScreenState extends State<FarmerDailyScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            GridView.count(
+                              crossAxisCount: 4, // 한 줄에 4개
+                              childAspectRatio: 2, // 가로 : 세로 = 2 : 1 → 세로 얇아짐
+                              mainAxisSpacing: 8,  // 세로 간격 (원하는 대로 조절 가능)
+                              //crossAxisSpacing: 8, // 가로 간격
+                              shrinkWrap: true,
+                              physics: NeverScrollableScrollPhysics(),
                               children: [
                                 for (var category in fruitsCategory)
                                   GestureDetector(
@@ -597,7 +601,6 @@ class _FarmerDailyScreenState extends State<FarmerDailyScreen> {
                                         context,
                                         '/farmer/daily/fruit',
                                         arguments: {
-                                          // category 맵에서 fruitId를 가져옵니다.
                                           'fruitId': category['fruitId'],
                                           // wholesale 값은 2로 고정합니다.
                                           'wholesale': 2,
@@ -605,7 +608,6 @@ class _FarmerDailyScreenState extends State<FarmerDailyScreen> {
                                       );
                                     },
                                     child: _CategoryIcon(
-                                      // category 맵에서 icon 경로를 가져옵니다.
                                       iconPath: category['fruitIcon'] as String,
                                     ),
                                   ),
