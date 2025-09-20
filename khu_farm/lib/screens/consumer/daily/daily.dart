@@ -149,11 +149,11 @@ class _ConsumerDailyScreenState extends State<ConsumerDailyScreen> {
       _currentFruitSearchKeyword = keyword;
       _hasMoreFruits = true;
     }
-
     setState(() {
       if (cursorId == null) _isLoading = true;
       else _isFetchingMoreFruits = true;
     });
+
 
     try {
       final accessToken = await StorageService.getAccessToken();

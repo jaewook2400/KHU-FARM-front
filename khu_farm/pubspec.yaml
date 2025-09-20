@@ -82,6 +82,8 @@ flutter:
     - assets/icons/mandarin.png
     - assets/icons/tangor.png
     - assets/icons/korean_melon.png
+    - assets/icons/pear.png
+    - assets/icons/gift.png
     - assets/mascot/main_mascot.png
     - assets/bottom_navigator/unselect/daily.png
     - assets/bottom_navigator/unselect/stock.png
