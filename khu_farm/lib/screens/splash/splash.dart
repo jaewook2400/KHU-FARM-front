@@ -30,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final refreshToken = await StorageService.getRefreshToken();
     final userInfo = await StorageService().getUserInfo();
 
-    print("refreshtoken --------- : $refreshToken");
+    //print("refreshtoken --------- : $refreshToken");
     if (!mounted) return;
 
 
@@ -49,22 +49,22 @@ class _SplashScreenState extends State<SplashScreen> {
           if (data['isSuccess'] == true) {
             final newAccessToken = data['result']['accessToken'];
 
-            String? refreshToken;
+            String? newRefreshToken;
             final String? rawCookie = response.headers['set-cookie'];
             if (rawCookie != null) {
               final regExp = RegExp(r'refresh_token=([^;]+)');
               final match = regExp.firstMatch(rawCookie);
               if (match != null) {
-                refreshToken = match.group(1);
+                newRefreshToken = match.group(1);
               }
             }
-            if (refreshToken == null) {
+            if (newRefreshToken == null) {
               setState(() => _errorMessage = '로그인에 실패했습니다. (토큰 오류)');
               return;
             }
 
             // 2. 토큰 저장
-            await StorageService.saveTokens(newAccessToken, refreshToken);
+            await StorageService.saveTokens(newAccessToken, newRefreshToken);
             print('Access Token 재발급 성공');
             _navigateToMainPage(userInfo); // 메인 페이지로 이동
             return;
