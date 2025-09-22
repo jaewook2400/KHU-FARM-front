@@ -431,30 +431,31 @@ class _SuccessDialog extends StatelessWidget {
         child: Material(
           borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(40, 40, 40, 40),
-            child: Stack(
-              clipBehavior: Clip.none,
+            padding: const EdgeInsets.all(40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Positioned(
-                  right: 8,
-                  top: 13,
-                  child: Image.asset(
-                    'assets/mascot/login_mascot.png',
-                    width: 50,
-                    height: 50,
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+                const Text('배송지가 성공적으로 추가되었습니다.'),
+                const SizedBox(height: 30),
+
+                // 🔑 버튼과 마스코트를 같은 Stack 안에 배치
+                Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    const Text('배송지가 성공적으로 추가되었습니다.'),
-                    const SizedBox(height: 30),
+                    Positioned(
+                      right: -0, // 버튼 기준 우측으로 살짝
+                      top: -30,   // 버튼 기준 위로 살짝
+                      child: Image.asset(
+                        'assets/mascot/login_mascot.png',
+                        width: 50,
+                        height: 50,
+                      ),
+                    ),
                     SizedBox(
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton(
                         onPressed: () {
-                          // Pop the dialog, then pop the add_address screen
                           Navigator.of(context).pop();
                           Navigator.of(context).pop();
                         },

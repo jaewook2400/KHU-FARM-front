@@ -131,8 +131,6 @@ import 'screens/farmer/mypage/manage/manage_list.dart';
 import 'screens/farmer/mypage/manage/product/add_product.dart';
 import 'screens/farmer/mypage/manage/product/add_product_detail.dart';
 import 'screens/farmer/mypage/manage/product/add_product_preview.dart';
-import 'screens/administrator/main_screen.dart';
-import 'screens/administrator/daily/daily.dart';
 
 void main() async {
   await init();
@@ -427,8 +425,6 @@ class _MyAppState extends State<MyApp> {
             (context) => const FarmerAddInquiryScreen(),
         '/farmer/mypage/inquiry/faq':
             (context) => const FarmerFAQListScreen(),
-        '/admin/main': (context) => const AdministratorMainScreen(),
-        '/admin/daily': (context) => const AdministratorDailyScreen(),
       },
     );
   }

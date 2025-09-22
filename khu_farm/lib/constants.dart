@@ -21,6 +21,16 @@ const fruitsCategory = [
     "fruitName": "만감류",
     "fruitIcon": "assets/icons/tangor.png",
   },
+  {
+    "fruitId": 5,
+    "fruitName": "배",
+    "fruitIcon": "assets/icons/pear.png",
+  },
+  {
+    "fruitId": 6,
+    "fruitName": "선물",
+    "fruitIcon": "assets/icons/gift.png",
+  },
 ];
 
 const deliveryCompany = [
