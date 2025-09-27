@@ -86,7 +86,7 @@ class FCM {
     terminateNotification();
 
     // FCM 토큰 갱신 처리 추가
-    //_listenTokenRefresh();
+    _listenTokenRefresh();
   }
 
   void _listenTokenRefresh() {

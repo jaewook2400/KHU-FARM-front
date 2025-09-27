@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:khu_farm/services/notifiaction_service.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/model/user_info.dart';
@@ -114,6 +115,8 @@ class _LoginScreenState extends State<LoginScreen> {
           print('User addresses saved successfully.');
         }
       }
+
+      await saveFcmTokenToServer(); // 로그인 후 다시 저장
 
       String route = '';
       switch (userType) {
