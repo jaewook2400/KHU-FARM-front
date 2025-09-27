@@ -7,6 +7,7 @@ import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/model/delivery_tracking.dart';
 import 'package:khu_farm/model/order_status.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/screens/consumer/mypage/order/order_detail_refund.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -347,10 +348,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                             TextButton(
                                               child: Text('환불 접수하기', style: TextStyle(color: Colors.red, fontWeight: FontWeight.normal)),
                                               onPressed: () {
-                                                Navigator.pushNamed(
+                                                Navigator.push(
                                                   context,
-                                                  '/consumer/mypage/order/detail/refund',
-                                                  arguments: widget.order,
+                                                  MaterialPageRoute(
+                                                    builder: (_) => RefundScreen(order: widget.order),
+                                                  ),
                                                 );
                                               },
                                             ),

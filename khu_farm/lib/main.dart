@@ -316,9 +316,7 @@ class _MyAppState extends State<MyApp> {
         '/consumer/mypage/info/cancel/success':
             (context) => const ConsumerAccountCancelledScreen(),
         '/consumer/mypage/order': (context) => const ConsumerOrderListScreen(),
-        '/consumer/mypage/order/detail/refund': (context) => const ConsumerRefundScreen(),
-        '/consumer/mypage/order/review/add':
-            (context) => const ConsumerAddReviewScreen(),
+        '/consumer/mypage/order/review/add': (context) => const ConsumerAddReviewScreen(),
         '/consumer/mypage/review': (context) => const ConsumerReviewListScreen(),
         '/consumer/mypage/inquiry/personal':
             (context) => const ConsumerPersonalInquiryListScreen(),
