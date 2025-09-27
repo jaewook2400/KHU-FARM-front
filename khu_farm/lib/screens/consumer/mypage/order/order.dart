@@ -74,6 +74,7 @@ class _ConsumerOrderListScreenState extends State<ConsumerOrderListScreen> {
         final data = json.decode(utf8.decode(response.bodyBytes));
         if (data['isSuccess'] == true && data['result'] != null) {
           final List<dynamic> orderJson = data['result']['content'];
+          //print(data['result']['content'][0]['orderStatus']);
           final newOrders = orderJson.map((json) => Order.fromJson(json)).toList();
           
           if (mounted) {

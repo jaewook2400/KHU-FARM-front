@@ -6,6 +6,7 @@ import 'package:khu_farm/screens/farmer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/account_cancelled.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancelled.dart';
+import 'screens/consumer/mypage/order/order_detail_refund.dart';
 import 'services/notifiaction_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:khu_farm/services/storage_service.dart';
@@ -315,6 +316,7 @@ class _MyAppState extends State<MyApp> {
         '/consumer/mypage/info/cancel/success':
             (context) => const ConsumerAccountCancelledScreen(),
         '/consumer/mypage/order': (context) => const ConsumerOrderListScreen(),
+        '/consumer/mypage/order/detail/refund': (context) => const ConsumerRefundScreen(),
         '/consumer/mypage/order/review/add':
             (context) => const ConsumerAddReviewScreen(),
         '/consumer/mypage/review': (context) => const ConsumerReviewListScreen(),

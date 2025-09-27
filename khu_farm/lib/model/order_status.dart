@@ -11,24 +11,24 @@ class DeliveryStatus {
 // 서버 상태(key)를 UI 단계(stepName)와 매핑한 맵
 const Map<String, DeliveryStatus> statusMap = {
   // '결제 완료' 단계에 매핑
-  '결제 대기': DeliveryStatus('결제 대기', '결제 완료', Colors.grey),
-  '주문 완료': DeliveryStatus('주문 완료', '결제 완료', Colors.orange),
+  'PAYMENT_STANDBY': DeliveryStatus('결제 대기', '결제 완료', Colors.grey),
+  'ORDER_COMPLETED': DeliveryStatus('주문 완료', '결제 완료', Colors.orange),
 
   // '배송 준비중' 단계에 매핑
-  '배송 준비중': DeliveryStatus('배송 준비중', '배송 준비중', Colors.blueAccent),
+  'PREPARING_SHIPMENT': DeliveryStatus('배송 준비중', '배송 준비중', Colors.blueAccent),
 
   // '배송중' 단계에 매핑
-  '배송중': DeliveryStatus('배송 중', '배송중', Colors.green),
+  'SHIPPING': DeliveryStatus('배송 중', '배송중', Colors.green),
 
   // '배달 완료' 단계에 매핑
-  '배달완료': DeliveryStatus('배송 완료', '배달 완료', Colors.blue),
+  'SHIPMENT_COMPLETED': DeliveryStatus('배송 완료', '배달 완료', Colors.blue),
   '배송 완료': DeliveryStatus('배송 완료', '배달 완료', Colors.blue),
 
   // 매핑되지 않는 기타 상태들 (stepName을 비워둠)
-  '주문 취소': DeliveryStatus('주문 취소', '', Colors.red),
-  '주문 실패': DeliveryStatus('주문 실패', '', Colors.purple),
-  '환불 대기': DeliveryStatus('환불 대기', '', Colors.red),
-  '환불 거부': DeliveryStatus('환불 거부', '', Colors.grey),
-  '부분 환불': DeliveryStatus('부분 환불', '', Colors.deepOrange),
+  'ORDER_CANCELLED': DeliveryStatus('주문 취소', '', Colors.red),
+  'ORDER_FAILED': DeliveryStatus('주문 실패', '', Colors.purple),
+  'REFUND_REQUESTED': DeliveryStatus('환불 대기', '', Colors.red),
+  'REFUND_DENIED': DeliveryStatus('환불 거부', '', Colors.grey),
+  'PAYMENT_PARTIALLY_REFUNDED': DeliveryStatus('부분 환불', '', Colors.deepOrange),
   '알 수 없음': DeliveryStatus('알 수 없음', '', Colors.black),
 };

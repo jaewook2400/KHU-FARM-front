@@ -30,39 +30,102 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _fetchTrackingInfo() async {
-  setState(() => _isLoading = true);
-  final accessToken = await StorageService.getAccessToken();
-  if (accessToken == null) {
-    setState(() => _isLoading = false);
-    return;
-  }
-  final headers = {'Authorization': 'Bearer $accessToken'};
+    setState(() => _isLoading = true);
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    final headers = {'Authorization': 'Bearer $accessToken'};
 
-  try {
-    final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
-    final getResponse = await http.get(getUri, headers: headers);
-    
-    if (getResponse.statusCode == 200) {
-      final data = json.decode(utf8.decode(getResponse.bodyBytes));
-      if (data['isSuccess'] == true && data['result'] != null) {
+    try {
+      final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
+      final getResponse = await http.get(getUri, headers: headers);
+
+      if (getResponse.statusCode == 200) {
+        final data = json.decode(utf8.decode(getResponse.bodyBytes));
+        if (data['isSuccess'] == true && data['result'] != null) {
+          if(mounted) {
+            setState(() {
+              _trackingData = DeliveryTrackingData.fromJson(data['result']);
+            });
+          }
+        }
+      } else {
+        //throw Exception('Failed to fetch tracking info');
+        /// 에러 던지는 대신에, 목데이터를 넣음
+        print('Failed to fetch tracking info: ${getResponse.statusCode}, 대신 목데이터를 사용합니다.');
+        final Map<String, dynamic> fakeData = {
+          "timestamp": "2025-09-27T13:57:55.925Z",
+          "isSuccess": true,
+          "code": "string",
+          "message": "string",
+          "result": {
+            "orderResponse": {
+              "merchantUid": "string",
+              "ordererName": "string",
+              "totalPrice": 0,
+              "orderCount": 0,
+              "portCode": "string",
+              "address": "string",
+              "detailAddress": "string",
+              "recipient": "string",
+              "phoneNumber": "string",
+              "orderRequest": "string"
+            },
+            "deliveryStatus": {
+              "carrier": {
+                "id": "string",
+                "name": "string",
+                "tel": "string"
+              },
+              "from": {
+                "name": "string",
+                "time": "string"
+              },
+              "to": {
+                "name": "string",
+                "time": "string"
+              },
+              "progresses": [
+                {
+                  "time": "string",
+                  "status": {
+                    "id": "string",
+                    "text": "string"
+                  },
+                  "location": {
+                    "name": "string"
+                  },
+                  "description": "string"
+                }
+              ],
+              "state": {
+                "id": "string",
+                "text": "SHIPPING"
+              },
+              "_deprecated_warn": "string"
+            },
+            "deliveryCompany": "string",
+            "deliveryNumber": "string"
+          }
+        };
+
         if(mounted) {
           setState(() {
             // --- 이 부분이 수정되었습니다 ---
             // 'deliveryStatus' 객체 대신 'result' 객체 전체를 전달합니다.
-            _trackingData = DeliveryTrackingData.fromJson(data['result']);
+            _trackingData = DeliveryTrackingData.fromJson(fakeData['result']);
             // --- 여기까지 ---
           });
         }
       }
-    } else {
-      throw Exception('Failed to fetch tracking info');
+    } catch (e) {
+      print('Error in fetching tracking info: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-  } catch (e) {
-    print('Error in fetching tracking info: $e');
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -271,18 +334,32 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                                 children: [
                                   _buildDeliveryStatus(_trackingData!, widget.order),
                                   const SizedBox(height: 40),
-                                  const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
-                                  const SizedBox(height: 8),
-                                  TextButton(
-                                    onPressed: () {},
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text('환불 접수하기', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                                        Icon(Icons.chevron_right, color: Colors.black),
-                                      ],
-                                    ),
-                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
+                                      const SizedBox(width: 8),
+                                      TextButton(
+                                        onPressed: () {},
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            TextButton(
+                                              child: Text('환불 접수하기', style: TextStyle(color: Colors.red, fontWeight: FontWeight.normal)),
+                                              onPressed: () {
+                                                Navigator.pushNamed(
+                                                  context,
+                                                  '/consumer/mypage/order/detail/refund',
+                                                  arguments: widget.order,
+                                                );
+                                              },
+                                            ),
+                                            Icon(Icons.chevron_right, color: Colors.red),
+                                          ],
+                                        ),
+                                      ),
+                                    ]
+                                  )
                                 ],
                               ),
                             ),
@@ -298,9 +375,13 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   /// Helper widget for the delivery status stepper
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order order) {
     const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
-    final currentStatusInfo =
+    final DeliveryStatus currentStatusInfo =
         statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
     int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+
+    debugPrint(trackingData.currentStateText);
+    debugPrint(currentStatusInfo.stepName);
+    debugPrint(currentStep.toString());
 
     final companyName = getDeliveryCompanyName(order.deliveryCompany);
 
