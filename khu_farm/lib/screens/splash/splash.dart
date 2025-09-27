@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen> {
         route = '/farmer/main';
         break;
       case 'ROLE_INDIVIDUAL':
-        route = '/consumer/main';
+        route = '/retailer/main';
         break;
       case 'ROLE_BUSINESS':
         route = '/retailer/main';

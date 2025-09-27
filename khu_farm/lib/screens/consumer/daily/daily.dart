@@ -8,6 +8,7 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/model/fruit.dart';
 import 'package:khu_farm/model/farm.dart';
+import 'package:khu_farm/shared/widgets/daily/category_icon.dart';
 
 class ConsumerDailyScreen extends StatefulWidget {
   const ConsumerDailyScreen({super.key});
@@ -605,7 +606,7 @@ class _ConsumerDailyScreenState extends State<ConsumerDailyScreen> {
                                     },
                                   );
                                 },
-                                child: _CategoryIcon(
+                                child: CategoryIcon(
                                   iconPath: category['fruitIcon'] as String,
                                 ),
                               );
@@ -832,30 +833,6 @@ class _NavItem extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [Image.asset(iconPath, width: size, height: size)],
-      ),
-    );
-  }
-}
-
-class _CategoryIcon extends StatelessWidget {
-  final String iconPath;
-
-  const _CategoryIcon({required this.iconPath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(4), // 여백 최소화
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Image.asset(
-              iconPath,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ],
       ),
     );
   }
