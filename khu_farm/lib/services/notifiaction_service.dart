@@ -84,6 +84,16 @@ class FCM {
     backgroundNotification();
 
     terminateNotification();
+
+    // FCM 토큰 갱신 처리 추가
+    //_listenTokenRefresh();
+  }
+
+  void _listenTokenRefresh() {
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      print("🔄 새로운 FCM 토큰 발급됨: $newToken");
+      await saveFcmTokenToServer(); // 서버에 갱신 저장
+    });
   }
 
   foregroundNotification() {

@@ -171,13 +171,12 @@ Future init() async {
 }
 
 Future<void> _checkLoginStatusAndSaveFcmToken() async {
-  // StorageService에서 액세스 토큰을 가져옵니다.
+  // StorageService에서 액세스 토큰(JWT)을 가져옵니다.
   final accessToken = await StorageService.getAccessToken();
 
-  // 토큰이 존재한다면 (즉, 로그인 상태라면)
-  if (accessToken != null) {
+  if (accessToken != null) { // JWT 토큰이 존재한다면 (즉, 로그인 상태라면)
     print('로그인 상태 확인: FCM 토큰을 서버에 저장합니다.');
-    await saveFcmTokenToServer();
+    await saveFcmTokenToServer(); // FCM 토큰을 서버에 저장
   } else {
     print('로그아웃 상태 확인: FCM 토큰을 저장하지 않습니다.');
   }
