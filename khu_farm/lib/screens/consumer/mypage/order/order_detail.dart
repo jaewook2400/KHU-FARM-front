@@ -334,34 +334,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               child: Column(
                                 children: [
                                   _buildDeliveryStatus(_trackingData!, widget.order),
-                                  const SizedBox(height: 40),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
-                                      const SizedBox(width: 8),
-                                      TextButton(
-                                        onPressed: () {},
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            TextButton(
-                                              child: Text('환불 접수하기', style: TextStyle(color: Colors.red, fontWeight: FontWeight.normal)),
-                                              onPressed: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (_) => RefundScreen(order: widget.order),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                            Icon(Icons.chevron_right, color: Colors.red),
-                                          ],
-                                        ),
-                                      ),
-                                    ]
-                                  )
                                 ],
                               ),
                             ),
@@ -371,6 +343,36 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    child: Text('환불 접수하기', style: TextStyle(color: Colors.red, fontWeight: FontWeight.normal)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RefundScreen(order: widget.order),
+                        ),
+                      );
+                    },
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.red),
+                ],
+              ),
+            ),
+          ]
+        ),
+      )
     );
   }
 

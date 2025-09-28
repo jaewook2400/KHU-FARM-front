@@ -219,10 +219,14 @@ class _RefundScreenState extends State<RefundScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.only(
+            left: 18,
+            right: 18,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16, // 키보드 높이만큼 패딩
+          ),
           child: SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 36,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
@@ -233,7 +237,7 @@ class _RefundScreenState extends State<RefundScreen> {
               onPressed: _submitRefund,
               child: const Text(
                 "접수하기",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
           ),
