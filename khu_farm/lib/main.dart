@@ -352,9 +352,6 @@ class _MyAppState extends State<MyApp> {
         '/retailer/mypage/info/cancel/success':
             (context) => const RetailerAccountCancelledScreen(),
         '/retailer/mypage/order': (context) => const RetailerOrderListScreen(),
-        '/retailer/mypage/order/refund': (context) => const RetailerRefundScreen(),
-        '/retailer/mypage/order/refund/success':
-            (context) => const RetailerRefundSuccessScreen(),
         '/retailer/mypage/inquiry/personal':
             (context) => const RetailerPersonalInquiryListScreen(),
         '/retailer/mypage/inquiry/personal/add':

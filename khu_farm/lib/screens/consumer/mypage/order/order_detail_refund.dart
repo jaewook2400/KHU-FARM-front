@@ -1,7 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
+import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/screens/consumer/mypage/order/order.dart';
+import 'package:khu_farm/services/storage_service.dart';
 
 class RefundScreen extends StatefulWidget {
   const RefundScreen({super.key, required this.order});
@@ -13,6 +18,7 @@ class RefundScreen extends StatefulWidget {
 
 class _RefundScreenState extends State<RefundScreen> {
   final TextEditingController _reasonController = TextEditingController();
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -20,7 +26,14 @@ class _RefundScreenState extends State<RefundScreen> {
     super.dispose();
   }
 
-  void _submitRefund() {
+  Future<void> _submitRefund() async {
+    // 이미 로딩 중이면 중복 호출 방지
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
     final reason = _reasonController.text.trim();
     if (reason.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -29,13 +42,65 @@ class _RefundScreenState extends State<RefundScreen> {
       return;
     }
 
-    // TODO: 환불 접수 API 호출
+    final accessToken = await StorageService.getAccessToken();
+
+    if (accessToken == null) {
+      _showErrorDialog('로그인이 필요합니다.');
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    final uri = Uri.parse('$baseUrl/order/refund/${widget.order.orderDetailId}');
+    final headers = {
+      'Authorization': 'Bearer $accessToken',
+      'Content-Type': 'application/json',
+    };
+    final body = json.encode({
+      'refundReason': _reasonController.text,
+    });
+
+    try {
+      final response = await http.patch(uri, headers: headers, body: body);
+      final responseBody = json.decode(utf8.decode(response.bodyBytes));
+      print(responseBody);
+
+      if (response.statusCode == 200 && responseBody['isSuccess'] == true) {
+        // 성공 시, 주문/배송 목록 화면으로 이동
+        Navigator.pop(context);
+      } else {
+        // API가 실패 응답을 보냈을 경우
+        final message = responseBody['message'] ?? '알 수 없는 오류가 발생했습니다.';
+        _showErrorDialog(message);
+      }
+    } catch (e) {
+      // 네트워크 오류 등 예외 발생 시
+      _showErrorDialog('네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
     print("환불 요청: $reason");
+  }
 
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("환불 요청이 접수되었습니다.")),
+  // 실패 알림창을 띄우는 함수
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('환불 접수 실패'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('확인'),
+          ),
+        ],
+      ),
     );
   }
 
