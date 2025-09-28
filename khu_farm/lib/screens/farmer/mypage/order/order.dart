@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/screens/consumer/mypage/order/order_detail.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
