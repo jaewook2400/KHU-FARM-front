@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/shared/app_colors.dart';
 import '../product_detail.dart';
 import 'package:khu_farm/model/fruit.dart';
 import 'package:khu_farm/services/storage_service.dart';
@@ -266,7 +267,7 @@ class _ConsumerDibsScreenState extends State<ConsumerDibsScreen> {
                       '찜 목록',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -300,7 +301,7 @@ class _ConsumerDibsScreenState extends State<ConsumerDibsScreen> {
                                       ),
                                     );
                                   },
-                                  child: _WishlistItem(
+                                  child: WishlistItem(
                                     fruit: fruit,
                                     onDelete: () => _deleteDibsItem(fruit.wishListId),
                                   ),
@@ -318,11 +319,11 @@ class _ConsumerDibsScreenState extends State<ConsumerDibsScreen> {
 }
 
 /// 찜 목록의 각 항목을 렌더링하는 별도의 위젯
-class _WishlistItem extends StatelessWidget {
+class WishlistItem extends StatelessWidget {
   final Fruit fruit;
   final VoidCallback onDelete;
 
-  const _WishlistItem({required this.fruit, required this.onDelete});
+  const WishlistItem({required this.fruit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -391,7 +392,7 @@ class _WishlistItem extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 8,
+                bottom: 15,
                 right: 8,
                 child: GestureDetector(
                   onTap: onDelete,
@@ -403,7 +404,7 @@ class _WishlistItem extends StatelessWidget {
                     padding: const EdgeInsets.all(4),
                     child: const Icon(
                       Icons.favorite,
-                      color: Colors.red,
+                      color: AppColors.fav,
                       size: 20,
                     ),
                   ),
@@ -426,10 +427,18 @@ class _WishlistItem extends StatelessWidget {
                 ),
                 Text(
                   // 가격과 단위를 fruit 모델에서 가져와 포매팅
-                  '${formatter.format(fruit.price)}원 / ${fruit.weight}kg',
+                  '${formatter.format(fruit.price)}원 / ',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  // 가격과 단위를 fruit 모델에서 가져와 포매팅
+                  '${fruit.weight}kg',
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ],
