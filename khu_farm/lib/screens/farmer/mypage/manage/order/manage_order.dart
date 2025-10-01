@@ -247,6 +247,12 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
   @override
   Widget build(BuildContext context) {
 
+    final String title = switch(section) {
+      OrderSection.newOrder => "NEW! 신규 주문",
+      OrderSection.shipping => "배송 현황",
+      OrderSection.refund => "환불 처리",
+      OrderSection.cancelled => "결제 취소",
+    };
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -429,8 +435,8 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      '주문 내역 확인',
+                    Text(
+                      title,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
