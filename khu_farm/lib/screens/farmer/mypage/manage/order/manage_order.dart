@@ -9,6 +9,9 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
+import 'package:khu_farm/screens/farmer/mypage/manage/order/new_manage_order.dart';
+
+
 
 class FarmerManageOrderListScreen extends StatefulWidget {
   const FarmerManageOrderListScreen({super.key});
@@ -20,6 +23,7 @@ class FarmerManageOrderListScreen extends StatefulWidget {
 class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScreen> {
   String? _selectedPeriod;
   String? _selectedStatus;
+  late OrderSection section;
 
   List<SellerOrder> _orders = [];
   bool _isLoading = true;
@@ -30,9 +34,20 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
   bool _hasMore = true;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // arguments를 didChangeDependencies에서 안전하게 꺼내기
+    final args =
+    ModalRoute.of(context)?.settings.arguments as OrderPageArgs?;
+    section = args?.section ?? OrderSection.newOrder;
+  }
+
+  @override
   void initState() {
     super.initState();
+    print("initState!");
     _fetchSellerOrders();
+    print('the length of orders is ${_orders.length}');
     // ✨ 2. 스크롤 리스너 추가
     _scrollController.addListener(_onScroll);
   }
@@ -42,6 +57,61 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  String _titleOf(OrderSection s) {
+    switch (s) {
+      case OrderSection.newOrder:
+        return 'NEW! 신규 주문';
+      case OrderSection.shipping:
+        return '배송 현황';
+      case OrderSection.refund:
+        return '환불 처리';
+      case OrderSection.cancelled:
+        return '결제 취소';
+    }
+  }
+
+  // argument에 따라 바뀌는 “사소한 버튼”
+  Widget _actionButton(OrderSection s) {
+    switch (s) {
+      case OrderSection.newOrder:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 신규 주문 처리 로직
+            });
+          },
+          child: const Text('결제 완료'),
+        );
+      case OrderSection.shipping:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 송장 업로드 로직
+            });
+          },
+          child: const Text('배송 중'),
+        );
+      case OrderSection.refund:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 환불 승인 로직
+            });
+          },
+          child: const Text('환불 대기'),
+        );
+      case OrderSection.cancelled:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 취소 관련 로직
+            });
+          },
+          child: const Text('결제 취소'),
+        );
+    }
   }
 
   // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
@@ -88,21 +158,14 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         print(data);
-        if (data['isSuccess'] == true && data['result'] != null) {
-          final List<dynamic> orderJson = data['result']['content'];
-          final newOrders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
-          
-          setState(() {
-            if (cursorId == null) {
-              _orders = newOrders;
-            } else {
-              _orders.addAll(newOrders);
-            }
-            if (newOrders.length < 5) {
-              _hasMore = false;
-            }
-          });
+
+        if (data['isSuccess'] == true) {
+          _handleOrders(data, cursorId);
         }
+      } else {
+        // ✅ 200이 아닐 경우에도 목데이터 채우기
+        print('Server error: ${response.statusCode}, using mock data');
+        _handleOrders(null, cursorId);
       }
     } catch (e) {
       print('Failed to fetch seller orders: $e');
@@ -113,9 +176,78 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
       });
     }
   }
+
+  void _handleOrders(dynamic data, int? cursorId) { //statusCode가 200이 아닐 때 목데이터를 _orders에 저장해주는 함수
+    List<dynamic> orderJson = [];
+
+    if (data == null || data['result'] == null || (data['result']['size'] ?? 0) == 0) {
+      // ✅ 목데이터
+      orderJson = [
+        {
+          "orderId": 1,
+          "orderDetailId": 101,
+          "merchantUid": "MUID-001",
+          "ordererName": "홍길동",
+          "totalPrice": 15000,
+          "fruitTitle": "사과 3kg",
+          "orderCount": 1,
+          "portCode": "PORT001",
+          "address": "서울특별시 강남구 테헤란로 123",
+          "detailAddress": "101호",
+          "recipient": "홍길동",
+          "phoneNumber": "010-1234-5678",
+          "deliveryCompany": "CJ대한통운",
+          "deliveryNumber": "123456789",
+          "orderRequest": "문 앞에 두세요",
+          "deliveryStatus": "ORDER_COMPLETED",
+          "orderStatus": "결제 완료",
+          "refundReason": "",
+          "createdAt": "2025-10-01T08:49:27.703Z"
+        },
+        {
+          "orderId": 2,
+          "orderDetailId": 102,
+          "merchantUid": "MUID-002",
+          "ordererName": "김철수",
+          "totalPrice": 20000,
+          "fruitTitle": "배 5kg",
+          "orderCount": 2,
+          "portCode": "PORT002",
+          "address": "부산광역시 해운대구 센텀로 456",
+          "detailAddress": "202호",
+          "recipient": "김철수",
+          "phoneNumber": "010-9876-5432",
+          "deliveryCompany": "한진택배",
+          "deliveryNumber": "987654321",
+          "orderRequest": "직접 전달 부탁드립니다",
+          "deliveryStatus": "SHIPPING",
+          "orderStatus": "배송 중",
+          "refundReason": "",
+          "createdAt": "2025-10-01T08:50:00.000Z"
+        },
+      ];
+    } else {
+      orderJson = data['result']['content'] ?? [];
+    }
+
+    final newOrders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
+
+    setState(() {
+      if (cursorId == null) {
+        _orders = newOrders;
+      } else {
+        _orders.addAll(newOrders);
+      }
+      if (newOrders.length < 5) {
+        _hasMore = false;
+      }
+    });
+  }
   
   @override
   Widget build(BuildContext context) {
+
+
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -535,18 +667,22 @@ class _OrderInfoCard extends StatelessWidget {
                 ),
                 _actionButton('배송 현황 확인', onPressed: onTrackDelivery),
                 isRefundPending
-                    ? ElevatedButton(
-                        // ✨ 4. onPressed에 콜백 함수 연결
-                        onPressed: onRefund,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                        ),
-                        child: const Text('환불'),
-                      )
+                    ? SizedBox(
+                  width: 100,
+                  height: 50,
+                  child: ElevatedButton(
+                    // ✨ 4. onPressed에 콜백 함수 연결
+                    onPressed: onRefund,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text('환불'),
+                  ),
+                )
                     : _actionButton('환불', onPressed: null),
               ],
             ),
@@ -557,20 +693,25 @@ class _OrderInfoCard extends StatelessWidget {
   }
 
   Widget _actionButton(String label, {VoidCallback? onPressed}) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.grey.shade700,
-        disabledForegroundColor: Colors.grey.shade400,
-        side: BorderSide(
-          color:
-              onPressed != null ? Colors.grey.shade600 : Colors.grey.shade300,
+    return SizedBox(
+      width: 90,
+      height: 30,
+      child: OutlinedButton(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.grey.shade700,
+          disabledForegroundColor: Colors.grey.shade400,
+          side: BorderSide(
+            color:
+            onPressed != null ? Colors.grey.shade600 : Colors.grey.shade300,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-      ),
-      child: Text(label),
+        child: Text(label, style: const TextStyle(fontSize: 12)),
+      )
     );
   }
 }

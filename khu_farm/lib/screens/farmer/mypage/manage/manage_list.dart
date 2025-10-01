@@ -193,8 +193,8 @@ class FarmerManageListScreen extends StatelessWidget {
                   '주문 관리',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                _SectionItem(label: '주문 내역 확인', onTap: () {
-                  Navigator.pushNamed(context, '/farmer/mypage/manage/order');
+                _SectionItem(label: '주문 내역 / 환불 대기', onTap: () {
+                  Navigator.pushNamed(context, '/farmer/mypage/manage/neworder');
                 }),
               ],
             ),

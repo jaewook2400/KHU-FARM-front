@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/account_cancelled.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/new_manage_order.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancelled.dart';
 import 'screens/consumer/mypage/order/order_detail_refund.dart';
@@ -404,13 +405,14 @@ class _MyAppState extends State<MyApp> {
         '/farmer/mypage/manage/inquiry/product': (context) => const FarmerManageProductInquiryScreen(),
         '/farmer/mypage/manage/inquiry/detail': (context) => const FarmerManageInquiryDetailScreen(),
         '/farmer/mypage/manage/inquiry/reply/success': (context) => const FarmerAddInquiryReplySuccessScreen(),
-        '/farmer/mypage/manage/order': (context) => const FarmerManageOrderListScreen(),
+        '/farmer/mypage/manage/order': (context) => FarmerManageOrderListScreen(),
         '/farmer/mypage/manage/order/detail': (context) => const FarmerManageOrderDetailScreen(),
         '/farmer/mypage/manage/order/delnum': (context) => const FarmerManageOrderDeliveryNumberScreen(),
         '/farmer/mypage/manage/order/delstat': (context) => const FarmerManageOrderDeliveryStatusScreen(),
         '/farmer/mypage/manage/order/refund': (context) => const FarmerManageOrderRefundScreen(),
         '/farmer/mypage/manage/order/refund/accept': (context) => const FarmerAcceptRefundSuccessScreen(),
         '/farmer/mypage/manage/order/refund/reject': (context) => const FarmerRejectRefundSuccessScreen(),
+        '/farmer/mypage/manage/neworder': (context) => const NewManageOrderPage(),
         '/farmer/mypage/order': (context) => FarmerOrderListScreen(),
         '/farmer/mypage/order/review/add':
             (context) => const FarmerAddReviewScreen(),
