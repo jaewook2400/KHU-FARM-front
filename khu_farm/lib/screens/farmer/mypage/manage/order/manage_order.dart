@@ -225,6 +225,48 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
           "refundReason": "",
           "createdAt": "2025-10-01T08:50:00.000Z"
         },
+        {
+          "orderId": 3,
+          "orderDetailId": 103,
+          "merchantUid": "MUID-003",
+          "ordererName": "김철",
+          "totalPrice": 20000,
+          "fruitTitle": "배 5kg",
+          "orderCount": 3,
+          "portCode": "PORT003",
+          "address": "부산광역시 해운대구 센텀로 456",
+          "detailAddress": "203호",
+          "recipient": "김철",
+          "phoneNumber": "010-9876-5432",
+          "deliveryCompany": "한진택배",
+          "deliveryNumber": "987654444",
+          "orderRequest": "직접 전달 부탁드립니다",
+          "deliveryStatus": "SHIPMENT_COMPLETED",
+          "orderStatus": "배송 중",
+          "refundReason": "",
+          "createdAt": "2025-10-01T08:50:00.000Z"
+        },
+        {
+          "orderId": 4,
+          "orderDetailId": 104,
+          "merchantUid": "MUID-004",
+          "ordererName": "김철준",
+          "totalPrice": 20000,
+          "fruitTitle": "배 5kg",
+          "orderCount": 4,
+          "portCode": "PORT004",
+          "address": "부산광역시 해운대구 센텀로 456",
+          "detailAddress": "204호",
+          "recipient": "김철준",
+          "phoneNumber": "010-9876-5432",
+          "deliveryCompany": "한진택배",
+          "deliveryNumber": "444654444",
+          "orderRequest": "직접 전달 부탁드립니다",
+          "deliveryStatus": "ORDER_CANCELLED",
+          "orderStatus": "배송 중",
+          "refundReason": "",
+          "createdAt": "2025-10-01T08:50:00.000Z"
+        },
       ];
     } else {
       orderJson = data['result']['content'] ?? [];
@@ -446,33 +488,33 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
                 ),
                 const SizedBox(height: 16,),
 
-                // Row(
-                //   children: [
-                //     Expanded(
-                //       child: _buildFilterDropdown(
-                //         hint: '기간',
-                //         value: _selectedPeriod,
-                //         items: ['모두', '1개월', '3개월', '6개월'],
-                //         onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
-                //       ),
-                //     ),
-                //     const SizedBox(width: 12),
-                //     Expanded(
-                //       child: _buildFilterDropdown(
-                //         hint: '상태',
-                //         value: _selectedStatus,
-                //         // statusMap의 key(한글 문자열)를 아이템으로 사용
-                //         items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
-                //         onChanged: (val) {
-                //           setState(() {
-                //             _selectedStatus = val == '모두' ? null : val;
-                //           });
-                //         },
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                // const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildFilterDropdown(
+                        hint: '기간',
+                        value: _selectedPeriod,
+                        items: ['모두', '1개월', '3개월', '6개월'],
+                        onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildFilterDropdown(
+                        hint: '상태',
+                        value: _selectedStatus,
+                        // statusMap의 key(한글 문자열)를 아이템으로 사용
+                        items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedStatus = val == '모두' ? null : val;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 
                 // Order List
                 Expanded(

@@ -308,7 +308,7 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
 
   // Helper widget for the delivery status stepper
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder sellerOrder) {
-    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
+    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
     final currentStatusInfo =
         statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
     print(trackingData.currentStateText);
@@ -350,7 +350,7 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
           ),
         _buildStepConnector(),
 
-        _buildStep(title: '배달 완료', isActive: currentStep == 3),
+        _buildStep(title: '배송 완료', isActive: currentStep == 3),
       ],
     );
   }

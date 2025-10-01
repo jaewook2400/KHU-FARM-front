@@ -378,7 +378,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   /// Helper widget for the delivery status stepper
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order order) {
-    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
+    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
     final DeliveryStatus currentStatusInfo =
         statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
     int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
@@ -425,7 +425,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         _buildStepConnector(),
 
-        _buildStep(title: '배달 완료', isActive: currentStep == 3),
+        _buildStep(title: '배송 완료', isActive: currentStep == 3),
       ],
     );
   }

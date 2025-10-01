@@ -20,9 +20,9 @@ const Map<String, DeliveryStatus> statusMap = {
   // '배송중' 단계에 매핑
   'SHIPPING': DeliveryStatus('배송 중', '배송중', Colors.green),
 
-  // '배달 완료' 단계에 매핑
-  'SHIPMENT_COMPLETED': DeliveryStatus('배송 완료', '배달 완료', Colors.blue),
-  '배송완료': DeliveryStatus('배송 완료', '배달 완료', Colors.blue),
+  // '배송 완료' 단계에 매핑
+  'SHIPMENT_COMPLETED': DeliveryStatus('배송 완료', '배송 완료', Colors.blue),
+  '배송완료': DeliveryStatus('배송 완료', '배송 완료', Colors.blue),
 
   // 매핑되지 않는 기타 상태들 (stepName을 비워둠)
   'ORDER_CANCELLED': DeliveryStatus('주문 취소', '', Colors.red),
