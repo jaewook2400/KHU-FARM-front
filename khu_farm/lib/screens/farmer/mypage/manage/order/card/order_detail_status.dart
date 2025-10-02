@@ -9,14 +9,14 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:http/http.dart' as http;
 
-class FarmerManageOrderDetailScreen extends StatefulWidget {
-  const FarmerManageOrderDetailScreen({super.key});
+class OrderDetailStatusScreen extends StatefulWidget {
+  const OrderDetailStatusScreen({super.key});
 
   @override
-  State<FarmerManageOrderDetailScreen> createState() => _FarmerManageOrderDetailScreenState();
+  State<OrderDetailStatusScreen> createState() => _OrderDetailStatusScreenState();
 }
 
-class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailScreen> {
+class _OrderDetailStatusScreenState extends State<OrderDetailStatusScreen> {
   DeliveryTrackingData? _trackingData;
   bool _isLoading = true;
 
