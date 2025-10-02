@@ -1,3 +1,4 @@
+///배송 상세 현황 확인 페이지
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,91 +6,63 @@ import 'package:intl/intl.dart';
 import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/model/seller_order.dart';
 import 'package:khu_farm/model/delivery_tracking.dart';
+import 'package:khu_farm/model/order_status.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
-import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
 
-class FarmerManageOrderDeliveryNumberScreen extends StatefulWidget {
-  const FarmerManageOrderDeliveryNumberScreen({super.key});
+class DeliveryDetailStatusScreen extends StatefulWidget {
+  const DeliveryDetailStatusScreen({super.key});
 
   @override
-  State<FarmerManageOrderDeliveryNumberScreen> createState() => _FarmerManageOrderDeliveryNumberScreenState();
+  State<DeliveryDetailStatusScreen> createState() => _DeliveryDetailStatusScreenState();
 }
 
-class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrderDeliveryNumberScreen> {
-  final _trackingNumberController = TextEditingController();
-  String? _selectedCourierName;
-  SellerOrder? _order;
+class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen> {
+  DeliveryTrackingData? _trackingData;
+  bool _isLoading = true;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_order == null) {
+  void initState() {
+    super.initState();
+    // Use WidgetsBinding to safely access arguments in initState
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final order = ModalRoute.of(context)!.settings.arguments as SellerOrder;
-      setState(() {
-        _order = order;
-        if (order.deliveryNumber != null && order.deliveryNumber != '미등록') {
-          _trackingNumberController.text = order.deliveryNumber!;
-        }
-        // deliveryCompany 필드에 저장된 택배사 이름을 초기값으로 설정
-        _selectedCourierName = order.deliveryCompany;
-      });
-    }
+      _fetchTrackingInfo(order.orderDetailId);
+    });
   }
 
-  @override
-  void dispose() {
-    _trackingNumberController.dispose();
-    super.dispose();
-  }
-  
-  // --- New function to save tracking info ---
-  Future<void> _saveTrackingInfo() async {
-    if (_order == null ||
-        _selectedCourierName == null ||
-        _trackingNumberController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('송장번호와 택배사를 모두 입력해주세요.')),
-      );
+  Future<void> _fetchTrackingInfo(int orderDetailId) async {
+    setState(() => _isLoading = true);
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) {
+      setState(() => _isLoading = false);
       return;
     }
-
-    final accessToken = await StorageService.getAccessToken();
-    if (accessToken == null) return;
-
-    final headers = {
-      'Authorization': 'Bearer $accessToken',
-      'Content-Type': 'application/json',
-    };
-    final uri = Uri.parse('$baseUrl/delivery/${_order!.orderDetailId}');
-    final body = jsonEncode({
-      "deliveryCompany": _selectedCourierName,
-      "deliveryNumber": _trackingNumberController.text,
-    });
+    final headers = {'Authorization': 'Bearer $accessToken'};
 
     try {
-      final response = await http.patch(uri, headers: headers, body: body);
-      final data = json.decode(utf8.decode(response.bodyBytes));
+      // API call to get tracking info
+      final getUri = Uri.parse('$baseUrl/delivery/$orderDetailId/tracking');
+      final getResponse = await http.get(getUri, headers: headers);
 
-      if (response.statusCode == 200 && data['isSuccess'] == true) {
-        if (mounted) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (_) => const _SuccessDialog(),
-          );
+      if (getResponse.statusCode == 200) {
+        final data = json.decode(utf8.decode(getResponse.bodyBytes));
+        if (data['isSuccess'] == true && data['result'] != null) {
+          if (mounted) {
+            setState(() {
+              _trackingData =
+                  DeliveryTrackingData.fromJson(data['result']['deliveryStatus']);
+            });
+          }
         }
       } else {
-        throw Exception('Failed to save tracking info: ${data['message']}');
+        throw Exception('Failed to fetch tracking info');
       }
     } catch (e) {
-      print('Error saving tracking info: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('저장에 실패했습니다. 다시 시도해주세요.')),
-        );
-      }
+      print('Error in fetching tracking info: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -102,6 +75,9 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
         statusBarBrightness: Brightness.light,
       ),
     );
+
+    final SellerOrder order =
+        ModalRoute.of(context)!.settings.arguments as SellerOrder;
 
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
@@ -225,7 +201,6 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ← 내 정보 타이틀
                 Row(
                   children: [
                     GestureDetector(
@@ -238,7 +213,7 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
                     ),
                     const SizedBox(width: 8),
                     const Text(
-                      '송장번호 입력하기',
+                      '배송 현황 확인',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -247,64 +222,40 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
                   ],
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 16,),
 
-                // Main Content
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: EdgeInsets.symmetric(horizontal: 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (_order != null) _buildInfoCard(_order!),
-                        const SizedBox(height: 24),
-                        _buildLabeledTextField(
-                          label: '송장번호',
-                          hint: '송장번호를 입력해 주세요.',
-                          controller: _trackingNumberController,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildCourierDropdown(),
+                        _buildInfoCard(order),
+                        const SizedBox(height: 32),
+                        _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _trackingData != null
+                                ? _buildDeliveryStatus(_trackingData!, order)
+                                : const Center(
+                                    child: Text('배송 정보를 조회할 수 없습니다.')),
                       ],
                     ),
                   ),
                 ),
-                // Save Button
-                
               ],
             ),
           ),
           
-          Positioned(
-            left: 24,
-            right: 24,
-            bottom: bottomPadding + 20,
-            child: Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                      onPressed: _saveTrackingInfo,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6FCF4B),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      ),
-                      child: const Text('저장하기', style: TextStyle(fontSize: 18 ,color: Colors.white, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
-  
+
   Widget _buildInfoCard(SellerOrder order) {
     String formattedDate = '';
     try {
       if (order.createdAt.isNotEmpty) {
-        formattedDate = DateFormat('yyyy.MM.dd').format(DateTime.parse(order.createdAt));
+        formattedDate =
+            DateFormat('yyyy.MM.dd').format(DateTime.parse(order.createdAt));
       }
     } catch (e) {
       formattedDate = order.createdAt.split('T').first;
@@ -324,11 +275,15 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
           _buildInfoRow('주문일자', formattedDate),
           _buildInfoRow('주문번호', order.merchantUid),
           _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+          _buildInfoRow('송장번호', order.deliveryNumber ?? '미등록'),
+          _buildInfoRow('택배사', order.deliveryCompany ?? '미등록'),
+          _buildInfoRow('주문자 요청사항', order.orderRequest ?? '없음'),
         ],
       ),
     );
   }
 
+  // Helper widget for a single row in the info card
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
@@ -336,95 +291,114 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 80,
-            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+            width: 100,
+            child: Text(label,
+                style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500)),
           ),
           const Text('|', style: TextStyle(color: Colors.grey)),
           const SizedBox(width: 16),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+          Expanded(
+              child: Text(value,
+                  style: const TextStyle(fontWeight: FontWeight.w500))),
         ],
       ),
     );
   }
 
-  Widget _buildLabeledTextField({
-    required String label,
-    required String hint,
-    required TextEditingController controller,
-  }) {
+  // Helper widget for the delivery status stepper
+  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder sellerOrder) {
+    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
+    final currentStatusInfo =
+        statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
+    print(trackingData.currentStateText);
+    int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+
+    final invoiceFullText = '운송장 번호 : ${sellerOrder.deliveryCompany} ${sellerOrder.deliveryNumber} (눌러서 복사)';
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          decoration: InputDecoration(
-            hintText: hint,
-            border: const OutlineInputBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildCourierDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('택배사', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedCourierName, // value는 이제 이름(name)
-              isExpanded: true,
-              hint: const Text('이용하시는 택배사를 선택해 주세요.'),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedCourierName = newValue;
-                });
-              },
-              // items 리스트 생성 시 value에 name을 할당
-              items: deliveryCompany.map<DropdownMenuItem<String>>((company) {
-                return DropdownMenuItem<String>(
-                  value: company['name'], // value를 이름으로 변경
-                  child: Text(company['name']!),
+        _buildStep(title: '결제 완료', isActive: currentStep == 0),
+        _buildStepConnector(),
+
+        _buildStep(title: '배송 준비중', isActive: currentStep == 1),
+        _buildStepConnector(),
+
+        _buildStep(title: '배송중', isActive: currentStep == 2),
+        
+        // '배송중' 단계 이거나 그 이후 단계일 때 운송장 번호 표시
+        if (currentStep >= 2)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: sellerOrder.deliveryNumber!));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
                 );
-              }).toList(),
+              },
+              child: Text(
+                invoiceFullText,
+                textAlign: TextAlign.center,
+                // 변경된 부분: '배송중' 단계가 활성화(currentStep == 2)일 때만 초록색, 아니면 회색
+                style: TextStyle(
+                  fontSize: 12,
+                  color: currentStep == 2 ? const Color(0xFF6FCF4B) : Colors.grey,
+                ),
+              ),
             ),
           ),
-        ),
+        _buildStepConnector(),
+
+        _buildStep(title: '배송 완료', isActive: currentStep == 3),
       ],
     );
   }
-}
 
-class _SuccessDialog extends StatelessWidget {
-  const _SuccessDialog();
+  Widget _buildStep({required String title, bool isActive = false}) {
+    final Color borderColor;
+    final Color fontColor;
+    final Color backgroundColor;
 
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('성공'),
-      content: const Text('송장 정보가 성공적으로 저장되었습니다.'),
-      actions: [
-        TextButton(
-          onPressed: () {
-            // '/farmer/mypage/manage/order' 라우트를 만날 때까지 현재 화면들을 모두 pop 합니다.
-            Navigator.of(context).popUntil(ModalRoute.withName('/farmer/mypage/manage/order'));
-          },
-          child: const Text('확인'),
-        ),
-      ],
+    if (isActive) {
+      borderColor = const Color(0xFF6FCF4B);
+      fontColor = const Color(0xFF6FCF4B);
+      backgroundColor = Colors.white;
+    } else {
+      borderColor = Colors.grey;
+      fontColor = Colors.grey;
+      backgroundColor = Colors.white;
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: fontColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepConnector() {
+    return Container(
+      height: 32, // 간격 조정
+      alignment: Alignment.center,
+      child: const Icon(Icons.arrow_downward, color: Colors.grey, size: 20),
     );
   }
 }

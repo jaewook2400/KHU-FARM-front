@@ -9,18 +9,18 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
-import 'package:khu_farm/screens/farmer/mypage/manage/order/new_manage_order.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/order_handle_list.dart';
 
 
 
-class FarmerManageOrderListScreen extends StatefulWidget {
-  const FarmerManageOrderListScreen({super.key});
+class NewOrderScreen extends StatefulWidget {
+  const NewOrderScreen({super.key});
 
   @override
-  State<FarmerManageOrderListScreen> createState() => _FarmerManageOrderListScreenState();
+  State<NewOrderScreen> createState() => _NewOrderScreenState();
 }
 
-class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScreen> {
+class _NewOrderScreenState extends State<NewOrderScreen> {
   String? _selectedPeriod;
   String? _selectedStatus;
   late OrderSection section;
@@ -713,7 +713,7 @@ class _OrderInfoCard extends StatelessWidget {
                   isTrackingNumberRegistered ? '송장번호 수정' : '송장번호 입력',
                   onPressed: onEditTrackingNumber,
                 ),
-                _actionButton('배송 현황 확인', onPressed: onTrackDelivery),
+                _actionButton('배송 상세 현황', onPressed: onTrackDelivery),
                 isRefundPending
                     ? SizedBox(
                   width: 100,
