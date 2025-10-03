@@ -479,18 +479,42 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
 
                 Row(
                   children: [
-                    Expanded(
+                    Text(
+                      '기간',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'default',
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                    SizedBox(width: screenWidth*0.02),
+                    SizedBox(
+                      width: screenWidth*0.3,
+                      height: screenHeight*0.04,
                       child: _buildFilterDropdown(
-                        hint: '기간',
+                        hint: '모두',
                         value: _selectedPeriod,
                         items: ['모두', '1개월', '4개월', '6개월'],
                         onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
+                    SizedBox(width: screenWidth*0.05),
+                    Text(
+                      '상태',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'default',
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF000000),
+                      ),
+                    ),
+                    SizedBox(width: screenWidth*0.02),
+                    SizedBox(
+                      width: screenWidth*0.3,
+                      height: screenHeight*0.04,
                       child: _buildFilterDropdown(
-                        hint: '상태',
+                        hint: '모두',
                         value: _selectedStatus,
                         // statusMap의 key(한글 문자열)를 아이템으로 사용
                         items: [
