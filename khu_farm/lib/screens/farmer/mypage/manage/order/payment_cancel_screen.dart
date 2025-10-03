@@ -135,7 +135,7 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
       if (accessToken == null) return;
 
       final headers = {'Authorization': 'Bearer $accessToken'};
-      final uri = Uri.parse('$baseUrl/order/seller/orders').replace(queryParameters: {
+      final uri = Uri.parse('$baseUrl/order/seller/orders/4').replace(queryParameters: {
         'size': '5',
         if (cursorId != null) 'cursorId': cursorId.toString(),
       });
