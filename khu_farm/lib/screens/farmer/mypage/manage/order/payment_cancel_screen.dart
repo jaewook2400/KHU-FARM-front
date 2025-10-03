@@ -21,9 +21,6 @@ class PaymentCancelScreen extends StatefulWidget {
 }
 
 class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
-  String? _selectedPeriod;
-  String? _selectedStatus;
-  late OrderSection section;
 
   List<SellerOrder> _orders = [];
   bool _isLoading = true;
@@ -108,13 +105,11 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
   // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
   void _onScroll() {
     // 필터가 적용되지 않았을 때만 무한 스크롤 동작
-    if (_selectedPeriod == null && _selectedStatus == null) {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
-          _hasMore &&
-          !_isFetchingMore) {
-        if (_orders.isNotEmpty) {
-          _fetchSellerOrders(cursorId: _orders.last.orderDetailId);
-        }
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_orders.isNotEmpty) {
+        _fetchSellerOrders(cursorId: _orders.last.orderDetailId);
       }
     }
   }
@@ -191,7 +186,7 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
           "deliveryNumber": "123456789",
           "orderRequest": "문 앞에 두세요",
           "deliveryStatus": "ORDER_COMPLETED",
-          "orderStatus": "결제 완료",
+          "orderStatus": "결제 취소",
           "refundReason": "",
           "createdAt": "2025-10-01T08:49:27.703Z"
         },
@@ -212,49 +207,7 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
           "deliveryNumber": "987654321",
           "orderRequest": "직접 전달 부탁드립니다",
           "deliveryStatus": "SHIPPING",
-          "orderStatus": "배송 중",
-          "refundReason": "",
-          "createdAt": "2025-10-01T08:50:00.000Z"
-        },
-        {
-          "orderId": 3,
-          "orderDetailId": 103,
-          "merchantUid": "MUID-003",
-          "ordererName": "김철",
-          "totalPrice": 20000,
-          "fruitTitle": "배 5kg",
-          "orderCount": 3,
-          "portCode": "PORT003",
-          "address": "부산광역시 해운대구 센텀로 456",
-          "detailAddress": "203호",
-          "recipient": "김철",
-          "phoneNumber": "010-9876-5432",
-          "deliveryCompany": "한진택배",
-          "deliveryNumber": "987654444",
-          "orderRequest": "직접 전달 부탁드립니다",
-          "deliveryStatus": "SHIPMENT_COMPLETED",
-          "orderStatus": "배송 중",
-          "refundReason": "",
-          "createdAt": "2025-10-01T08:50:00.000Z"
-        },
-        {
-          "orderId": 4,
-          "orderDetailId": 104,
-          "merchantUid": "MUID-004",
-          "ordererName": "김철준",
-          "totalPrice": 20000,
-          "fruitTitle": "배 5kg",
-          "orderCount": 4,
-          "portCode": "PORT004",
-          "address": "부산광역시 해운대구 센텀로 456",
-          "detailAddress": "204호",
-          "recipient": "김철준",
-          "phoneNumber": "010-9876-5432",
-          "deliveryCompany": "한진택배",
-          "deliveryNumber": "444654444",
-          "orderRequest": "직접 전달 부탁드립니다",
-          "deliveryStatus": "ORDER_CANCELLED",
-          "orderStatus": "배송 중",
+          "orderStatus": "결제 취소",
           "refundReason": "",
           "createdAt": "2025-10-01T08:50:00.000Z"
         },
@@ -280,12 +233,7 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
   @override
   Widget build(BuildContext context) {
 
-    final String title = switch(section) {
-      OrderSection.newOrder => "NEW! 신규 주문",
-      OrderSection.shipping => "배송 현황",
-      OrderSection.refund => "환불 처리",
-      OrderSection.cancelled => "결제 취소",
-    };
+    final String title = "결제 취소";
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -301,43 +249,6 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     List<SellerOrder> filteredOrders = List.from(_orders);
-
-    // Filter by Status
-    if (_selectedStatus != null) {
-      filteredOrders = filteredOrders
-          .where((order) => order.status == _selectedStatus)
-          .toList();
-    }
-
-    if (_selectedPeriod != null && _selectedPeriod != '모두') {
-      DateTime now = DateTime.now();
-      DateTime startDate;
-      switch (_selectedPeriod) {
-        case '1개월':
-          startDate = now.subtract(const Duration(days: 30));
-          break;
-        case '2개월':
-          startDate = now.subtract(const Duration(days: 60));
-          break;
-        case '4개월':
-          startDate = now.subtract(const Duration(days: 120));
-          break;
-        case '6개월':
-          startDate = now.subtract(const Duration(days: 180));
-          break;
-        default:
-          startDate = DateTime(2000);
-      }
-
-      filteredOrders = filteredOrders.where((order) {
-        try {
-          DateTime orderDate = DateTime.parse(order.createdAt);
-          return orderDate.isAfter(startDate);
-        } catch (e) {
-          return false;
-        }
-      }).toList();
-    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -479,34 +390,6 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
                 ),
                 const SizedBox(height: 16,),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        hint: '기간',
-                        value: _selectedPeriod,
-                        items: ['모두', '1개월', '3개월', '6개월'],
-                        onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        hint: '상태',
-                        value: _selectedStatus,
-                        // statusMap의 key(한글 문자열)를 아이템으로 사용
-                        items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedStatus = val == '모두' ? null : val;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
                 // Order List
                 Expanded(
                   child: _isLoading
@@ -519,7 +402,7 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
                     padding: EdgeInsets.zero,
                     itemCount: filteredOrders.length +
                         // 필터가 없고, 더 불러올 데이터가 있을 때만 로딩 인디케이터 공간 추가
-                        (_hasMore && _selectedPeriod == null && _selectedStatus == null ? 1 : 0),
+                        (_hasMore ? 1 : 0),
                     itemBuilder: (context, index) {
                       // 마지막 아이템일 경우 로딩 인디케이터 표시
                       if (index == filteredOrders.length) {
@@ -668,34 +551,39 @@ class _OrderInfoCard extends StatelessWidget {
               children: [
                 Text(order.recipient,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
+                Spacer(),
                 Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
                   decoration: BoxDecoration(
-                    color: status.color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Color(0xFFB3B3B3),
+                        width: 0.5,
+                      )
                   ),
                   child: Row(
                     children: [
                       Text(
-                        status.displayName,
+                        '결제 취소',
                         style: TextStyle(
-                            color: status.color,
+                            color: Color(0xFFB3B3B3),
                             fontWeight: FontWeight.bold,
                             fontSize: 12),
                       ),
-                      Icon(Icons.chevron_right, color: status.color, size: 16),
                     ],
                   ),
                 ),
+                SizedBox(width: 4,),
+                Icon(Icons.arrow_forward_ios, color: Color(0xFF333333), size: 16),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text('주문일자 : $formattedDate', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text('주문번호 : ${order.merchantUid}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            const SizedBox(height: 8),
-            Text('${order.address} ${order.detailAddress} [${order.portCode}]', style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 2),
+            Text('${order.address} ${order.detailAddress}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -704,7 +592,7 @@ class _OrderInfoCard extends StatelessWidget {
                   isTrackingNumberRegistered ? '송장번호 수정' : '송장번호 입력',
                   onPressed: onEditTrackingNumber,
                 ),
-                _actionButton('배송 상세 현황', onPressed: onTrackDelivery),
+                _actionButton('배송 현황 확인', onPressed: onTrackDelivery),
                 isRefundPending
                     ? SizedBox(
                   width: 100,
@@ -734,7 +622,7 @@ class _OrderInfoCard extends StatelessWidget {
   Widget _actionButton(String label, {VoidCallback? onPressed}) {
     return SizedBox(
         width: 90,
-        height: 30,
+        height: 24,
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
