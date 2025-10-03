@@ -167,56 +167,58 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
   void _handleOrders(dynamic data, int? cursorId) { //statusCode가 200이 아닐 때 목데이터를 _orders에 저장해주는 함수
     List<dynamic> orderJson = [];
 
-    if (data == null || data['result'] == null || (data['result']['size'] ?? 0) == 0) {
-      // ✅ 목데이터
-      orderJson = [
-        {
-          "orderId": 1,
-          "orderDetailId": 101,
-          "merchantUid": "MUID-001",
-          "ordererName": "홍길동",
-          "totalPrice": 15000,
-          "fruitTitle": "사과 3kg",
-          "orderCount": 1,
-          "portCode": "PORT001",
-          "address": "서울특별시 강남구 테헤란로 123",
-          "detailAddress": "101호",
-          "recipient": "홍길동",
-          "phoneNumber": "010-1234-5678",
-          "deliveryCompany": "CJ대한통운",
-          "deliveryNumber": "123456789",
-          "orderRequest": "문 앞에 두세요",
-          "deliveryStatus": "ORDER_COMPLETED",
-          "orderStatus": "결제 취소",
-          "refundReason": "",
-          "createdAt": "2025-10-01T08:49:27.703Z"
-        },
-        {
-          "orderId": 2,
-          "orderDetailId": 102,
-          "merchantUid": "MUID-002",
-          "ordererName": "김철수",
-          "totalPrice": 20000,
-          "fruitTitle": "배 5kg",
-          "orderCount": 2,
-          "portCode": "PORT002",
-          "address": "부산광역시 해운대구 센텀로 456",
-          "detailAddress": "202호",
-          "recipient": "김철수",
-          "phoneNumber": "010-9876-5432",
-          "deliveryCompany": "한진택배",
-          "deliveryNumber": "987654321",
-          "orderRequest": "직접 전달 부탁드립니다",
-          "deliveryStatus": "SHIPPING",
-          "orderStatus": "결제 취소",
-          "refundReason": "",
-          "createdAt": "2025-10-01T08:50:00.000Z"
-        },
-      ];
-    } else {
-      orderJson = data['result']['content'] ?? [];
-    }
+    // if (data == null || data['result'] == null || (data['result']['size'] ?? 0) == 0) {
+    //   // ✅ 목데이터
+    //   orderJson = [
+    //     {
+    //       "orderId": 1,
+    //       "orderDetailId": 101,
+    //       "merchantUid": "MUID-001",
+    //       "ordererName": "홍길동",
+    //       "totalPrice": 15000,
+    //       "fruitTitle": "사과 3kg",
+    //       "orderCount": 1,
+    //       "portCode": "PORT001",
+    //       "address": "서울특별시 강남구 테헤란로 123",
+    //       "detailAddress": "101호",
+    //       "recipient": "홍길동",
+    //       "phoneNumber": "010-1234-5678",
+    //       "deliveryCompany": "CJ대한통운",
+    //       "deliveryNumber": "123456789",
+    //       "orderRequest": "문 앞에 두세요",
+    //       "deliveryStatus": "ORDER_COMPLETED",
+    //       "orderStatus": "결제 취소",
+    //       "refundReason": "",
+    //       "createdAt": "2025-10-01T08:49:27.703Z"
+    //     },
+    //     {
+    //       "orderId": 2,
+    //       "orderDetailId": 102,
+    //       "merchantUid": "MUID-002",
+    //       "ordererName": "김철수",
+    //       "totalPrice": 20000,
+    //       "fruitTitle": "배 5kg",
+    //       "orderCount": 2,
+    //       "portCode": "PORT002",
+    //       "address": "부산광역시 해운대구 센텀로 456",
+    //       "detailAddress": "202호",
+    //       "recipient": "김철수",
+    //       "phoneNumber": "010-9876-5432",
+    //       "deliveryCompany": "한진택배",
+    //       "deliveryNumber": "987654321",
+    //       "orderRequest": "직접 전달 부탁드립니다",
+    //       "deliveryStatus": "SHIPPING",
+    //       "orderStatus": "결제 취소",
+    //       "refundReason": "",
+    //       "createdAt": "2025-10-01T08:50:00.000Z"
+    //     },
+    //   ];
+    // } else {
+    //   orderJson = data['result']['content'] ?? [];
+    // }
 
+    orderJson = data['result']['content'] ?? [];
+    
     final newOrders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
 
     setState(() {
