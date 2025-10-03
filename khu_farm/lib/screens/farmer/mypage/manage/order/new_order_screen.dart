@@ -21,8 +21,6 @@ class NewOrderScreen extends StatefulWidget {
 }
 
 class _NewOrderScreenState extends State<NewOrderScreen> {
-  String? _selectedPeriod;
-  String? _selectedStatus;
   late OrderSection section;
 
   List<SellerOrder> _orders = [];
@@ -32,15 +30,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isFetchingMore = false;
   bool _hasMore = true;
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // arguments를 didChangeDependencies에서 안전하게 꺼내기
-    final args =
-    ModalRoute.of(context)?.settings.arguments as OrderPageArgs?;
-    section = args?.section ?? OrderSection.newOrder;
-  }
 
   @override
   void initState() {
@@ -117,13 +106,11 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
   void _onScroll() {
     // 필터가 적용되지 않았을 때만 무한 스크롤 동작
-    if (_selectedPeriod == null && _selectedStatus == null) {
-      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
-          _hasMore &&
-          !_isFetchingMore) {
-        if (_orders.isNotEmpty) {
-          _fetchSellerOrders(cursorId: _orders.last.orderDetailId);
-        }
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 50 &&
+        _hasMore &&
+        !_isFetchingMore) {
+      if (_orders.isNotEmpty) {
+        _fetchSellerOrders(cursorId: _orders.last.orderDetailId);
       }
     }
   }
@@ -149,7 +136,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
       if (accessToken == null) return;
 
       final headers = {'Authorization': 'Bearer $accessToken'};
-      final uri = Uri.parse('$baseUrl/order/seller/orders').replace(queryParameters: {
+      final uri = Uri.parse('$baseUrl/order/seller/orders/1').replace(queryParameters: {
         'size': '5',
         if (cursorId != null) 'cursorId': cursorId.toString(),
       });
@@ -184,27 +171,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
       // ✅ 목데이터
       orderJson = [
         {
-          "orderId": 1,
-          "orderDetailId": 101,
-          "merchantUid": "MUID-001",
-          "ordererName": "홍길동",
-          "totalPrice": 15000,
-          "fruitTitle": "사과 3kg",
-          "orderCount": 1,
-          "portCode": "PORT001",
-          "address": "서울특별시 강남구 테헤란로 123",
-          "detailAddress": "101호",
-          "recipient": "홍길동",
-          "phoneNumber": "010-1234-5678",
-          "deliveryCompany": "CJ대한통운",
-          "deliveryNumber": "123456789",
-          "orderRequest": "문 앞에 두세요",
-          "deliveryStatus": "ORDER_COMPLETED",
-          "orderStatus": "결제 완료",
-          "refundReason": "",
-          "createdAt": "2025-10-01T08:49:27.703Z"
-        },
-        {
           "orderId": 2,
           "orderDetailId": 102,
           "merchantUid": "MUID-002",
@@ -218,7 +184,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
           "recipient": "김철수",
           "phoneNumber": "010-9876-5432",
           "deliveryCompany": "한진택배",
-          "deliveryNumber": "987654321",
+          "deliveryNumber": null,
           "orderRequest": "직접 전달 부탁드립니다",
           "deliveryStatus": "SHIPPING",
           "orderStatus": "배송 중",
@@ -239,7 +205,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
           "recipient": "김철",
           "phoneNumber": "010-9876-5432",
           "deliveryCompany": "한진택배",
-          "deliveryNumber": "987654444",
+          "deliveryNumber": null,
           "orderRequest": "직접 전달 부탁드립니다",
           "deliveryStatus": "SHIPMENT_COMPLETED",
           "orderStatus": "배송 중",
@@ -260,7 +226,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
           "recipient": "김철준",
           "phoneNumber": "010-9876-5432",
           "deliveryCompany": "한진택배",
-          "deliveryNumber": "444654444",
+          "deliveryNumber": null,
           "orderRequest": "직접 전달 부탁드립니다",
           "deliveryStatus": "ORDER_CANCELLED",
           "orderStatus": "배송 중",
@@ -289,12 +255,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
   @override
   Widget build(BuildContext context) {
 
-    final String title = switch(section) {
-      OrderSection.newOrder => "NEW! 신규 주문",
-      OrderSection.shipping => "배송 현황",
-      OrderSection.refund => "환불 처리",
-      OrderSection.cancelled => "결제 취소",
-    };
+    final String title = "NEW! 신규 주문";
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -310,43 +271,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     List<SellerOrder> filteredOrders = List.from(_orders);
-    
-    // Filter by Status
-    if (_selectedStatus != null) {
-      filteredOrders = filteredOrders
-          .where((order) => order.status == _selectedStatus)
-          .toList();
-    }
-
-    if (_selectedPeriod != null && _selectedPeriod != '모두') {
-      DateTime now = DateTime.now();
-      DateTime startDate;
-      switch (_selectedPeriod) {
-        case '1개월':
-          startDate = now.subtract(const Duration(days: 30));
-          break;
-        case '2개월':
-          startDate = now.subtract(const Duration(days: 60));
-          break;
-        case '4개월':
-          startDate = now.subtract(const Duration(days: 120));
-          break;
-        case '6개월':
-          startDate = now.subtract(const Duration(days: 180));
-          break;
-        default:
-          startDate = DateTime(2000);
-      }
-      
-      filteredOrders = filteredOrders.where((order) {
-        try {
-          DateTime orderDate = DateTime.parse(order.createdAt);
-          return orderDate.isAfter(startDate);
-        } catch (e) {
-          return false;
-        }
-      }).toList();
-    }
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -487,34 +411,6 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                   ],
                 ),
                 const SizedBox(height: 16,),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        hint: '기간',
-                        value: _selectedPeriod,
-                        items: ['모두', '1개월', '3개월', '6개월'],
-                        onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildFilterDropdown(
-                        hint: '상태',
-                        value: _selectedStatus,
-                        // statusMap의 key(한글 문자열)를 아이템으로 사용
-                        items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedStatus = val == '모두' ? null : val;
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
                 
                 // Order List
                 Expanded(
@@ -528,7 +424,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
                               padding: EdgeInsets.zero,
                               itemCount: filteredOrders.length + 
                                   // 필터가 없고, 더 불러올 데이터가 있을 때만 로딩 인디케이터 공간 추가
-                                  (_hasMore && _selectedPeriod == null && _selectedStatus == null ? 1 : 0),
+                                  (_hasMore ? 1 : 0),
                               itemBuilder: (context, index) {
                                 // 마지막 아이템일 경우 로딩 인디케이터 표시
                                 if (index == filteredOrders.length) {
@@ -679,32 +575,34 @@ class _OrderInfoCard extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold)),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
                   decoration: BoxDecoration(
-                    color: status.color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Color(0xFF7AC833),
+                      width: 0.5,
+                    )
                   ),
                   child: Row(
                     children: [
                       Text(
-                        status.displayName,
+                        '결제 완료',
                         style: TextStyle(
-                            color: status.color,
+                            color: Color(0xFF7AC833),
                             fontWeight: FontWeight.bold,
                             fontSize: 12),
                       ),
-                      Icon(Icons.chevron_right, color: status.color, size: 16),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text('주문일자 : $formattedDate', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text('주문번호 : ${order.merchantUid}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            const SizedBox(height: 8),
-            Text('${order.address} ${order.detailAddress} [${order.portCode}]', style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 2),
+            Text('${order.address} ${order.detailAddress}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -713,7 +611,7 @@ class _OrderInfoCard extends StatelessWidget {
                   isTrackingNumberRegistered ? '송장번호 수정' : '송장번호 입력',
                   onPressed: onEditTrackingNumber,
                 ),
-                _actionButton('배송 상세 현황', onPressed: onTrackDelivery),
+                _actionButton('배송 현황 확인', onPressed: onTrackDelivery),
                 isRefundPending
                     ? SizedBox(
                   width: 100,

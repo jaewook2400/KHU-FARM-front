@@ -32,14 +32,6 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
   bool _isFetchingMore = false;
   bool _hasMore = true;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // arguments를 didChangeDependencies에서 안전하게 꺼내기
-    final args =
-    ModalRoute.of(context)?.settings.arguments as OrderPageArgs?;
-    section = args?.section ?? OrderSection.newOrder;
-  }
 
   @override
   void initState() {

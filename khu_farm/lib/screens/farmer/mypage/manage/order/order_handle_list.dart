@@ -3,12 +3,6 @@ import 'package:khu_farm/shared/text_styles.dart';
 
 enum OrderSection { newOrder, shipping, refund, cancelled }
 
-class OrderPageArgs {
-  final OrderSection section;
-  const OrderPageArgs(this.section);
-}
-
-
 class OrderHandleListPage extends StatefulWidget {
   const OrderHandleListPage({Key? key}) : super(key: key);
 
@@ -186,7 +180,6 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                     Navigator.pushNamed(
                       context,
                       '/farmer/mypage/manage/order',
-                      arguments: const OrderPageArgs(OrderSection.newOrder),
                     );
                   },
                 ),
@@ -198,7 +191,6 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                     Navigator.pushNamed(
                       context,
                       '/farmer/mypage/manage/order',
-                      arguments: const OrderPageArgs(OrderSection.shipping),
                     );
                   },
                 ),
@@ -219,7 +211,6 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                     Navigator.pushNamed(
                       context,
                       '/farmer/mypage/manage/order',
-                      arguments: const OrderPageArgs(OrderSection.refund),
                     );
                   },
                 ),
@@ -231,7 +222,6 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                     Navigator.pushNamed(
                       context,
                       '/farmer/mypage/manage/order',
-                      arguments: const OrderPageArgs(OrderSection.cancelled),
                     );
                   },
                 ),
