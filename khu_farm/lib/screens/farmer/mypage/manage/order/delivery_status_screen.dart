@@ -490,7 +490,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                     ),
                     SizedBox(width: screenWidth*0.02),
                     SizedBox(
-                      width: screenWidth*0.3,
+                      width: screenWidth*0.27,
                       height: screenHeight*0.04,
                       child: _buildFilterDropdown(
                         hint: '모두',
@@ -511,7 +511,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                     ),
                     SizedBox(width: screenWidth*0.02),
                     SizedBox(
-                      width: screenWidth*0.3,
+                      width: screenWidth*0.34,
                       height: screenHeight*0.04,
                       child: _buildFilterDropdown(
                         hint: '모두',
@@ -760,7 +760,7 @@ class _OrderInfoCard extends StatelessWidget {
 
   Widget _actionButton(String label, {VoidCallback? onPressed}) {
     return SizedBox(
-        width: 90,
+        width: 85,
         height: 24,
         child: OutlinedButton(
           onPressed: onPressed,
@@ -776,7 +776,7 @@ class _OrderInfoCard extends StatelessWidget {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           ),
-          child: Text(label, style: const TextStyle(fontSize: 12)),
+          child: Text(label, style: const TextStyle(fontSize: 11)),
         )
     );
   }
