@@ -699,8 +699,8 @@ class _OrderInfoCard extends StatelessWidget {
             Text('주문일자 : $formattedDate', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const SizedBox(height: 4),
             Text('주문번호 : ${order.merchantUid}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            const SizedBox(height: 8),
-            Text('${order.address} ${order.detailAddress} [${order.portCode}]', style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 2),
+            Text('${order.address} ${order.detailAddress}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -739,7 +739,7 @@ class _OrderInfoCard extends StatelessWidget {
   Widget _actionButton(String label, {VoidCallback? onPressed}) {
     return SizedBox(
         width: 90,
-        height: 30,
+        height: 24,
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
