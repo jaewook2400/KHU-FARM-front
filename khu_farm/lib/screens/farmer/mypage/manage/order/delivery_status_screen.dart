@@ -10,6 +10,7 @@ import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
 import 'package:khu_farm/screens/farmer/mypage/manage/order/order_handle_list.dart';
+import 'package:khu_farm/shared/text_styles.dart';
 
 
 class DeliveryStatusScreen extends StatefulWidget {
@@ -470,10 +471,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                     const SizedBox(width: 8),
                     Text(
                       title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: AppTextStyles.pretendard_black,
                     ),
                   ],
                 ),
