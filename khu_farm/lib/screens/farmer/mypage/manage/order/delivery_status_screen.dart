@@ -22,7 +22,6 @@ class DeliveryStatusScreen extends StatefulWidget {
 class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
   String? _selectedPeriod;
   String? _selectedStatus;
-  late OrderSection section;
 
   List<SellerOrder> _orders = [];
   bool _isLoading = true;
@@ -140,7 +139,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
       if (accessToken == null) return;
 
       final headers = {'Authorization': 'Bearer $accessToken'};
-      final uri = Uri.parse('$baseUrl/order/seller/orders').replace(queryParameters: {
+      final uri = Uri.parse('$baseUrl/order/seller/orders/2').replace(queryParameters: {
         'size': '5',
         if (cursorId != null) 'cursorId': cursorId.toString(),
       });
@@ -193,7 +192,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
           "deliveryStatus": "ORDER_COMPLETED",
           "orderStatus": "결제 완료",
           "refundReason": "",
-          "createdAt": "2025-10-01T08:49:27.703Z"
+          "createdAt": "2024-10-01T08:49:27.703Z"
         },
         {
           "orderId": 2,
@@ -253,7 +252,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
           "deliveryCompany": "한진택배",
           "deliveryNumber": "444654444",
           "orderRequest": "직접 전달 부탁드립니다",
-          "deliveryStatus": "ORDER_CANCELLED",
+          "deliveryStatus": 'PREPARING_SHIPMENT',
           "orderStatus": "배송 중",
           "refundReason": "",
           "createdAt": "2025-10-01T08:50:00.000Z"
@@ -277,15 +276,14 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     });
   }
 
+  // bool shipCompleted(DeliveryStatus status){
+  //
+  // }
+
   @override
   Widget build(BuildContext context) {
 
-    final String title = switch(section) {
-      OrderSection.newOrder => "NEW! 신규 주문",
-      OrderSection.shipping => "배송 현황",
-      OrderSection.refund => "환불 처리",
-      OrderSection.cancelled => "결제 취소",
-    };
+    final String title = "배송 현황";
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -302,12 +300,14 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
 
     List<SellerOrder> filteredOrders = List.from(_orders);
 
-    // Filter by Status
+    // Filter by Status(한글)
     if (_selectedStatus != null) {
-      filteredOrders = filteredOrders
-          .where((order) => order.status == _selectedStatus)
-          .toList();
+      filteredOrders = filteredOrders.where((order) {
+        final name = statusMap[order.status]?.displayName;
+        return name == _selectedStatus;
+      }).toList();
     }
+
 
     if (_selectedPeriod != null && _selectedPeriod != '모두') {
       DateTime now = DateTime.now();
@@ -485,7 +485,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                       child: _buildFilterDropdown(
                         hint: '기간',
                         value: _selectedPeriod,
-                        items: ['모두', '1개월', '3개월', '6개월'],
+                        items: ['모두', '1개월', '4개월', '6개월'],
                         onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
                       ),
                     ),
@@ -495,7 +495,12 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                         hint: '상태',
                         value: _selectedStatus,
                         // statusMap의 key(한글 문자열)를 아이템으로 사용
-                        items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
+                        items: [
+                          '모두',
+                          ...statusMap.values
+                              .map((status) => status.displayName) // displayName만 뽑기
+                              .where((name) => name != '알 수 없음')
+                        ],
                         onChanged: (val) {
                           setState(() {
                             _selectedStatus = val == '모두' ? null : val;

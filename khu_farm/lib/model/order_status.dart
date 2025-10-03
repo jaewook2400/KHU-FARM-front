@@ -13,7 +13,7 @@ const Map<String, DeliveryStatus> statusMap = {
   // '결제 완료' 단계에 매핑
   'PAYMENT_STANDBY': DeliveryStatus('결제 대기', '결제 완료', Colors.grey),
   'ORDER_COMPLETED': DeliveryStatus('주문 완료', '결제 완료', Colors.orange),
-
+// {'ORDER_COMPLETED', 'PREPARING_SHIPMENT', 'SHIPMENT_COMPLETED'}
   // '배송 준비중' 단계에 매핑
   'PREPARING_SHIPMENT': DeliveryStatus('배송 준비중', '배송 준비중', Colors.blueAccent),
 
@@ -22,7 +22,7 @@ const Map<String, DeliveryStatus> statusMap = {
 
   // '배송 완료' 단계에 매핑
   'SHIPMENT_COMPLETED': DeliveryStatus('배송 완료', '배송 완료', Colors.blue),
-  '배송완료': DeliveryStatus('배송 완료', '배송 완료', Colors.blue),
+  //'배송완료': DeliveryStatus('배송 완료', '배송 완료', Colors.blue),
 
   // 매핑되지 않는 기타 상태들 (stepName을 비워둠)
   'ORDER_CANCELLED': DeliveryStatus('주문 취소', '', Colors.red),
