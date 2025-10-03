@@ -571,6 +571,7 @@ class _OrderInfoCard extends StatelessWidget {
               children: [
                 Text(order.recipient,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
+                Spacer(),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
@@ -593,6 +594,8 @@ class _OrderInfoCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                SizedBox(width: 4,),
+                Icon(Icons.arrow_forward_ios, color: Color(0xFF333333), size: 16),
               ],
             ),
             const SizedBox(height: 2),
