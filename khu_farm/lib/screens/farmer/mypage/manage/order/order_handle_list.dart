@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:khu_farm/shared/text_styles.dart';
 
 enum OrderSection { newOrder, shipping, refund, cancelled }
 
@@ -31,17 +32,125 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
       extendBodyBehindAppBar: true, // 요구사항 반영
       body: Stack(
         children: [
+          // 노치 배경
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: statusBarHeight + screenHeight * 0.06,
+            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
+          ),
+
+          // 우상단 이미지
+          Positioned(
+            top: 0,
+            right: 0,
+            height: statusBarHeight * 1.2,
+            child: Image.asset(
+              'assets/notch/morning_right_up_cloud.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topRight,
+            ),
+          ),
+
+          // 좌하단 이미지
+          Positioned(
+            top: statusBarHeight,
+            left: 0,
+            height: screenHeight * 0.06,
+            child: Image.asset(
+              'assets/notch/morning_left_down_cloud.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.topRight,
+            ),
+          ),
+
+          Positioned(
+            top: statusBarHeight,
+            height: statusBarHeight + screenHeight * 0.02,
+            left: screenWidth * 0.05,
+            right: screenWidth * 0.05,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/farmer/main',
+                          (route) => false,
+                    );
+                  },
+                  child: const Text(
+                    'KHU:FARM',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'LogoFont',
+                      fontSize: 22,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/farmer/notification/list',
+                        );
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/notice.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/farmer/dib/list');
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/dibs.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/farmer/cart/list');
+                      },
+                      child: Image.asset(
+                        'assets/top_icons/cart.png',
+                        width: 24,
+                        height: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: screenHeight*0.1,),
                 Row(
                   children: [
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
                       child: Image.asset(
@@ -51,51 +160,9 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
+                    Text(
                       '주문 내역 / 환불 대기',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16,),
-                // 드롭다운 (기간 / 상태)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // 기간 선택
-                    DropdownButton<String>(
-                      hint: const Text("기간"),
-                      value: selectedPeriod,
-                      items: periodOptions.map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedPeriod = newValue;
-                        });
-                      },
-                    ),
-                    // 상태 선택
-                    DropdownButton<String>(
-                      hint: const Text("상태"),
-                      value: selectedStatus,
-                      items: statusOptions.entries.map((entry) {
-                        return DropdownMenuItem<String>(
-                          value: entry.value,
-                          child: Text(entry.key),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          selectedStatus = newValue;
-                        });
-                      },
+                      style: AppTextStyles.pretendard_black,
                     ),
                   ],
                 ),
@@ -103,9 +170,9 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                 const SizedBox(height: 20),
 
                 // 주문 내역 확인 텍스트
-                const Text(
+                Text(
                   "주문 내역 확인",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.pretendard_black,
                 ),
 
                 const SizedBox(height: 10),
@@ -137,15 +204,15 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                 ),
 
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   "환불 관리",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.pretendard_black,
                 ),
 
                 const SizedBox(height: 10),
 
                 _buildOrderButton(
-                  color: const Color(0xFFFD7FDF),
+                  color: const Color(0xFFFD7F7F),
                   title: "환불 처리",
                   subtitle: "환불 내역을 확인하고 승인할 수 있습니다.",
                   onTap: () {
@@ -189,9 +256,9 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        title: Text(title, style: AppTextStyles.pretendard_black_white),
+        subtitle: Text(subtitle, style: AppTextStyles.pretendard_regular,),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 17, color: Color(0xFFFFFFFF),),
         onTap: onTap,
       ),
     );

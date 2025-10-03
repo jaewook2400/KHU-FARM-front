@@ -63,7 +63,16 @@ flutter:
         - asset: assets/fonts/RixInooAriDuri-Regular.ttf
     - family: default
       fonts:
+        - asset: assets/fonts/PRETENDARD-REGULAR.OTF
+          weight: 400
         - asset: assets/fonts/PRETENDARD-MEDIUM.OTF
+          weight: 500
+        - asset: assets/fonts/PRETENDARD-BOLD.OTF
+          weight: 700
+        - asset: assets/fonts/PRETENDARD-EXTRABOLD.OTF
+          weight: 800
+        - asset: assets/fonts/PRETENDARD-BLACK.OTF
+          weight: 900
 
   assets:
     - assets/splash/splash.png
