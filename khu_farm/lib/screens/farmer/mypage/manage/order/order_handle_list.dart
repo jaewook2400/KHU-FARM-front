@@ -190,7 +190,7 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                   onTap: () {
                     Navigator.pushNamed(
                       context,
-                      '/farmer/mypage/manage/order',
+                      '/farmer/mypage/manage/deliverystatus',
                     );
                   },
                 ),
@@ -210,7 +210,7 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                   onTap: () {
                     Navigator.pushNamed(
                       context,
-                      '/farmer/mypage/manage/order',
+                      '/farmer/mypage/manage/refundprocess',
                     );
                   },
                 ),
@@ -221,7 +221,7 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
                   onTap: () {
                     Navigator.pushNamed(
                       context,
-                      '/farmer/mypage/manage/order',
+                      '/farmer/mypage/manage/paymentcancel',
                     );
                   },
                 ),

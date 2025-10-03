@@ -4,7 +4,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/account_cancelled.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_status_screen.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/order/order_handle_list.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/payment_cancel_screen.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_process_screen.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancelled.dart';
 import 'screens/consumer/mypage/order/order_detail_refund.dart';
@@ -406,6 +409,9 @@ class _MyAppState extends State<MyApp> {
         '/farmer/mypage/manage/inquiry/detail': (context) => const FarmerManageInquiryDetailScreen(),
         '/farmer/mypage/manage/inquiry/reply/success': (context) => const FarmerAddInquiryReplySuccessScreen(),
         '/farmer/mypage/manage/order': (context) => NewOrderScreen(),
+        '/farmer/mypage/manage/deliverystatus': (context) => const DeliveryStatusScreen(),
+        '/farmer/mypage/manage/refundprocess': (context) => const RefundProcessScreen(),
+        '/farmer/mypage/manage/paymentcancel': (context) => const PaymentCancelScreen(),
         '/farmer/mypage/manage/order/detail': (context) => const OrderDetailStatusScreen(),
         '/farmer/mypage/manage/order/delnum': (context) => const DeliveryNumberEditScreen(),
         '/farmer/mypage/manage/order/delstat': (context) => const DeliveryDetailStatusScreen(),
