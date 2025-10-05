@@ -18,7 +18,8 @@ class SellerOrder {
   final String? deliveryNumber;
   final String? orderRequest;
   final String createdAt;
-  final String status;
+  final String deliveryStatus;
+  final String orderStatus;
   final String refundReason;
 
   SellerOrder({
@@ -38,7 +39,8 @@ class SellerOrder {
     this.deliveryNumber,
     this.orderRequest,
     required this.createdAt,
-    required this.status,
+    required this.deliveryStatus,
+    required this.orderStatus,
     required this.refundReason,
   });
 
@@ -60,7 +62,8 @@ class SellerOrder {
       deliveryNumber: json['deliveryNumber'],
       orderRequest: json['orderRequest'],
       createdAt: json['createdAt'] ?? '',
-      status: json['deliveryStatus'] ?? '알 수 없음', 
+      deliveryStatus: json['deliveryStatus'] ?? '알 수 없음',
+      orderStatus: json['orderStatus'] ?? '알 수 없음',
       refundReason: json['refundReason'] ?? '',
     );
   }
@@ -84,7 +87,8 @@ class SellerOrder {
         'deliveryNumber: $deliveryNumber, '
         'orderRequest: $orderRequest, '
         'createdAt: $createdAt, '
-        'status: $status, ' 
+        'deliveryStatus: $deliveryStatus, '
+        'orderStatus: $orderStatus, '
         'refundReason: $refundReason'
         ')';
   }

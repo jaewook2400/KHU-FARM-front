@@ -290,7 +290,7 @@ class _OrderDetailStatusScreenState extends State<OrderDetailStatusScreen> {
 
   Widget _buildOrderDetails(SellerOrder order) {
     final DeliveryStatus status =
-        statusMap[order.status] ?? statusMap['알 수 없음']!;
+        statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
     String formattedDate = '';
     try {
       if (order.createdAt.isNotEmpty) {

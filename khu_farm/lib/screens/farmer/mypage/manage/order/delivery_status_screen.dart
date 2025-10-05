@@ -236,7 +236,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     //       "deliveryNumber": "987654444",
     //       "orderRequest": "직접 전달 부탁드립니다",
     //       "deliveryStatus": "SHIPMENT_COMPLETED",
-    //       "orderStatus": "배송 중",
+    //       "orderStatus": "배송 완료",
     //       "refundReason": "",
     //       "createdAt": "2025-10-01T08:50:00.000Z"
     //     },
@@ -309,7 +309,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     // Filter by Status(한글)
     if (_selectedStatus != null) {
       filteredOrders = filteredOrders.where((order) {
-        final name = statusMap[order.status]?.displayName;
+        final name = statusMap[order.deliveryStatus]?.displayName;
         return name == _selectedStatus;
       }).toList();
     }
@@ -664,7 +664,7 @@ class _OrderInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DeliveryStatus status =
-        statusMap[order.status] ?? statusMap['알 수 없음']!;
+        statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
 
     String formattedDate = '';
     try {
@@ -679,7 +679,7 @@ class _OrderInfoCard extends StatelessWidget {
     final bool isTrackingNumberRegistered =
         order.deliveryNumber != null && order.deliveryNumber != '미등록';
 
-    final bool isRefundPending = order.status == '환불 대기';
+    final bool isRefundPending = order.deliveryStatus == '환불 대기';
 
     return Card(
       elevation: 2,

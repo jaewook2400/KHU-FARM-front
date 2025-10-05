@@ -307,15 +307,45 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
     );
   }
 
-  // Helper widget for the delivery status stepper
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder sellerOrder) {
-    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
-    final currentStatusInfo =
-        statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
-    print(trackingData.currentStateText);
-    int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder order) {
+    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
+    // 상태 그룹 정의
+    const stepStatuses = {
+      0: ['결제 완료'],
+      1: ['배송 준비중'],
+      2: ['배송 중'],
+      3: ['배송 완료'],
+    };
 
-    final invoiceFullText = '운송장 번호 : ${sellerOrder.deliveryCompany} ${sellerOrder.deliveryNumber} (눌러서 복사)';
+    //     PAYMENT_STANDBY("결제 대기", "1"),
+    //     ORDER_COMPLETED("주문 완료", "2"),
+    //     PREPARING_SHIPMENT("배송 준비중","3"),
+    //     SHIPPING("배송중", "4"),
+    //     SHIPMENT_COMPLETED("배달 완료", "5"),
+    //     ORDER_CANCELLED("주문 취소", "6"),
+    //     ORDER_FAILED("주문 실패", "7"),
+    //     REFUND_REQUESTED("환불 대기", "8"),
+    //     PAYMENT_PARTIALLY_REFUNDED("부분 환불", "9"),
+    //     REFUND_DENIED("환불 거부", "10")
+
+    final DeliveryStatus currentStatusInfo =
+        statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
+    print('current statusssss: ${order.orderStatus}');
+    int currentStep = stepStatuses.entries
+        .firstWhere(
+          (entry) => entry.value.contains(order.orderStatus),
+      //orElse: () => const MapEntry(0, []), // 없을 경우 0단계 처리
+    ).key;
+    print('currentStep: ${currentStep.toString()}');
+
+    debugPrint(trackingData.currentStateText);
+    debugPrint(currentStatusInfo.stepName);
+    debugPrint(currentStep.toString());
+
+    final companyName = getDeliveryCompanyName(order.deliveryCompany);
+
+    final invoiceFullText = '운송장 번호 : $companyName ${trackingData.deliveryNumber} (눌러서 복사)';
 
     return Column(
       children: [
@@ -326,14 +356,14 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
         _buildStepConnector(),
 
         _buildStep(title: '배송중', isActive: currentStep == 2),
-        
+
         // '배송중' 단계 이거나 그 이후 단계일 때 운송장 번호 표시
         if (currentStep >= 2)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: GestureDetector(
               onTap: () {
-                Clipboard.setData(ClipboardData(text: sellerOrder.deliveryNumber!));
+                Clipboard.setData(ClipboardData(text: trackingData.deliveryNumber!));
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
                 );

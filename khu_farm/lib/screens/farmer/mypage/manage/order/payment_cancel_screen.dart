@@ -515,7 +515,7 @@ class _OrderInfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DeliveryStatus status =
-        statusMap[order.status] ?? statusMap['알 수 없음']!;
+        statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
 
     String formattedDate = '';
     try {
@@ -530,7 +530,7 @@ class _OrderInfoCard extends StatelessWidget {
     final bool isTrackingNumberRegistered =
         order.deliveryNumber != null && order.deliveryNumber != '미등록';
 
-    final bool isRefundPending = order.status == '환불 대기';
+    final bool isRefundPending = order.deliveryStatus == '환불 대기';
 
     return Card(
       elevation: 2,
