@@ -171,6 +171,8 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
   void _handleOrders(dynamic data, int? cursorId) { //statusCode가 200이 아닐 때 목데이터를 _orders에 저장해주는 함수
     List<dynamic> orderJson = [];
 
+    print('🧩 statusMap displayNames: ${statusMap.values.map((s) => s.displayName).toList()}');
+
     ///디버깅용 목데이터
     // if (data == null || data['result'] == null || (data['result']['size'] ?? 0) == 0) {
     //   // ✅ 목데이터
@@ -524,7 +526,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                           '모두',
                           ...statusMap.values
                               .map((status) => status.displayName) // displayName만 뽑기
-                              .where((name) => name != '알 수 없음')
+                              .where((name) => (name == '배송 중' || name == '배송 완료'))
                         ],
                         onChanged: (val) {
                           setState(() {
