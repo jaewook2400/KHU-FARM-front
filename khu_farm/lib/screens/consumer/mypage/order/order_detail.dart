@@ -39,6 +39,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     }
     final headers = {'Authorization': 'Bearer $accessToken'};
 
+    print('delivery ID is: ${widget.order.orderId}');
+
     try {
       final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
       final getResponse = await http.get(getUri, headers: headers);
@@ -103,7 +105,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
               "state": {
                 "id": "string",
-                "text": "SHIPPING"
+                "text": "SHIPMENT_COMPLETED"
               },
               "_deprecated_warn": "string"
             },
@@ -378,10 +380,37 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   /// Helper widget for the delivery status stepper
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order order) {
-    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
+    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
+    // 상태 그룹 정의
+    const stepStatuses = {
+      0: ['PAYMENT_STANDBY', 'ORDER_COMPLETED'],
+      1: ['PREPARING_SHIPMENT'],
+      2: ['SHIPPING'],
+      3: ['SHIPMENT_COMPLETED', 'ORDER_CANCELLED', 'ORDER_FAILED', 'REFUND_REQUESTED', 'REFUND_DENIED', 'PAYMENT_PARTIALLY_REFUNDED'],
+    };
+
+    //     PAYMENT_STANDBY("결제 대기", "1"),
+    //     ORDER_COMPLETED("주문 완료", "2"),
+    //     PREPARING_SHIPMENT("배송 준비중","3"),
+    //     SHIPPING("배송중", "4"),
+    //     SHIPMENT_COMPLETED("배달 완료", "5"),
+    //     ORDER_CANCELLED("주문 취소", "6"),
+    //     ORDER_FAILED("주문 실패", "7"),
+    //     REFUND_REQUESTED("환불 대기", "8"),
+    //     PAYMENT_PARTIALLY_REFUNDED("부분 환불", "9"),
+    //     REFUND_DENIED("환불 거부", "10")
+
     final DeliveryStatus currentStatusInfo =
         statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
-    int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+    //int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+    print('현재 orderStatus: ${widget.order.orderStatus}');
+    //int currentStep = stepStatuses.indexOf(widget.order.orderStatus);
+    int currentStep = stepStatuses.entries
+      .firstWhere(
+        (entry) => entry.value.contains(widget.order.orderStatus),
+        //orElse: () => const MapEntry(0, []), // 없을 경우 0단계 처리
+      ).key;
+    print('currentStep: ${currentStep.toString()}');
 
     debugPrint(trackingData.currentStateText);
     debugPrint(currentStatusInfo.stepName);

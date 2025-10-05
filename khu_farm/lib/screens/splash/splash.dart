@@ -49,6 +49,7 @@ class _SplashScreenState extends State<SplashScreen> {
           final data = jsonDecode(utf8.decode(response.bodyBytes));
           if (data['isSuccess'] == true) {
             final newAccessToken = data['result']['accessToken'];
+            print('access token is: $newAccessToken');
 
             String? newRefreshToken;
             final String? rawCookie = response.headers['set-cookie'];
