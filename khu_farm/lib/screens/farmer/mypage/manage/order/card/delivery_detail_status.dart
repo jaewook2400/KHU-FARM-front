@@ -307,7 +307,6 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
     );
   }
 
-  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder sellerOrder) {
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder order) {
     //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
     // 상태 그룹 정의
