@@ -377,16 +377,16 @@ class _NotificationCard extends StatelessWidget {
 
                   _readNotification(context);
 
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => ConsumerNotificationDetailScreen(
-                            title: title,
-                            content: content,
-                          ),
-                    ),
-                  );
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder:
+                  //         (_) => ConsumerNotificationDetailScreen(
+                  //           title: title,
+                  //           content: content,
+                  //         ),
+                  //   ),
+                  // );
                 },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,

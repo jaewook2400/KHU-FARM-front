@@ -257,6 +257,7 @@ class _FarmerNotificationListScreenState
                                 child: _NotificationCard(
                                   title: notification.title,
                                   content: notification.content,
+                                  id: notification.notificationId.toString(),
                                 ),
                               );
                             } else {
@@ -281,7 +282,70 @@ class _FarmerNotificationListScreenState
 class _NotificationCard extends StatelessWidget {
   final String title;
   final String content;
-  const _NotificationCard({required this.title, required this.content});
+  final String id;
+  const _NotificationCard({required this.title, required this.content, required this.id});
+
+  _readNotification(BuildContext context) async {
+    try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      // 2. API 요청 준비 (GET 쿼리 파라미터 구성)
+      final url = '$baseUrl/notification/$id';
+
+      // 3. API 호출
+      final response = await http.get(Uri.parse(url), headers: headers);
+
+      // 5. 결과 처리
+      if (response.statusCode == 200) {
+        // 한글 깨짐 방지를 위해 utf8로 디코딩
+        print('nofification API 성공!: ${response.statusCode}');
+        final decodedBody = jsonDecode(utf8.decode(response.bodyBytes));
+        // 서버에서 내려주는 기본 구조 확인
+        if (decodedBody['isSuccess'] == true && decodedBody['result'] != null) {
+          final result = decodedBody['result'];
+
+          // 4. result 값 점검
+          final notificationId = result['notificationId'];
+          final title = result['title'];
+          final content = result['content'];
+
+          if (notificationId != null && title != null && content != null) {
+            // 5. 정상 → 상세 화면 이동
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => FarmerNotificationDetailScreen(
+                  title: title,
+                  content: content,
+                ),
+              ),
+            );
+          } else {
+            print('API 응답에 필수 값이 없습니다.');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('알림 데이터를 불러올 수 없습니다.')),
+            );
+          }
+        } else {
+          print('API 응답이 실패 상태입니다.');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('알림 요청이 실패했습니다.')),
+          );
+        }
+      } else {
+        print('Notification API Error: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('서버 오류: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      print('Notification Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('네트워크 오류가 발생했습니다.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -309,16 +373,19 @@ class _NotificationCard extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => FarmerNotificationDetailScreen(
-                            title: title,
-                            content: content,
-                          ),
-                    ),
-                  );
+
+                  _readNotification(context);
+
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder:
+                  //         (_) => FarmerNotificationDetailScreen(
+                  //           title: title,
+                  //           content: content,
+                  //         ),
+                  //   ),
+                  // );
                 },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,
