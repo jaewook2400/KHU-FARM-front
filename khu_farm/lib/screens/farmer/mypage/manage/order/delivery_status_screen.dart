@@ -82,7 +82,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
               // 예: 송장 업로드 로직
             });
           },
-          child: const Text('배송 중'),
+          child: const Text('배송중'),
         );
       case OrderSection.refund:
         return ElevatedButton(
@@ -215,7 +215,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     //       "deliveryNumber": "987654321",
     //       "orderRequest": "직접 전달 부탁드립니다",
     //       "deliveryStatus": "SHIPPING",
-    //       "orderStatus": "배송 중",
+    //       "orderStatus": "배송중",
     //       "refundReason": "",
     //       "createdAt": "2025-10-01T08:50:00.000Z"
     //     },
@@ -257,7 +257,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     //       "deliveryNumber": "444654444",
     //       "orderRequest": "직접 전달 부탁드립니다",
     //       "deliveryStatus": 'PREPARING_SHIPMENT',
-    //       "orderStatus": "배송 중",
+    //       "orderStatus": "배송중",
     //       "refundReason": "",
     //       "createdAt": "2025-10-01T08:50:00.000Z"
     //     },
@@ -526,7 +526,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                           '모두',
                           ...statusMap.values
                               .map((status) => status.displayName) // displayName만 뽑기
-                              .where((name) => (name == '배송 중' || name == '배송 완료'))
+                              .where((name) => (name == '배송중' || name == '배송 완료'))
                         ],
                         onChanged: (val) {
                           setState(() {
@@ -663,8 +663,14 @@ class _OrderInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DeliveryStatus status =
-        statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
+    debugPrint(order.deliveryStatus);
+    // final DeliveryStatus status =
+    //     statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
+    final DeliveryStatus status = statusMap.values.firstWhere(
+          (status) => status.displayName == order.deliveryStatus,
+      orElse: () => statusMap.values.firstWhere((s) => s.displayName == '알 수 없음'),
+    );
+
 
     String formattedDate = '';
     try {

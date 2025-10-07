@@ -18,7 +18,7 @@ const Map<String, DeliveryStatus> statusMap = {
   'PREPARING_SHIPMENT': DeliveryStatus('배송 준비중', '배송 준비중', Colors.blueAccent),
 
   // '배송중' 단계에 매핑
-  'SHIPPING': DeliveryStatus('배송 중', '배송중', Colors.green),
+  'SHIPPING': DeliveryStatus('배송중', '배송중', Colors.green),
 
   // '배송 완료' 단계에 매핑
   'SHIPMENT_COMPLETED': DeliveryStatus('배송 완료', '배송 완료', Colors.blue),

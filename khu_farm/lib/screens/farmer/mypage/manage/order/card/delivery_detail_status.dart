@@ -313,7 +313,7 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
     const stepStatuses = {
       0: ['결제 완료'],
       1: ['배송 준비중'],
-      2: ['배송 중'],
+      2: ['배송중'],
       3: ['배송 완료'],
     };
 

@@ -80,7 +80,7 @@ class _PaymentCancelScreenState extends State<PaymentCancelScreen> {
               // 예: 송장 업로드 로직
             });
           },
-          child: const Text('배송 중'),
+          child: const Text('배송중'),
         );
       case OrderSection.refund:
         return ElevatedButton(

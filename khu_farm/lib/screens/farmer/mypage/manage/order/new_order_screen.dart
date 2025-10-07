@@ -81,7 +81,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
               // 예: 송장 업로드 로직
             });
           },
-          child: const Text('배송 중'),
+          child: const Text('배송중'),
         );
       case OrderSection.refund:
         return ElevatedButton(
@@ -188,7 +188,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     //       "deliveryNumber": null,
     //       "orderRequest": "직접 전달 부탁드립니다",
     //       "deliveryStatus": "SHIPPING",
-    //       "orderStatus": "배송 중",
+    //       "orderStatus": "배송중",
     //       "refundReason": "",
     //       "createdAt": "2025-10-01T08:50:00.000Z"
     //     },
@@ -209,7 +209,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     //       "deliveryNumber": null,
     //       "orderRequest": "직접 전달 부탁드립니다",
     //       "deliveryStatus": "SHIPMENT_COMPLETED",
-    //       "orderStatus": "배송 중",
+    //       "orderStatus": "배송중",
     //       "refundReason": "",
     //       "createdAt": "2025-10-01T08:50:00.000Z"
     //     },
@@ -230,7 +230,7 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     //       "deliveryNumber": null,
     //       "orderRequest": "직접 전달 부탁드립니다",
     //       "deliveryStatus": "ORDER_CANCELLED",
-    //       "orderStatus": "배송 중",
+    //       "orderStatus": "배송중",
     //       "refundReason": "",
     //       "createdAt": "2025-10-01T08:50:00.000Z"
     //     },
