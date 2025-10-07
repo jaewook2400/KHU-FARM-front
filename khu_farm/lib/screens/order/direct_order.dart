@@ -505,9 +505,10 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
                         const SizedBox(height: 12),
                         const Text('주문 요청사항', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 12),
-                        const TextField(
+                        TextField(
+                          controller: _orderRequestController,
                           maxLines: 4,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: '내용을 입력해주세요.',
                             border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                           ),
