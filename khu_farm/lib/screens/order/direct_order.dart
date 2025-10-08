@@ -244,10 +244,13 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
         "address": _shippingAddress!.address,
         "detailAddress": _shippingAddress!.detailAddress,
         "recipient": _shippingAddress!.recipient,
-        "phoneNumber": _shippingAddress!.phoneNumber
-      },
-      "orderRequest": _orderRequestController.text,
+        "phoneNumber": _shippingAddress!.phoneNumber,
+        "orderRequest": _orderRequestController.text
+      }
     });
+
+    final prettyBody = const JsonEncoder.withIndent('  ').convert(jsonDecode(body));
+    debugPrint('📦 Request body:\n$prettyBody');
 
     try {
       final preOrderResponse = await http.post(preOrderUri, headers: headers, body: body);
