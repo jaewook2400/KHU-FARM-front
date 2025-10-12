@@ -380,7 +380,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   /// Helper widget for the delivery status stepper
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order order) {
-    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
+    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송완료'];
     // 상태 그룹 정의
     const stepStatuses = {
       0: ['PAYMENT_STANDBY', 'ORDER_COMPLETED'],
@@ -454,7 +454,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         _buildStepConnector(),
 
-        _buildStep(title: '배송 완료', isActive: currentStep == 3),
+        _buildStep(title: '배송완료', isActive: currentStep == 3),
       ],
     );
   }

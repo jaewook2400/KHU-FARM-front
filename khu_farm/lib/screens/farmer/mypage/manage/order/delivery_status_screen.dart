@@ -142,7 +142,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
       final headers = {'Authorization': 'Bearer $accessToken'};
       final uri = Uri.parse('$baseUrl/order/seller/orders/2').replace(queryParameters: {
         'size': '5',
-        if (cursorId != null) 'cursorId': cursorId.toString(),
+        //if (cursorId != null) 'cursorId': cursorId.toString(),
       });
 
       final response = await http.get(uri, headers: headers);
@@ -236,7 +236,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     //       "deliveryNumber": "987654444",
     //       "orderRequest": "직접 전달 부탁드립니다",
     //       "deliveryStatus": "SHIPMENT_COMPLETED",
-    //       "orderStatus": "배송 완료",
+    //       "orderStatus": "배송완료",
     //       "refundReason": "",
     //       "createdAt": "2025-10-01T08:50:00.000Z"
     //     },
@@ -309,8 +309,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
     // Filter by Status(한글)
     if (_selectedStatus != null) {
       filteredOrders = filteredOrders.where((order) {
-        final name = statusMap[order.deliveryStatus]?.displayName;
-        return name == _selectedStatus;
+        return order.deliveryStatus == _selectedStatus;
       }).toList();
     }
 
@@ -526,7 +525,7 @@ class _DeliveryStatusScreenState extends State<DeliveryStatusScreen> {
                           '모두',
                           ...statusMap.values
                               .map((status) => status.displayName) // displayName만 뽑기
-                              .where((name) => (name == '배송중' || name == '배송 완료'))
+                              .where((name) => (name == '배송중' || name == '배송완료'))
                         ],
                         onChanged: (val) {
                           setState(() {
@@ -670,7 +669,6 @@ class _OrderInfoCard extends StatelessWidget {
           (status) => status.displayName == order.deliveryStatus,
       orElse: () => statusMap.values.firstWhere((s) => s.displayName == '알 수 없음'),
     );
-
 
     String formattedDate = '';
     try {

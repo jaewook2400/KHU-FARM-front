@@ -304,7 +304,7 @@ class _OrderCard extends StatelessWidget {
       formattedDate = order.createdAt;
     }
 
-    final bool isReviewable = (order.deliveryStatus?.currentStateText == 'SHIPMENT_COMPLETED') | (order.deliveryStatus?.currentStateText == '배송 완료') ;
+    final bool isReviewable = (order.deliveryStatus?.currentStateText == 'SHIPMENT_COMPLETED') | (order.deliveryStatus?.currentStateText == '배송완료') ;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

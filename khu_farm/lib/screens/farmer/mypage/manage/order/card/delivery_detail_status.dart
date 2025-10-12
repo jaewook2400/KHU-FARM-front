@@ -308,13 +308,14 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
   }
 
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder order) {
-    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송 완료'];
+
+    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송완료'];
     // 상태 그룹 정의
     const stepStatuses = {
       0: ['결제 완료'],
       1: ['배송 준비중'],
       2: ['배송중'],
-      3: ['배송 완료'],
+      3: ['배송완료'],
     };
 
     //     PAYMENT_STANDBY("결제 대기", "1"),
@@ -333,18 +334,17 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
     print('current statusssss: ${order.orderStatus}');
     int currentStep = stepStatuses.entries
         .firstWhere(
-          (entry) => entry.value.contains(order.orderStatus),
+          (entry) => entry.value.contains(statusMap[order.orderStatus]?.stepName),
       //orElse: () => const MapEntry(0, []), // 없을 경우 0단계 처리
     ).key;
     print('currentStep: ${currentStep.toString()}');
 
     debugPrint(trackingData.currentStateText);
-    debugPrint(currentStatusInfo.stepName);
     debugPrint(currentStep.toString());
 
     final companyName = getDeliveryCompanyName(order.deliveryCompany);
 
-    final invoiceFullText = '운송장 번호 : $companyName ${trackingData.deliveryNumber} (눌러서 복사)';
+    final invoiceFullText = '운송장 번호 : $companyName ${order.deliveryNumber ?? '미등록'} (눌러서 복사)';
 
     return Column(
       children: [
@@ -362,11 +362,20 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
             padding: const EdgeInsets.only(top: 8.0),
             child: GestureDetector(
               onTap: () {
-                Clipboard.setData(ClipboardData(text: trackingData.deliveryNumber!));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
-                );
+                final trackingNumber = order.deliveryNumber;
+
+                if (trackingNumber != null && trackingNumber.isNotEmpty) {
+                  Clipboard.setData(ClipboardData(text: trackingNumber));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('운송장 번호가 등록되어 있지 않습니다.')),
+                  );
+                }
               },
+
               child: Text(
                 invoiceFullText,
                 textAlign: TextAlign.center,
@@ -380,7 +389,7 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
           ),
         _buildStepConnector(),
 
-        _buildStep(title: '배송 완료', isActive: currentStep == 3),
+        _buildStep(title: '배송완료', isActive: currentStep == 3),
       ],
     );
   }

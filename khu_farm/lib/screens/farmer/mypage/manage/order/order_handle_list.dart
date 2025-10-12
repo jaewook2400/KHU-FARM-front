@@ -19,7 +19,7 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
   final Map<String, String> statusOptions = {
     '결제 완료': 'ORDER_COMPLETED',
     '배송중': 'SHIPPING',
-    '배송 완료': 'SHIPMENT_COMPLETED',
+    '배송완료': 'SHIPMENT_COMPLETED',
     '결제 취소': 'ORDER_CANCELLED',
     '환불 대기': 'REFUND_REQUESTED',
   };

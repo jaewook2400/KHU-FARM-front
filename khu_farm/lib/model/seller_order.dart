@@ -62,7 +62,7 @@ class SellerOrder {
       deliveryNumber: json['deliveryNumber'],
       orderRequest: json['orderRequest'],
       createdAt: json['createdAt'] ?? '',
-      deliveryStatus: json['deliveryStatus'] ?? '알 수 없음',
+      deliveryStatus: json['deliveryStatus']['state']['text'] ?? '알 수 없음',
       orderStatus: json['orderStatus'] ?? '알 수 없음',
       refundReason: json['refundReason'] ?? '',
     );
