@@ -23,8 +23,7 @@ class RefundScreen extends StatefulWidget {
 
 class _RefundScreenState extends State<RefundScreen> {
   final TextEditingController _reasonController = TextEditingController();
-  String? _horizontalImagePath;
-  String? _squareImagePath;
+  String? _imagePath;
   bool _isLoading = false;
 
   @override
@@ -57,14 +56,18 @@ class _RefundScreenState extends State<RefundScreen> {
       return;
     }
 
+    final _imageUrl = await _getImageUrl(_imagePath!);
+
     final uri = Uri.parse('$baseUrl/order/refund/${widget.order.orderDetailId}');
     final headers = {
       'Authorization': 'Bearer $accessToken',
       'Content-Type': 'application/json',
     };
     final body = json.encode({
-      'refundReason': _reasonController.text,
+      'refundReason': '${_imageUrl ?? ''}${_reasonController.text}',
     });
+
+    debugPrint('refundReason: ${_imageUrl ?? ''}${_reasonController.text}');
 
     try {
       final response = await http.patch(uri, headers: headers, body: body);
@@ -80,6 +83,7 @@ class _RefundScreenState extends State<RefundScreen> {
               onClick: () {
                 Navigator.pop(context); // 닫기 눌렀을 때 현재 SuccessScreen 닫기
                 Navigator.pop(context); // 환불 화면도 닫고 이전 화면으로
+                debugPrint('image path: $_imagePath');
               },
               message: '환불 접수가 완료되었습니다.',
             ),
@@ -103,6 +107,68 @@ class _RefundScreenState extends State<RefundScreen> {
     }
     print("환불 요청: $reason");
   }
+
+  Future<String?> _getImageUrl(String imagePath) async {
+    final uri = Uri.parse('$baseUrl/image/upload');
+    final String? token = await StorageService.getAccessToken();
+
+    if (token == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('로그인 정보가 없습니다.')),
+        );
+      }
+      return null;
+    }
+
+    try {
+      final request = http.MultipartRequest('POST', uri)
+        ..headers['Authorization'] = 'Bearer $token'
+        ..files.add(
+          await http.MultipartFile.fromPath(
+            'image',
+            imagePath,
+            filename: imagePath.split('/').last,
+          ),
+        );
+
+      final streamed = await request.send();
+
+      if (streamed.statusCode == 200) {
+        final body = await streamed.stream.bytesToString();
+        final data = jsonDecode(body);
+
+        // ✅ 응답 구조가 예상과 다를 수도 있으므로 방어적으로 접근
+        final imageUrl = data['result'] as String?;
+        if (imageUrl == null || imageUrl.isEmpty) {
+          throw Exception('서버에서 이미지 URL을 반환하지 않았습니다.');
+        }
+
+        return imageUrl;
+      } else {
+        // ❗ HTTP 상태 코드가 200이 아닐 경우
+        final body = await streamed.stream.bytesToString();
+        debugPrint('이미지 업로드 실패 응답: $body');
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('이미지 업로드 실패 (${streamed.statusCode})')),
+          );
+        }
+        return null;
+      }
+    } catch (e) {
+      // ✅ 네트워크 오류나 예외 처리
+      debugPrint('이미지 업로드 중 오류: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이미지 업로드 중 오류가 발생했습니다.')),
+        );
+      }
+      return null;
+    }
+  }
+
 
   // 실패 알림창을 띄우는 함수
   void _showErrorDialog(String message) {
@@ -384,8 +450,8 @@ class _RefundScreenState extends State<RefundScreen> {
                 SizedBox(height: 30,),
                 _buildImageUpload(
                   label: '사진',
-                  imagePath: _horizontalImagePath,
-                  onImageSelected: (path) => setState(() => _horizontalImagePath = path),
+                  imagePath: _imagePath,
+                  onImageSelected: (path) => setState(() => _imagePath = path),
                 ),
               ],
             ),
