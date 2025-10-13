@@ -9,6 +9,7 @@ import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/screens/consumer/mypage/order/order.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:khu_farm/shared/widgets/alert/success_screen.dart';
 
 import '../../../../shared/text_styles.dart';
 
@@ -71,8 +72,20 @@ class _RefundScreenState extends State<RefundScreen> {
       print(responseBody);
 
       if (response.statusCode == 200 && responseBody['isSuccess'] == true) {
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => SuccessScreen(
+              onClick: () {
+                Navigator.pop(context); // 닫기 눌렀을 때 현재 SuccessScreen 닫기
+                Navigator.pop(context); // 환불 화면도 닫고 이전 화면으로
+              },
+              message: '환불 접수가 완료되었습니다.',
+            ),
+          ),
+        );
         // 성공 시, 주문/배송 목록 화면으로 이동
-        Navigator.pop(context);
       } else {
         // API가 실패 응답을 보냈을 경우
         final message = responseBody['message'] ?? '알 수 없는 오류가 발생했습니다.';
