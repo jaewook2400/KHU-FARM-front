@@ -10,6 +10,8 @@ import 'package:khu_farm/screens/consumer/mypage/order/order.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../shared/text_styles.dart';
+
 class RefundScreen extends StatefulWidget {
   const RefundScreen({super.key, required this.order});
   final Order order;
@@ -117,45 +119,79 @@ class _RefundScreenState extends State<RefundScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        const SizedBox(height: 6),
         Row(
           children: [
+            Text(label,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            SizedBox(width: 15,),
             ElevatedButton(
               onPressed: () => _pickImage(onImageSelected),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6FCF4B),
+                backgroundColor: const Color(0xFF7AC833),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                minimumSize: const Size(0, 28),
               ),
-              child: const Text(
+
+              child: Text(
                 '사진 업로드하기',
-                style: TextStyle(fontSize: 14, color: Colors.white),
+                style: AppTextStyles.pretendard_black?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                )
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: imagePath != null
-                  ? Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.file(
-                    File(imagePath),
-                    width: 80,
-                    height: 80,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              )
-                  : const SizedBox(),
-            ),
           ],
         ),
         const SizedBox(height: 20),
+        Text.rich(
+          TextSpan(
+            text: '※ 본 상품은 ‘신선 식품’으로, 환불 접수 시 ',
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFFFF3434),
+            ),
+            children: [
+              TextSpan(
+                text: '사진 증빙이 필수',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10,
+                  color: Color(0xFFFF3434),
+                ),
+              ),
+              const TextSpan(
+                text: '입니다.\n추가 문의 사항은 ansy00@khu.ac.kr로 남겨주시면 조속히 도와드리겠습니다. :)',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFFFF3434),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 30,),
+        Container(
+          height: 100,
+          child: imagePath != null
+              ? Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(imagePath),
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+              ),
+            ),
+          )
+              : const SizedBox(),
+        ),
       ],
     );
   }
@@ -333,9 +369,11 @@ class _RefundScreenState extends State<RefundScreen> {
                   ),
                 ),
                 SizedBox(height: 30,),
-                _buildImageUpload(label: '미리보기 이미지 (가로형)',
+                _buildImageUpload(
+                  label: '사진',
                   imagePath: _horizontalImagePath,
-                  onImageSelected: (path) => setState(() => _horizontalImagePath = path),),
+                  onImageSelected: (path) => setState(() => _horizontalImagePath = path),
+                ),
               ],
             ),
           ),
