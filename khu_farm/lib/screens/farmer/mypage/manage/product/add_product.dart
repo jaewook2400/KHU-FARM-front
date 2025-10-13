@@ -246,12 +246,16 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                   const SizedBox(height: 20),
 
                   // 미리보기 이미지 업로드 (가로형 + 정방형)
-                  _buildImageUpload(label: '미리보기 이미지 (가로형)',
+                  _buildImageUpload(
+                    label: '미리보기 이미지 (가로형)',
                     imagePath: _horizontalImagePath,
-                    onImageSelected: (path) => setState(() => _horizontalImagePath = path),),
-                  _buildImageUpload(label: '미리보기 이미지 (정방형)',
+                    onImageSelected: (path) => setState(() => _horizontalImagePath = path),
+                  ),
+                  _buildImageUpload(
+                    label: '미리보기 이미지 (정방형)',
                     imagePath: _squareImagePath,
-                    onImageSelected: (path) => setState(() => _squareImagePath = path),),
+                    onImageSelected: (path) => setState(() => _squareImagePath = path),
+                  ),
 
                   buildLabeledTextField(
                     "상품 제목",

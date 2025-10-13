@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,7 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/screens/consumer/mypage/order/order.dart';
 import 'package:khu_farm/services/storage_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class RefundScreen extends StatefulWidget {
   const RefundScreen({super.key, required this.order});
@@ -18,6 +20,8 @@ class RefundScreen extends StatefulWidget {
 
 class _RefundScreenState extends State<RefundScreen> {
   final TextEditingController _reasonController = TextEditingController();
+  String? _horizontalImagePath;
+  String? _squareImagePath;
   bool _isLoading = false;
 
   @override
@@ -101,6 +105,58 @@ class _RefundScreenState extends State<RefundScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _pickImage(ValueChanged<String> onImageSelected) async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) onImageSelected(picked.path);
+  }
+
+  Widget _buildImageUpload({required String label, required String? imagePath, required ValueChanged<String> onImageSelected,}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: () => _pickImage(onImageSelected),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6FCF4B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              ),
+              child: const Text(
+                '사진 업로드하기',
+                style: TextStyle(fontSize: 14, color: Colors.white),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: imagePath != null
+                  ? Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(imagePath),
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              )
+                  : const SizedBox(),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 
@@ -249,7 +305,6 @@ class _RefundScreenState extends State<RefundScreen> {
                 const SizedBox(height: 8),
 
                 // ✅ 환불 사유 입력 칸
-                // ✅ 환불 사유 입력 칸
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -276,7 +331,11 @@ class _RefundScreenState extends State<RefundScreen> {
                       contentPadding: const EdgeInsets.all(12),
                     ),
                   ),
-                )
+                ),
+                SizedBox(height: 30,),
+                _buildImageUpload(label: '미리보기 이미지 (가로형)',
+                  imagePath: _horizontalImagePath,
+                  onImageSelected: (path) => setState(() => _horizontalImagePath = path),),
               ],
             ),
           ),
