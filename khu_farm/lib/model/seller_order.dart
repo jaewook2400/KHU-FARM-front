@@ -62,7 +62,19 @@ class SellerOrder {
       deliveryNumber: json['deliveryNumber'],
       orderRequest: json['orderRequest'],
       createdAt: json['createdAt'] ?? '',
-      deliveryStatus: json['deliveryStatus']['state']['text'] ?? '알 수 없음',
+      deliveryStatus: (() {
+        final status = json['deliveryStatus'];
+        if (status == null) return '알 수 없음';
+
+        if (status is Map && status['state'] is Map) {
+          return status['state']?['text'] ?? '알 수 없음';
+        }
+
+        // 혹시 그냥 문자열로 오는 경우도 대비
+        if (status is String) return status;
+
+        return '알 수 없음';
+      })(),
       orderStatus: json['orderStatus'] ?? '알 수 없음',
       refundReason: json['refundReason'] ?? '',
     );

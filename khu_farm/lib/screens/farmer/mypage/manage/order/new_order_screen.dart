@@ -147,15 +147,16 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
-        print(data);
+        print('data is: $data');
 
         if (data['isSuccess'] == true) {
+          debugPrint('isSuccess is true');
           _handleOrders(data, cursorId);
         }
       } else {
         // ✅ 200이 아닐 경우에도 목데이터 채우기
         print('Server error: ${response.statusCode}, using mock data');
-        _handleOrders(null, cursorId);
+        //_handleOrders(null, cursorId);
       }
     } catch (e) {
       print('Failed to fetch seller orders: $e');
@@ -167,81 +168,22 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
     }
   }
 
-  void _handleOrders(dynamic data, int? cursorId) { //statusCode가 200이 아닐 때 목데이터를 _orders에 저장해주는 함수
-    List<dynamic> orderJson = [];
+  void _handleOrders(dynamic data, int? cursorId) {
+    debugPrint('📦 전체 응답: $data');
 
-    // if (data == null || data['result'] == null || (data['result']['size'] ?? 0) == 0) {
-    //   // ✅ 목데이터
-    //   orderJson = [
-    //     {
-    //       "orderId": 2,
-    //       "orderDetailId": 102,
-    //       "merchantUid": "MUID-002",
-    //       "ordererName": "김철수",
-    //       "totalPrice": 20000,
-    //       "fruitTitle": "배 5kg",
-    //       "orderCount": 2,
-    //       "portCode": "PORT002",
-    //       "address": "부산광역시 해운대구 센텀로 456",
-    //       "detailAddress": "202호",
-    //       "recipient": "김철수",
-    //       "phoneNumber": "010-9876-5432",
-    //       "deliveryCompany": "한진택배",
-    //       "deliveryNumber": null,
-    //       "orderRequest": "직접 전달 부탁드립니다",
-    //       "deliveryStatus": "SHIPPING",
-    //       "orderStatus": "배송중",
-    //       "refundReason": "",
-    //       "createdAt": "2025-10-01T08:50:00.000Z"
-    //     },
-    //     {
-    //       "orderId": 3,
-    //       "orderDetailId": 103,
-    //       "merchantUid": "MUID-003",
-    //       "ordererName": "김철",
-    //       "totalPrice": 20000,
-    //       "fruitTitle": "배 5kg",
-    //       "orderCount": 3,
-    //       "portCode": "PORT003",
-    //       "address": "부산광역시 해운대구 센텀로 456",
-    //       "detailAddress": "203호",
-    //       "recipient": "김철",
-    //       "phoneNumber": "010-9876-5432",
-    //       "deliveryCompany": "한진택배",
-    //       "deliveryNumber": null,
-    //       "orderRequest": "직접 전달 부탁드립니다",
-    //       "deliveryStatus": "SHIPMENT_COMPLETED",
-    //       "orderStatus": "배송중",
-    //       "refundReason": "",
-    //       "createdAt": "2025-10-01T08:50:00.000Z"
-    //     },
-    //     {
-    //       "orderId": 4,
-    //       "orderDetailId": 104,
-    //       "merchantUid": "MUID-004",
-    //       "ordererName": "김철준",
-    //       "totalPrice": 20000,
-    //       "fruitTitle": "배 5kg",
-    //       "orderCount": 4,
-    //       "portCode": "PORT004",
-    //       "address": "부산광역시 해운대구 센텀로 456",
-    //       "detailAddress": "204호",
-    //       "recipient": "김철준",
-    //       "phoneNumber": "010-9876-5432",
-    //       "deliveryCompany": "한진택배",
-    //       "deliveryNumber": null,
-    //       "orderRequest": "직접 전달 부탁드립니다",
-    //       "deliveryStatus": "ORDER_CANCELLED",
-    //       "orderStatus": "배송중",
-    //       "refundReason": "",
-    //       "createdAt": "2025-10-01T08:50:00.000Z"
-    //     },
-    //   ];
-    // } else {
-    //   orderJson = data['result']['content'] ?? [];
-    // }
+    final result = data['result'];
+    if (result == null) {
+      debugPrint('⚠️ result가 null입니다.');
+      return;
+    }
 
-    orderJson = data['result']['content'] ?? [];
+    final orderJson = (result['content'] ?? []) as List<dynamic>;
+    if (orderJson.isEmpty) {
+      debugPrint('⚠️ content 비어 있음');
+      return;
+    }
+
+    debugPrint('✅ 첫 주문: ${orderJson[0]}');
 
     final newOrders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
 
@@ -249,14 +191,15 @@ class _NewOrderScreenState extends State<NewOrderScreen> {
       if (cursorId == null) {
         _orders = newOrders;
       } else {
-        _orders.addAll(newOrders);
+        _orders = [..._orders, ...newOrders];
       }
-      if (newOrders.length < 5) {
-        _hasMore = false;
-      }
+
+      _hasMore = newOrders.length >= 5;
     });
+
+    debugPrint('🆕 newOrders length: ${_orders.length}');
   }
-  
+
   @override
   Widget build(BuildContext context) {
 
