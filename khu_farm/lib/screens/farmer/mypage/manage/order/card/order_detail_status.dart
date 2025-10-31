@@ -8,6 +8,7 @@ import 'package:khu_farm/model/order_status.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:http/http.dart' as http;
+import 'dart:math';
 
 import '../../../../../../shared/widgets/top_norch_header.dart';
 
@@ -191,8 +192,9 @@ class _OrderDetailStatusScreenState extends State<OrderDetailStatusScreen> {
   }
 
   Widget _buildOrderDetails(SellerOrder order) {
+    print('배송상태ooo: ${order.deliveryStatus}');
     final DeliveryStatus status =
-        statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
+        statusMap[koreanToCode[order.deliveryStatus]] ?? statusMap['알 수 없음']!;
     String formattedDate = '';
     try {
       if (order.createdAt.isNotEmpty) {
@@ -213,9 +215,10 @@ class _OrderDetailStatusScreenState extends State<OrderDetailStatusScreen> {
         _buildInfoRow('주문일자', formattedDate),
         _buildInfoRow('주문번호', order.merchantUid),
         _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+        _buildInfoRow('주소', '${order.address} ${order.detailAddress ?? ''} [${order.portCode}]'),
         _buildInfoRow('송장번호', order.deliveryNumber ?? '미등록'),
         _buildInfoRow('택배사', order.deliveryCompany ?? '미등록'),
-        _buildInfoRow('주문자 요청사항', order.orderRequest ?? '없음'),
+        _buildInfoRow('주문자\n요청사항', order.orderRequest ?? '없음'),
         const SizedBox(height: 24),
         // 메모 필드 추가
         
@@ -236,18 +239,20 @@ class _OrderDetailStatusScreenState extends State<OrderDetailStatusScreen> {
   }
 
   Widget _buildInfoRow(String label, String value, {Widget? trailing}) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.width;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      padding: EdgeInsets.symmetric(vertical: screenHeight*0.02),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
-            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+            width: max(70, screenWidth*0.2),
+            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500)),
           ),
           const Text('|', style: TextStyle(color: Colors.grey)),
           const SizedBox(width: 16),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+          Expanded(child: Text(value, style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500))),
           if (trailing != null) trailing,
         ],
       ),

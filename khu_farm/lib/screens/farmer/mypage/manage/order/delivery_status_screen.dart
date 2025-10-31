@@ -662,7 +662,7 @@ class _OrderInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(order.deliveryStatus);
+    debugPrint('delivery status: ${order.deliveryStatus}');
     // final DeliveryStatus status =
     //     statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
     final DeliveryStatus status = statusMap.values.firstWhere(

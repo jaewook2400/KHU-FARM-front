@@ -227,6 +227,8 @@ class _DeliveryNumberEditScreenState extends State<DeliveryNumberEditScreen> {
           _buildInfoRow('주문일자', formattedDate),
           _buildInfoRow('주문번호', order.merchantUid),
           _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+          _buildInfoRow('주소', '${order.address} ${order.detailAddress ?? ''} [${order.portCode}]'),
+          _buildInfoRow('요청사항', order.orderRequest ?? '없음'),
         ],
       ),
     );

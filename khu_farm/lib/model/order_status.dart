@@ -32,3 +32,17 @@ const Map<String, DeliveryStatus> statusMap = {
   'PAYMENT_PARTIALLY_REFUNDED': DeliveryStatus('부분 환불', '', Colors.deepOrange),
   '알 수 없음': DeliveryStatus('알 수 없음', '', Colors.black),
 };
+
+// 한글 상태 → 서버 코드
+const Map<String, String> koreanToCode = {
+  '결제 대기': 'PAYMENT_STANDBY',
+  '주문 완료': 'ORDER_COMPLETED',
+  '배송 준비중': 'PREPARING_SHIPMENT',
+  '배송중': 'SHIPPING',
+  '배송완료': 'SHIPMENT_COMPLETED',
+  '주문 취소': 'ORDER_CANCELLED',
+  '주문 실패': 'ORDER_FAILED',
+  '환불 대기': 'REFUND_REQUESTED',
+  '환불 거부': 'REFUND_DENIED',
+  '부분 환불': 'PAYMENT_PARTIALLY_REFUNDED',
+};

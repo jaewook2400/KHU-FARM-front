@@ -177,6 +177,7 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
           _buildInfoRow('주문일자', formattedDate),
           _buildInfoRow('주문번호', order.merchantUid),
           _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+          _buildInfoRow('주소', '${order.address} ${order.detailAddress} [${order.portCode}]'),
           _buildInfoRow('송장번호', order.deliveryNumber ?? '미등록'),
           _buildInfoRow('택배사', order.deliveryCompany ?? '미등록'),
           _buildInfoRow('주문자 요청사항', order.orderRequest ?? '없음'),
@@ -236,7 +237,7 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
     print('current statusssss: ${order.orderStatus}');
     int currentStep = stepStatuses.entries
         .firstWhere(
-          (entry) => entry.value.contains(statusMap[order.orderStatus]?.stepName),
+          (entry) => entry.value.contains(statusMap[koreanToCode[order.deliveryStatus]]?.stepName),
       //orElse: () => const MapEntry(0, []), // 없을 경우 0단계 처리
     ).key;
     print('currentStep: ${currentStep.toString()}');
@@ -292,6 +293,7 @@ class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen>
         _buildStepConnector(),
 
         _buildStep(title: '배송완료', isActive: currentStep == 3),
+        SizedBox(height: 30,),
       ],
     );
   }
