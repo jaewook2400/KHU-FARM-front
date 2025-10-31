@@ -731,7 +731,7 @@ class _OrderInfoCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text('주문번호 : ${order.merchantUid}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const SizedBox(height: 2),
-            Text('${order.address} ${order.detailAddress}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+            Text('${order.address} ${order.detailAddress} [${order.portCode}]', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
