@@ -44,6 +44,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (loginData['isSuccess'] == true) {
       final loginResult = loginData['result'];
       final accessToken = loginResult['accessToken'];
+      print('access token is: $accessToken');
       final userType = loginResult['userType'];
       String? refreshToken;
       final String? rawCookie = loginResponse.headers['set-cookie'];
