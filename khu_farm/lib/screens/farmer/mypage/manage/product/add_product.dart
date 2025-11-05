@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:khu_farm/constants.dart';
-
+import 'package:khu_farm/screens/farmer/mypage/manage/product/add_product_option.dart';
 import '../../../../../shared/widgets/top_norch_header.dart';
 
 class FarmerAddProductScreen extends StatefulWidget {
@@ -20,19 +20,39 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
   String? _squareImagePath;
   String? _selectedCourierId;
 
+  final List<Map<String, dynamic>> _options = [];
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _weightController = TextEditingController();
+  final _quantityController = TextEditingController();
+
   final _stockController = TextEditingController();
   final _normalShippingController = TextEditingController();
   final _islandShippingController = TextEditingController();
   final _maxDeliveryController = TextEditingController();
+
+  // 옵션 추가 함수
+  Future<void> _addOption() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddProductOptionPage(),
+      ),
+    );
+
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        _options.add(result);
+      });
+    }
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _priceController.dispose();
     _weightController.dispose();
+    _quantityController.dispose();
     _stockController.dispose();
     _normalShippingController.dispose();
     _islandShippingController.dispose();
@@ -41,9 +61,11 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
   }
 
   bool get _allFieldsFilled {
-    return _titleController.text.isNotEmpty &&
-      _priceController.text.isNotEmpty &&
-      _weightController.text.isNotEmpty &&
+    return
+      // _titleController.text.isNotEmpty &&
+      // _priceController.text.isNotEmpty &&
+      // _weightController.text.isNotEmpty &&
+      _options.isNotEmpty &&
       _stockController.text.isNotEmpty &&
       _selectedCourierId != null &&
       _normalShippingController.text.isNotEmpty &&
@@ -158,7 +180,6 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                     imagePath: _squareImagePath,
                     onImageSelected: (path) => setState(() => _squareImagePath = path),
                   ),
-
                   buildLabeledTextField(
                     "상품 제목",
                     "제목을 입력해 주세요.",
