@@ -137,11 +137,15 @@ class _OrderHandleListPageState extends State<OrderHandleListPage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.only(
+              top: statusBarHeight + screenHeight * 0.06 + 20,
+              bottom: 16,
+              left: 16,
+              right: 16
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: screenHeight*0.1,),
                 Row(
                   children: [
                     const SizedBox(width: 8),
