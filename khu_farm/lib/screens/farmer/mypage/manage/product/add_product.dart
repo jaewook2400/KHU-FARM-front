@@ -43,6 +43,7 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
     if (result != null && result is Map<String, dynamic>) {
       setState(() {
         _options.add(result);
+        print('옵션 추가: $result');
       });
     }
   }
@@ -62,10 +63,11 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
 
   bool get _allFieldsFilled {
     return
-      // _titleController.text.isNotEmpty &&
-      // _priceController.text.isNotEmpty &&
-      // _weightController.text.isNotEmpty &&
-      _options.isNotEmpty &&
+      _titleController.text.isNotEmpty &&
+      _priceController.text.isNotEmpty &&
+      _weightController.text.isNotEmpty &&
+
+      //_options.isNotEmpty &&
       _stockController.text.isNotEmpty &&
       _selectedCourierId != null &&
       _normalShippingController.text.isNotEmpty &&
@@ -185,23 +187,38 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                     "제목을 입력해 주세요.",
                     controller: _titleController,
                   ),
-                  buildLabeledTextField(
-                    "상품 가격",
-                    "상품 가격을 입력해 주세요.",
-                    controller: _priceController,
+                  TextButton(
+                      onPressed: _addOption,
+                      child: Container(
+                        color: Colors.yellow,
+                        child: Text(
+                          '옵션 추가하기',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      )
                   ),
-                  buildLabeledTextField(
-                    "상품 중량 (수량 1개)",
-                    "kg단위, 숫자만 입력해 주세요.",
-                    suffix: "kg",
-                    controller: _weightController,
-                  ),
-                  buildLabeledTextField(
-                    "준비된 재고",
-                    "박스단위, 숫자만 입력해 주세요.",
-                    suffix: "박스",
-                    controller: _stockController,
-                  ),
+                  // buildLabeledTextField(
+                  //   "상품 가격",
+                  //   "상품 가격을 입력해 주세요.",
+                  //   controller: _priceController,
+                  // ),
+                  // buildLabeledTextField(
+                  //   "상품 중량 (수량 1개)",
+                  //   "kg단위, 숫자만 입력해 주세요.",
+                  //   suffix: "kg",
+                  //   controller: _weightController,
+                  // ),
+                  // buildLabeledTextField(
+                  //   "준비된 재고",
+                  //   "박스단위, 숫자만 입력해 주세요.",
+                  //   suffix: "박스",
+                  //   controller: _stockController,
+                  // ),
+                  buildOptionList(),
+                  const SizedBox(height: 20),
                   _buildCourierDropdown(),
                   Row(
                     children: [
@@ -255,6 +272,8 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                       );
                       // Get the name, or null if not found
                       final courierName = selectedCourier['name'];
+
+
                       Navigator.pushNamed(
                         context,
                         '/farmer/mypage/manage/product/add/detail',
@@ -264,9 +283,10 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                             'horizontalImagePath': _horizontalImagePath,
                             'squareImagePath': _squareImagePath,
                             'title': _titleController.text,
-                            'price': _priceController.text,
-                            'weight': _weightController.text,
-                            'stock': _stockController.text,
+                            // 'price': _priceController.text,
+                            // 'weight': _weightController.text,
+                            // 'stock': _stockController.text,
+                            'options': _options,
                             'courier': courierName,
                             'normalShipping': _normalShippingController.text,
                             'islandShipping': _islandShippingController.text,
@@ -430,6 +450,68 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget buildOptionList() {
+    if (_options.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _options.map((option) {
+        final title = option['title'];
+        final weightList = option['weight'] as List<dynamic>;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ✅ 옵션 제목
+              Text(
+                '옵션명: $title',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // ✅ 한 옵션의 weight 리스트 반복 표시
+              Column(
+                children: weightList.map((w) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(child: Text('중량: ${w['weight']}')),
+                        Expanded(child: Text('가격: ${w['price']}')),
+                        Expanded(child: Text('재고: ${w['stock']}')),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }
