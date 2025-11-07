@@ -54,9 +54,9 @@ class _AddProductOptionPageState extends State<AddProductOptionPage> {
       }
 
       weightList.add({
-        'weight': weight,
-        'price': price,
-        'stock': stock,
+        'weight': int.parse(weight),
+        'price': int.parse(price),
+        'stock': int.parse(stock),
       });
     }
 

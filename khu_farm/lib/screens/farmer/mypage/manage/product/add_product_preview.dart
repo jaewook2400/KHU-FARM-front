@@ -61,7 +61,7 @@ class _FarmerAddProductPreviewScreen
       for (final w in weightList) {
         result.add({
           "optionTitle": title,
-          "weight": w['weight'].toString(),
+          "weight": w['weight'],
         });
       }
     }
@@ -114,6 +114,9 @@ class _FarmerAddProductPreviewScreen
         'description':                 description,
         //'stock':                       stock,
       };
+      const encoder = JsonEncoder.withIndent('  ');
+      final pretty = encoder.convert(payload);
+      debugPrint("📦 API Request Payload:\n$pretty");
 
 // 1) print it
       final response = await http.post(
@@ -592,9 +595,9 @@ class _FarmerAddProductPreviewScreen
                 ),
               ),
 
-              /// ✅ 오른쪽: “옵션명 + weight kg”
+              /// ✅ 오른쪽: “weight kg”
               Text(
-                '$optionTitle ${weight}kg',
+                '${weight}kg',
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black87,

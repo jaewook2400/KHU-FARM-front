@@ -63,12 +63,12 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
 
   bool get _allFieldsFilled {
     return
-      _titleController.text.isNotEmpty &&
-      _priceController.text.isNotEmpty &&
-      _weightController.text.isNotEmpty &&
+      // _titleController.text.isNotEmpty &&
+      // _priceController.text.isNotEmpty &&
+      // _weightController.text.isNotEmpty &&
 
-      //_options.isNotEmpty &&
-      _stockController.text.isNotEmpty &&
+      _options.isNotEmpty &&
+     // _stockController.text.isNotEmpty &&
       _selectedCourierId != null &&
       _normalShippingController.text.isNotEmpty &&
       _islandShippingController.text.isNotEmpty &&
@@ -187,19 +187,35 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                     "제목을 입력해 주세요.",
                     controller: _titleController,
                   ),
-                  TextButton(
-                      onPressed: _addOption,
-                      child: Container(
-                        color: Colors.yellow,
-                        child: Text(
-                          '옵션 추가하기',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      )
+            TextButton(
+              onPressed: _addOption,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,     // 내부 패딩 제거
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 18),
+                decoration: BoxDecoration(
+                  color: Color(0XFFEFEFEF),  // ✅ 밝은 회색
+                  borderRadius: BorderRadius.circular(10), // ✅ 둥근 모서리
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  '+ 옵션 추가하기',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF4A4A4A),
+                    fontWeight: FontWeight.w600, // ✅ Semi-bold
                   ),
+                ),
+              ),
+            ),
                   // buildLabeledTextField(
                   //   "상품 가격",
                   //   "상품 가격을 입력해 주세요.",
