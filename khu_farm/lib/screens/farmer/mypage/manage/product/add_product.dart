@@ -36,7 +36,7 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => const AddProductOptionPage(),
+        builder: (_) => AddProductOptionPage(productName: _titleController.text),
       ),
     );
 
