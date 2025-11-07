@@ -79,11 +79,12 @@ class _FarmerAddProductPreviewScreen
     final String hPath = args['horizontalImagePath'] as String;
     final String sPath = args['squareImagePath']     as String;
     final String title = args['title']     as String;
-    final int    price = int.parse(args['price'] as String);
-    final int weight = int.parse(args['weight'] as String);
+    // final int    price = int.parse(args['price'] as String);
+    // final int weight = int.parse(args['weight'] as String);
     final String deliveryCompany = args['courier']   as String;
     final int    deliveryDay = int.parse(args['maxDelivery'] as String);
-    final int    stock = int.parse(args['stock'] as String);
+    // final int    stock = int.parse(args['stock'] as String);
+    final List<Map<String, dynamic>> options = args['options'] as List<Map<String, dynamic>>;
     final dynamic contentArg = args['content'];
     final String description = contentArg is String
         ? contentArg
@@ -105,12 +106,13 @@ class _FarmerAddProductPreviewScreen
         'widthImage':                  horizontalUrl,
         'squareImage':                 squareUrl,
         'title':                       title,
-        'price':                       price,
-        'weight':                      weight,
+        'options':                     options,
+        // 'price':                       price,
+        // 'weight':                      weight,
         'deliveryCompany':             deliveryCompany,
         'deliveryDay':                 deliveryDay,
         'description':                 description,
-        'stock':                       stock,
+        //'stock':                       stock,
       };
 
 // 1) print it
