@@ -129,7 +129,7 @@ class _AddProductOptionPageState extends State<AddProductOptionPage> {
 
           /// 콘텐츠 영역
           Positioned.fill(
-            top: statusBarHeight + screenHeight * 0.06 + 60,
+            top: statusBarHeight + screenHeight * 0.08 + 60,
             bottom: bottomPadding + 80,
             left: screenWidth * 0.06,
             right: screenWidth * 0.06,

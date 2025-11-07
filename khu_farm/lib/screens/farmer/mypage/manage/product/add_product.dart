@@ -187,35 +187,35 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                     "제목을 입력해 주세요.",
                     controller: _titleController,
                   ),
-            TextButton(
-              onPressed: _addOption,
-              style: TextButton.styleFrom(
-                padding: EdgeInsets.zero,     // 내부 패딩 제거
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 18),
-                decoration: BoxDecoration(
-                  color: Color(0XFFEFEFEF),  // ✅ 밝은 회색
-                  borderRadius: BorderRadius.circular(10), // ✅ 둥근 모서리
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
+                  TextButton(
+                    onPressed: _addOption,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,     // 내부 패딩 제거
                     ),
-                  ],
-                ),
-                child: const Text(
-                  '+ 옵션 추가하기',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF4A4A4A),
-                    fontWeight: FontWeight.w600, // ✅ Semi-bold
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: Color(0XFFEFEFEF),  // ✅ 밝은 회색
+                        borderRadius: BorderRadius.circular(10), // ✅ 둥근 모서리
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '+ 옵션 추가하기',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF4A4A4A),
+                          fontWeight: FontWeight.w600, // ✅ Semi-bold
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ),
                   // buildLabeledTextField(
                   //   "상품 가격",
                   //   "상품 가격을 입력해 주세요.",
@@ -233,6 +233,7 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                   //   suffix: "박스",
                   //   controller: _stockController,
                   // ),
+                  SizedBox(height: screenHeight*0.03),
                   buildOptionList(),
                   const SizedBox(height: 20),
                   _buildCourierDropdown(),
