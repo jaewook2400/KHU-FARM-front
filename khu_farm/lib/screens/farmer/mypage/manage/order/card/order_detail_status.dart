@@ -8,15 +8,18 @@ import 'package:khu_farm/model/order_status.dart';
 import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:http/http.dart' as http;
+import 'dart:math';
 
-class FarmerManageOrderDetailScreen extends StatefulWidget {
-  const FarmerManageOrderDetailScreen({super.key});
+import '../../../../../../shared/widgets/top_norch_header.dart';
+
+class OrderDetailStatusScreen extends StatefulWidget {
+  const OrderDetailStatusScreen({super.key});
 
   @override
-  State<FarmerManageOrderDetailScreen> createState() => _FarmerManageOrderDetailScreenState();
+  State<OrderDetailStatusScreen> createState() => _OrderDetailStatusScreenState();
 }
 
-class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailScreen> {
+class _OrderDetailStatusScreenState extends State<OrderDetailStatusScreen> {
   DeliveryTrackingData? _trackingData;
   bool _isLoading = true;
 
@@ -85,107 +88,7 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
 
       body: Stack(
         children: [
-          // 노치 배경
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight + screenHeight * 0.06,
-            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
-          ),
-
-          // 우상단 이미지
-          Positioned(
-            top: 0,
-            right: 0,
-            height: statusBarHeight * 1.2,
-            child: Image.asset(
-              'assets/notch/morning_right_up_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          // 좌하단 이미지
-          Positioned(
-            top: statusBarHeight,
-            left: 0,
-            height: screenHeight * 0.06,
-            child: Image.asset(
-              'assets/notch/morning_left_down_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          Positioned(
-            top: statusBarHeight,
-            height: statusBarHeight + screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/farmer/main',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'KHU:FARM',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'LogoFont',
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          FarmerTopNotchHeader(),
 
           Padding(
             padding: EdgeInsets.only(
@@ -289,8 +192,9 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
   }
 
   Widget _buildOrderDetails(SellerOrder order) {
+    print('배송상태ooo: ${order.deliveryStatus}');
     final DeliveryStatus status =
-        statusMap[order.status] ?? statusMap['알 수 없음']!;
+        statusMap[koreanToCode[order.deliveryStatus]] ?? statusMap['알 수 없음']!;
     String formattedDate = '';
     try {
       if (order.createdAt.isNotEmpty) {
@@ -311,9 +215,10 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
         _buildInfoRow('주문일자', formattedDate),
         _buildInfoRow('주문번호', order.merchantUid),
         _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+        _buildInfoRow('주소', '${order.address} ${order.detailAddress ?? ''} [${order.portCode}]'),
         _buildInfoRow('송장번호', order.deliveryNumber ?? '미등록'),
         _buildInfoRow('택배사', order.deliveryCompany ?? '미등록'),
-        _buildInfoRow('주문자 요청사항', order.orderRequest ?? '없음'),
+        _buildInfoRow('주문자\n요청사항', order.orderRequest ?? '없음'),
         const SizedBox(height: 24),
         // 메모 필드 추가
         
@@ -334,18 +239,20 @@ class _FarmerManageOrderDetailScreenState extends State<FarmerManageOrderDetailS
   }
 
   Widget _buildInfoRow(String label, String value, {Widget? trailing}) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.width;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      padding: EdgeInsets.symmetric(vertical: screenHeight*0.02),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
-            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
+            width: max(70, screenWidth*0.2),
+            child: Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500)),
           ),
           const Text('|', style: TextStyle(color: Colors.grey)),
           const SizedBox(width: 16),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500))),
+          Expanded(child: Text(value, style: TextStyle(color: Colors.grey.shade600, fontSize: 13, fontWeight: FontWeight.w500))),
           if (trailing != null) trailing,
         ],
       ),

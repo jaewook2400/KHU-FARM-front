@@ -7,6 +7,7 @@ import 'package:khu_farm/model/order.dart';
 import 'package:khu_farm/model/delivery_tracking.dart';
 import 'package:khu_farm/model/order_status.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/screens/consumer/mypage/order/order_detail_refund.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -30,39 +31,104 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _fetchTrackingInfo() async {
-  setState(() => _isLoading = true);
-  final accessToken = await StorageService.getAccessToken();
-  if (accessToken == null) {
-    setState(() => _isLoading = false);
-    return;
-  }
-  final headers = {'Authorization': 'Bearer $accessToken'};
+    setState(() => _isLoading = true);
+    final accessToken = await StorageService.getAccessToken();
+    if (accessToken == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    final headers = {'Authorization': 'Bearer $accessToken'};
 
-  try {
-    final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
-    final getResponse = await http.get(getUri, headers: headers);
-    
-    if (getResponse.statusCode == 200) {
-      final data = json.decode(utf8.decode(getResponse.bodyBytes));
-      if (data['isSuccess'] == true && data['result'] != null) {
+    print('delivery ID is: ${widget.order.orderId}');
+
+    try {
+      final getUri = Uri.parse('$baseUrl/delivery/${widget.order.orderId}/tracking');
+      final getResponse = await http.get(getUri, headers: headers);
+
+      if (getResponse.statusCode == 200) {
+        final data = json.decode(utf8.decode(getResponse.bodyBytes));
+        if (data['isSuccess'] == true && data['result'] != null) {
+          if(mounted) {
+            setState(() {
+              _trackingData = DeliveryTrackingData.fromJson(data['result']);
+            });
+          }
+        }
+      } else {
+        //throw Exception('Failed to fetch tracking info');
+        /// 에러 던지는 대신에, 목데이터를 넣음
+        print('Failed to fetch tracking info: ${getResponse.statusCode}, 대신 목데이터를 사용합니다.');
+        final Map<String, dynamic> fakeData = {
+          "timestamp": "2025-09-27T13:57:55.925Z",
+          "isSuccess": true,
+          "code": "string",
+          "message": "string",
+          "result": {
+            "orderResponse": {
+              "merchantUid": "string",
+              "ordererName": "string",
+              "totalPrice": 0,
+              "orderCount": 0,
+              "portCode": "string",
+              "address": "string",
+              "detailAddress": "string",
+              "recipient": "string",
+              "phoneNumber": "string",
+              "orderRequest": "string"
+            },
+            "deliveryStatus": {
+              "carrier": {
+                "id": "string",
+                "name": "string",
+                "tel": "string"
+              },
+              "from": {
+                "name": "string",
+                "time": "string"
+              },
+              "to": {
+                "name": "string",
+                "time": "string"
+              },
+              "progresses": [
+                {
+                  "time": "string",
+                  "status": {
+                    "id": "string",
+                    "text": "string"
+                  },
+                  "location": {
+                    "name": "string"
+                  },
+                  "description": "string"
+                }
+              ],
+              "state": {
+                "id": "string",
+                "text": "SHIPMENT_COMPLETED"
+              },
+              "_deprecated_warn": "string"
+            },
+            "deliveryCompany": "string",
+            "deliveryNumber": "string"
+          }
+        };
+
         if(mounted) {
           setState(() {
             // --- 이 부분이 수정되었습니다 ---
             // 'deliveryStatus' 객체 대신 'result' 객체 전체를 전달합니다.
-            _trackingData = DeliveryTrackingData.fromJson(data['result']);
+            _trackingData = DeliveryTrackingData.fromJson(fakeData['result']);
             // --- 여기까지 ---
           });
         }
       }
-    } else {
-      throw Exception('Failed to fetch tracking info');
+    } catch (e) {
+      print('Error in fetching tracking info: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-  } catch (e) {
-    print('Error in fetching tracking info: $e');
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -270,19 +336,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               child: Column(
                                 children: [
                                   _buildDeliveryStatus(_trackingData!, widget.order),
-                                  const SizedBox(height: 40),
-                                  const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
-                                  const SizedBox(height: 8),
-                                  TextButton(
-                                    onPressed: () {},
-                                    child: const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text('환불 접수하기', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                                        Icon(Icons.chevron_right, color: Colors.black),
-                                      ],
-                                    ),
-                                  ),
                                 ],
                               ),
                             ),
@@ -292,15 +345,76 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('제품에 문제가 있나요?', style: TextStyle(color: Colors.grey)),
+            const SizedBox(width: 8),
+            TextButton(
+              onPressed: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  TextButton(
+                    child: Text('환불 접수하기', style: TextStyle(color: Colors.red, fontWeight: FontWeight.normal)),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RefundScreen(order: widget.order),
+                        ),
+                      );
+                    },
+                  ),
+                  Icon(Icons.chevron_right, color: Colors.red),
+                ],
+              ),
+            ),
+          ]
+        ),
+      )
     );
   }
 
   /// Helper widget for the delivery status stepper
   Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, Order order) {
-    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
-    final currentStatusInfo =
+    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송완료'];
+    // 상태 그룹 정의
+    const stepStatuses = {
+      0: ['PAYMENT_STANDBY', 'ORDER_COMPLETED'],
+      1: ['PREPARING_SHIPMENT'],
+      2: ['SHIPPING'],
+      3: ['SHIPMENT_COMPLETED', 'ORDER_CANCELLED', 'ORDER_FAILED', 'REFUND_REQUESTED', 'REFUND_DENIED', 'PAYMENT_PARTIALLY_REFUNDED'],
+    };
+
+    //     PAYMENT_STANDBY("결제 대기", "1"),
+    //     ORDER_COMPLETED("주문 완료", "2"),
+    //     PREPARING_SHIPMENT("배송 준비중","3"),
+    //     SHIPPING("배송중", "4"),
+    //     SHIPMENT_COMPLETED("배달 완료", "5"),
+    //     ORDER_CANCELLED("주문 취소", "6"),
+    //     ORDER_FAILED("주문 실패", "7"),
+    //     REFUND_REQUESTED("환불 대기", "8"),
+    //     PAYMENT_PARTIALLY_REFUNDED("부분 환불", "9"),
+    //     REFUND_DENIED("환불 거부", "10")
+
+    final DeliveryStatus currentStatusInfo =
         statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
-    int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+    //int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+    print('현재 orderStatus: ${widget.order.orderStatus}');
+    //int currentStep = stepStatuses.indexOf(widget.order.orderStatus);
+    int currentStep = stepStatuses.entries
+      .firstWhere(
+        (entry) => entry.value.contains(widget.order.orderStatus),
+        //orElse: () => const MapEntry(0, []), // 없을 경우 0단계 처리
+      ).key;
+    print('currentStep: ${currentStep.toString()}');
+
+    debugPrint(trackingData.currentStateText);
+    debugPrint(currentStatusInfo.stepName);
+    debugPrint(currentStep.toString());
 
     final companyName = getDeliveryCompanyName(order.deliveryCompany);
 
@@ -340,7 +454,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           ),
         _buildStepConnector(),
 
-        _buildStep(title: '배달 완료', isActive: currentStep == 3),
+        _buildStep(title: '배송완료', isActive: currentStep == 3),
       ],
     );
   }

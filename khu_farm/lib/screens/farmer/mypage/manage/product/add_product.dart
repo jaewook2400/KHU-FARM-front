@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/product/add_product_option.dart';
+import '../../../../../shared/widgets/top_norch_header.dart';
 
 class FarmerAddProductScreen extends StatefulWidget {
   const FarmerAddProductScreen({super.key});
@@ -18,19 +20,40 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
   String? _squareImagePath;
   String? _selectedCourierId;
 
+  final List<Map<String, dynamic>> _options = [];
   final _titleController = TextEditingController();
   final _priceController = TextEditingController();
   final _weightController = TextEditingController();
+  final _quantityController = TextEditingController();
+
   final _stockController = TextEditingController();
   final _normalShippingController = TextEditingController();
   final _islandShippingController = TextEditingController();
   final _maxDeliveryController = TextEditingController();
+
+  // 옵션 추가 함수
+  Future<void> _addOption() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddProductOptionPage(productName: _titleController.text),
+      ),
+    );
+
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        _options.add(result);
+        print('옵션 추가: $result');
+      });
+    }
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _priceController.dispose();
     _weightController.dispose();
+    _quantityController.dispose();
     _stockController.dispose();
     _normalShippingController.dispose();
     _islandShippingController.dispose();
@@ -39,10 +62,13 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
   }
 
   bool get _allFieldsFilled {
-    return _titleController.text.isNotEmpty &&
-      _priceController.text.isNotEmpty &&
-      _weightController.text.isNotEmpty &&
-      _stockController.text.isNotEmpty &&
+    return
+      // _titleController.text.isNotEmpty &&
+      // _priceController.text.isNotEmpty &&
+      // _weightController.text.isNotEmpty &&
+
+      _options.isNotEmpty &&
+     // _stockController.text.isNotEmpty &&
       _selectedCourierId != null &&
       _normalShippingController.text.isNotEmpty &&
       _islandShippingController.text.isNotEmpty &&
@@ -75,107 +101,7 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
 
       body: Stack(
         children: [
-          // 노치 배경
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight + screenHeight * 0.06,
-            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
-          ),
-
-          // 우상단 이미지
-          Positioned(
-            top: 0,
-            right: 0,
-            height: statusBarHeight * 1.2,
-            child: Image.asset(
-              'assets/notch/morning_right_up_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          // 좌하단 이미지
-          Positioned(
-            top: statusBarHeight,
-            left: 0,
-            height: screenHeight * 0.06,
-            child: Image.asset(
-              'assets/notch/morning_left_down_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          Positioned(
-            top: statusBarHeight,
-            height: statusBarHeight + screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/farmer/main',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'KHU:FARM',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'LogoFont',
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          FarmerTopNotchHeader(),
 
           Positioned(
             top: statusBarHeight + screenHeight * 0.06 + 20,
@@ -246,35 +172,70 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                   const SizedBox(height: 20),
 
                   // 미리보기 이미지 업로드 (가로형 + 정방형)
-                  _buildImageUpload(label: '미리보기 이미지 (가로형)',
+                  _buildImageUpload(
+                    label: '미리보기 이미지 (가로형)',
                     imagePath: _horizontalImagePath,
-                    onImageSelected: (path) => setState(() => _horizontalImagePath = path),),
-                  _buildImageUpload(label: '미리보기 이미지 (정방형)',
+                    onImageSelected: (path) => setState(() => _horizontalImagePath = path),
+                  ),
+                  _buildImageUpload(
+                    label: '미리보기 이미지 (정방형)',
                     imagePath: _squareImagePath,
-                    onImageSelected: (path) => setState(() => _squareImagePath = path),),
-
+                    onImageSelected: (path) => setState(() => _squareImagePath = path),
+                  ),
                   buildLabeledTextField(
                     "상품 제목",
                     "제목을 입력해 주세요.",
                     controller: _titleController,
                   ),
-                  buildLabeledTextField(
-                    "상품 가격",
-                    "상품 가격을 입력해 주세요.",
-                    controller: _priceController,
+                  TextButton(
+                    onPressed: _addOption,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,     // 내부 패딩 제거
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 18),
+                      decoration: BoxDecoration(
+                        color: Color(0XFFEFEFEF),  // ✅ 밝은 회색
+                        borderRadius: BorderRadius.circular(10), // ✅ 둥근 모서리
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '+ 옵션 추가하기',
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF4A4A4A),
+                          fontWeight: FontWeight.w600, // ✅ Semi-bold
+                        ),
+                      ),
+                    ),
                   ),
-                  buildLabeledTextField(
-                    "상품 중량 (수량 1개)",
-                    "kg단위, 숫자만 입력해 주세요.",
-                    suffix: "kg",
-                    controller: _weightController,
-                  ),
-                  buildLabeledTextField(
-                    "준비된 재고",
-                    "박스단위, 숫자만 입력해 주세요.",
-                    suffix: "박스",
-                    controller: _stockController,
-                  ),
+                  // buildLabeledTextField(
+                  //   "상품 가격",
+                  //   "상품 가격을 입력해 주세요.",
+                  //   controller: _priceController,
+                  // ),
+                  // buildLabeledTextField(
+                  //   "상품 중량 (수량 1개)",
+                  //   "kg단위, 숫자만 입력해 주세요.",
+                  //   suffix: "kg",
+                  //   controller: _weightController,
+                  // ),
+                  // buildLabeledTextField(
+                  //   "준비된 재고",
+                  //   "박스단위, 숫자만 입력해 주세요.",
+                  //   suffix: "박스",
+                  //   controller: _stockController,
+                  // ),
+                  SizedBox(height: screenHeight*0.03),
+                  buildOptionList(),
+                  const SizedBox(height: 20),
                   _buildCourierDropdown(),
                   Row(
                     children: [
@@ -328,6 +289,8 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                       );
                       // Get the name, or null if not found
                       final courierName = selectedCourier['name'];
+
+
                       Navigator.pushNamed(
                         context,
                         '/farmer/mypage/manage/product/add/detail',
@@ -337,9 +300,10 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
                             'horizontalImagePath': _horizontalImagePath,
                             'squareImagePath': _squareImagePath,
                             'title': _titleController.text,
-                            'price': _priceController.text,
-                            'weight': _weightController.text,
-                            'stock': _stockController.text,
+                            // 'price': _priceController.text,
+                            // 'weight': _weightController.text,
+                            // 'stock': _stockController.text,
+                            'options': _options,
                             'courier': courierName,
                             'normalShipping': _normalShippingController.text,
                             'islandShipping': _islandShippingController.text,
@@ -503,6 +467,68 @@ class _FarmerAddProductScreenState extends State<FarmerAddProductScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget buildOptionList() {
+    if (_options.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: _options.map((option) {
+        final title = option['title'];
+        final weightList = option['weight'] as List<dynamic>;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ✅ 옵션 제목
+              Text(
+                '옵션명: $title',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(height: 8),
+
+              // ✅ 한 옵션의 weight 리스트 반복 표시
+              Column(
+                children: weightList.map((w) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(child: Text('중량: ${w['weight']}')),
+                        Expanded(child: Text('가격: ${w['price']}')),
+                        Expanded(child: Text('재고: ${w['stock']}')),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

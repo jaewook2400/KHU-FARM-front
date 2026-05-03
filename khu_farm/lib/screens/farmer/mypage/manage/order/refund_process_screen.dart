@@ -9,17 +9,22 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
+import 'package:khu_farm/screens/farmer/mypage/manage/order/order_handle_list.dart';
+import 'package:khu_farm/shared/text_styles.dart';
 
-class FarmerManageOrderListScreen extends StatefulWidget {
-  const FarmerManageOrderListScreen({super.key});
+
+
+class RefundProcessScreen extends StatefulWidget {
+  const RefundProcessScreen({super.key});
 
   @override
-  State<FarmerManageOrderListScreen> createState() => _FarmerManageOrderListScreenState();
+  State<RefundProcessScreen> createState() => _RefundProcessScreenState();
 }
 
-class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScreen> {
+class _RefundProcessScreenState extends State<RefundProcessScreen> {
   String? _selectedPeriod;
   String? _selectedStatus;
+  late OrderSection section;
 
   List<SellerOrder> _orders = [];
   bool _isLoading = true;
@@ -29,10 +34,13 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
   bool _isFetchingMore = false;
   bool _hasMore = true;
 
+
   @override
   void initState() {
     super.initState();
+    print("initState!");
     _fetchSellerOrders();
+    print('the length of orders is ${_orders.length}');
     // ✨ 2. 스크롤 리스너 추가
     _scrollController.addListener(_onScroll);
   }
@@ -42,6 +50,61 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  String _titleOf(OrderSection s) {
+    switch (s) {
+      case OrderSection.newOrder:
+        return 'NEW! 신규 주문';
+      case OrderSection.shipping:
+        return '배송 현황';
+      case OrderSection.refund:
+        return '환불 처리';
+      case OrderSection.cancelled:
+        return '결제 취소';
+    }
+  }
+
+  // argument에 따라 바뀌는 “사소한 버튼”
+  Widget _actionButton(OrderSection s) {
+    switch (s) {
+      case OrderSection.newOrder:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 신규 주문 처리 로직
+            });
+          },
+          child: const Text('결제 완료'),
+        );
+      case OrderSection.shipping:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 송장 업로드 로직
+            });
+          },
+          child: const Text('배송중'),
+        );
+      case OrderSection.refund:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 환불 승인 로직
+            });
+          },
+          child: const Text('환불 대기'),
+        );
+      case OrderSection.cancelled:
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              // 예: 취소 관련 로직
+            });
+          },
+          child: const Text('결제 취소'),
+        );
+    }
   }
 
   // ✨ 3. 스크롤 감지 및 추가 데이터 요청 함수
@@ -79,30 +142,23 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
       if (accessToken == null) return;
 
       final headers = {'Authorization': 'Bearer $accessToken'};
-      final uri = Uri.parse('$baseUrl/order/seller/orders').replace(queryParameters: {
+      final uri = Uri.parse('$baseUrl/order/seller/orders/3').replace(queryParameters: {
         'size': '5',
         if (cursorId != null) 'cursorId': cursorId.toString(),
       });
-      
+
       final response = await http.get(uri, headers: headers);
       if (response.statusCode == 200) {
         final data = json.decode(utf8.decode(response.bodyBytes));
         print(data);
-        if (data['isSuccess'] == true && data['result'] != null) {
-          final List<dynamic> orderJson = data['result']['content'];
-          final newOrders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
-          
-          setState(() {
-            if (cursorId == null) {
-              _orders = newOrders;
-            } else {
-              _orders.addAll(newOrders);
-            }
-            if (newOrders.length < 5) {
-              _hasMore = false;
-            }
-          });
+
+        if (data['isSuccess'] == true) {
+          _handleOrders(data, cursorId);
         }
+      } else {
+        // ✅ 200이 아닐 경우에도 목데이터 채우기
+        print('Server error: ${response.statusCode}, using mock data');
+        _handleOrders(null, cursorId);
       }
     } catch (e) {
       print('Failed to fetch seller orders: $e');
@@ -113,9 +169,102 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
       });
     }
   }
-  
+
+  void _handleOrders(dynamic data, int? cursorId) { //statusCode가 200이 아닐 때 목데이터를 _orders에 저장해주는 함수
+    List<dynamic> orderJson = [];
+
+    // if (data == null || data['result'] == null || (data['result']['size'] ?? 0) == 0) {
+    //   // ✅ 목데이터
+    //   orderJson = [
+    //     {
+    //       "orderId": 1,
+    //       "orderDetailId": 101,
+    //       "merchantUid": "MUID-001",
+    //       "ordererName": "홍길동",
+    //       "totalPrice": 15000,
+    //       "fruitTitle": "사과 3kg",
+    //       "orderCount": 1,
+    //       "portCode": "PORT001",
+    //       "address": "서울특별시 강남구 테헤란로 123",
+    //       "detailAddress": "101호",
+    //       "recipient": "홍길동",
+    //       "phoneNumber": "010-1234-5678",
+    //       "deliveryCompany": "CJ대한통운",
+    //       "deliveryNumber": "123456789",
+    //       "orderRequest": "문 앞에 두세요",
+    //       "deliveryStatus": "ORDER_COMPLETED",
+    //       "orderStatus": "결제 완료",
+    //       "refundReason": "품질이 이상해요",
+    //       "createdAt": "2025-10-01T08:49:27.703Z"
+    //     },
+    //     {
+    //       "orderId": 2,
+    //       "orderDetailId": 102,
+    //       "merchantUid": "MUID-002",
+    //       "ordererName": "김철수",
+    //       "totalPrice": 20000,
+    //       "fruitTitle": "배 5kg",
+    //       "orderCount": 2,
+    //       "portCode": "PORT002",
+    //       "address": "부산광역시 해운대구 센텀로 456",
+    //       "detailAddress": "202호",
+    //       "recipient": "김철수",
+    //       "phoneNumber": "010-9876-5432",
+    //       "deliveryCompany": "한진택배",
+    //       "deliveryNumber": "987654321",
+    //       "orderRequest": "직접 전달 부탁드립니다",
+    //       "deliveryStatus": "SHIPPING",
+    //       "orderStatus": "배송중",
+    //       "refundReason": "개수가 잘못 왔어요",
+    //       "createdAt": "2025-10-01T08:50:00.000Z"
+    //     },
+    //     {
+    //       "orderId": 3,
+    //       "orderDetailId": 103,
+    //       "merchantUid": "MUID-003",
+    //       "ordererName": "김철",
+    //       "totalPrice": 20000,
+    //       "fruitTitle": "배 5kg",
+    //       "orderCount": 3,
+    //       "portCode": "PORT003",
+    //       "address": "부산광역시 해운대구 센텀로 456",
+    //       "detailAddress": "203호",
+    //       "recipient": "김철",
+    //       "phoneNumber": "010-9876-5432",
+    //       "deliveryCompany": "한진택배",
+    //       "deliveryNumber": "987654444",
+    //       "orderRequest": "직접 전달 부탁드립니다",
+    //       "deliveryStatus": "SHIPMENT_COMPLETED",
+    //       "orderStatus": "배송중",
+    //       "refundReason": "색이 이상해요",
+    //       "createdAt": "2025-10-01T08:50:00.000Z"
+    //     },
+    //   ];
+    // } else {
+    //   orderJson = data['result']['content'] ?? [];
+    // }
+
+    orderJson = data['result']['content'] ?? [];
+
+    final newOrders = orderJson.map((json) => SellerOrder.fromJson(json)).toList();
+
+    setState(() {
+      if (cursorId == null) {
+        _orders = newOrders;
+      } else {
+        _orders.addAll(newOrders);
+      }
+      if (newOrders.length < 5) {
+        _hasMore = false;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+
+    final String title = "환불 처리";
+
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -130,42 +279,12 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
     final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     List<SellerOrder> filteredOrders = List.from(_orders);
-    
+
     // Filter by Status
     if (_selectedStatus != null) {
       filteredOrders = filteredOrders
-          .where((order) => order.status == _selectedStatus)
+          .where((order) => order.deliveryStatus == _selectedStatus)
           .toList();
-    }
-
-    if (_selectedPeriod != null && _selectedPeriod != '모두') {
-      DateTime now = DateTime.now();
-      DateTime startDate;
-      switch (_selectedPeriod) {
-        case '1개월':
-          startDate = now.subtract(const Duration(days: 30));
-          break;
-        case '2개월':
-          startDate = now.subtract(const Duration(days: 60));
-          break;
-        case '4개월':
-          startDate = now.subtract(const Duration(days: 120));
-          break;
-        case '6개월':
-          startDate = now.subtract(const Duration(days: 180));
-          break;
-        default:
-          startDate = DateTime(2000);
-      }
-      
-      filteredOrders = filteredOrders.where((order) {
-        try {
-          DateTime orderDate = DateTime.parse(order.createdAt);
-          return orderDate.isAfter(startDate);
-        } catch (e) {
-          return false;
-        }
-      }).toList();
     }
 
     return Scaffold(
@@ -219,7 +338,7 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
                     Navigator.pushNamedAndRemoveUntil(
                       context,
                       '/farmer/main',
-                      (route) => false,
+                          (route) => false,
                     );
                   },
                   child: const Text(
@@ -297,111 +416,80 @@ class _FarmerManageOrderListScreenState extends State<FarmerManageOrderListScree
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      '주문 내역 확인',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    Text(
+                      title,
+                      style: AppTextStyles.pretendard_black,
                     ),
                   ],
                 ),
                 const SizedBox(height: 16,),
 
-                // Row(
-                //   children: [
-                //     Expanded(
-                //       child: _buildFilterDropdown(
-                //         hint: '기간',
-                //         value: _selectedPeriod,
-                //         items: ['모두', '1개월', '3개월', '6개월'],
-                //         onChanged: (val) => setState(() => _selectedPeriod = val == '모두' ? null : val),
-                //       ),
-                //     ),
-                //     const SizedBox(width: 12),
-                //     Expanded(
-                //       child: _buildFilterDropdown(
-                //         hint: '상태',
-                //         value: _selectedStatus,
-                //         // statusMap의 key(한글 문자열)를 아이템으로 사용
-                //         items: ['모두', ...statusMap.keys.where((k) => k != '알 수 없음')],
-                //         onChanged: (val) {
-                //           setState(() {
-                //             _selectedStatus = val == '모두' ? null : val;
-                //           });
-                //         },
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                // const SizedBox(height: 16),
-                
                 // Order List
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : filteredOrders.isEmpty
-                          ? const Center(child: Text('주문 내역이 없습니다.'))
-                          // ✨ 5. ListView.builder 수정
-                          : ListView.builder(
-                              controller: _scrollController, // 컨트롤러 연결
-                              padding: EdgeInsets.zero,
-                              itemCount: filteredOrders.length + 
-                                  // 필터가 없고, 더 불러올 데이터가 있을 때만 로딩 인디케이터 공간 추가
-                                  (_hasMore && _selectedPeriod == null && _selectedStatus == null ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                // 마지막 아이템일 경우 로딩 인디케이터 표시
-                                if (index == filteredOrders.length) {
-                                  return const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 16.0),
-                                    child: Center(child: CircularProgressIndicator()),
-                                  );
-                                }
-                                final order = filteredOrders[index];
-                                // --- This is the updated part ---
-                                return GestureDetector(
-                                  onTap: () async {
-                                    await Navigator.pushNamed(
-                                      context,
-                                      '/farmer/mypage/manage/order/detail',
-                                      arguments: order,
-                                    );
-                                    _fetchSellerOrders();
-                                  },
-                                  child: _OrderInfoCard(
-                                    order: order, 
-                                    onEditTrackingNumber: () async {
-                                      await Navigator.pushNamed(
-                                        context,
-                                        '/farmer/mypage/manage/order/delnum',
-                                        arguments: order,
-                                      );
-                                      _fetchSellerOrders();
-                                    },
-                                    onTrackDelivery: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/farmer/mypage/manage/order/delstat',
-                                        arguments: order,
-                                      );
-                                    },
-                                    onRefund: () async {
-                                      final result = await Navigator.pushNamed(
-                                        context,
-                                        '/farmer/mypage/manage/order/refund',
-                                        arguments: order,
-                                      );
+                      ? const Center(child: Text('주문 내역이 없습니다.'))
+                  // ✨ 5. ListView.builder 수정
+                      : ListView.builder(
+                    controller: _scrollController, // 컨트롤러 연결
+                    padding: EdgeInsets.zero,
+                    itemCount: filteredOrders.length +
+                        // 필터가 없고, 더 불러올 데이터가 있을 때만 로딩 인디케이터 공간 추가
+                        (_hasMore && _selectedPeriod == null && _selectedStatus == null ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      // 마지막 아이템일 경우 로딩 인디케이터 표시
+                      if (index == filteredOrders.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      final order = filteredOrders[index];
+                      // --- This is the updated part ---
+                      return GestureDetector(
+                        onTap: () async {
+                          await Navigator.pushNamed(
+                            context,
+                            '/farmer/mypage/manage/order/detail',
+                            arguments: order,
+                          );
+                          _fetchSellerOrders();
+                        },
+                        child: _OrderInfoCard(
+                          order: order,
+                          onEditTrackingNumber: () async {
+                            await Navigator.pushNamed(
+                              context,
+                              '/farmer/mypage/manage/order/delnum',
+                              arguments: order,
+                            );
+                            _fetchSellerOrders();
+                          },
+                          onTrackDelivery: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/farmer/mypage/manage/order/delstat',
+                              arguments: order,
+                            );
+                          },
+                          onRefund: () async {
+                            final result = await Navigator.pushNamed(
+                              context,
+                              '/farmer/mypage/manage/order/refund',
+                              arguments: order,
+                            );
 
-                                      // 환불 화면에서 true(승인) 또는 false(거절)를 반환받으면 목록 새로고침
-                                      if (result == true || result == false) {
-                                        _fetchSellerOrders();
-                                      }
-                                    },
-                                  ),
-                                );
-                                // --- End of update ---
-                              },
-                            ),
+                            // 환불 화면에서 true(승인) 또는 false(거절)를 반환받으면 목록 새로고침
+                            if (result == true || result == false) {
+                              _fetchSellerOrders();
+                            }
+                          },
+                        ),
+                      );
+                      // --- End of update ---
+                    },
+                  ),
                 ),
               ],
             ),
@@ -454,14 +542,14 @@ class _OrderInfoCard extends StatelessWidget {
 
   const _OrderInfoCard(
       {required this.order,
-      required this.onEditTrackingNumber,
-      required this.onTrackDelivery,
-      required this.onRefund}); // ✨ 3. 생성자에 onRefund 추가
+        required this.onEditTrackingNumber,
+        required this.onTrackDelivery,
+        required this.onRefund}); // ✨ 3. 생성자에 onRefund 추가
 
   @override
   Widget build(BuildContext context) {
     final DeliveryStatus status =
-        statusMap[order.status] ?? statusMap['알 수 없음']!;
+        statusMap[order.deliveryStatus] ?? statusMap['알 수 없음']!;
 
     String formattedDate = '';
     try {
@@ -476,7 +564,7 @@ class _OrderInfoCard extends StatelessWidget {
     final bool isTrackingNumberRegistered =
         order.deliveryNumber != null && order.deliveryNumber != '미등록';
 
-    final bool isRefundPending = order.status == '환불 대기';
+    final bool isRefundPending = order.deliveryStatus == '환불 대기';
 
     return Card(
       elevation: 2,
@@ -497,34 +585,39 @@ class _OrderInfoCard extends StatelessWidget {
               children: [
                 Text(order.recipient,
                     style: const TextStyle(fontWeight: FontWeight.bold)),
+                Spacer(),
                 Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 1),
                   decoration: BoxDecoration(
-                    color: status.color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Color(0xFFF65353),
+                        width: 0.5,
+                      )
                   ),
                   child: Row(
                     children: [
                       Text(
-                        status.displayName,
+                        '환불 대기',
                         style: TextStyle(
-                            color: status.color,
+                            color: Color(0xFFF65353),
                             fontWeight: FontWeight.bold,
                             fontSize: 12),
                       ),
-                      Icon(Icons.chevron_right, color: status.color, size: 16),
                     ],
                   ),
                 ),
+                SizedBox(width: 4,),
+                Icon(Icons.arrow_forward_ios, color: Color(0xFF333333), size: 16),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text('주문일자 : $formattedDate', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text('주문번호 : ${order.merchantUid}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-            const SizedBox(height: 8),
-            Text('${order.address} ${order.detailAddress} [${order.portCode}]', style: const TextStyle(fontSize: 14)),
+            const SizedBox(height: 2),
+            Text('${order.address} ${order.detailAddress} [${order.portCode}]', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -534,20 +627,25 @@ class _OrderInfoCard extends StatelessWidget {
                   onPressed: onEditTrackingNumber,
                 ),
                 _actionButton('배송 현황 확인', onPressed: onTrackDelivery),
-                isRefundPending
-                    ? ElevatedButton(
-                        // ✨ 4. onPressed에 콜백 함수 연결
-                        onPressed: onRefund,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                SizedBox(
+                    width: 90,
+                    height: 24,
+                    child: OutlinedButton(
+                      onPressed: onRefund,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Color(0xFFFFFFFF),
+                        backgroundColor: Color(0xFFF65353),
+                        side: BorderSide(
+                          color: Color(0xFFF65353),
                         ),
-                        child: const Text('환불'),
-                      )
-                    : _actionButton('환불', onPressed: null),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      ),
+                      child: Text('환불', style: const TextStyle(fontSize: 12)),
+                    )
+                ),
               ],
             ),
           ],
@@ -557,20 +655,25 @@ class _OrderInfoCard extends StatelessWidget {
   }
 
   Widget _actionButton(String label, {VoidCallback? onPressed}) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.grey.shade700,
-        disabledForegroundColor: Colors.grey.shade400,
-        side: BorderSide(
-          color:
+    return SizedBox(
+        width: 85,
+        height: 24,
+        child: OutlinedButton(
+          onPressed: onPressed,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: Colors.grey.shade700,
+            disabledForegroundColor: Colors.grey.shade400,
+            side: BorderSide(
+              color:
               onPressed != null ? Colors.grey.shade600 : Colors.grey.shade300,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-      ),
-      child: Text(label),
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          ),
+          child: Text(label, style: const TextStyle(fontSize: 11)),
+        )
     );
   }
 }

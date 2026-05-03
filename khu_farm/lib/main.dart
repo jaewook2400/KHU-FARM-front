@@ -4,8 +4,13 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/farmer/mypage/info/account_cancelled.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_status_screen.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/order_handle_list.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/payment_cancel_screen.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_process_screen.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancellation.dart';
 import 'package:khu_farm/screens/retailer/mypage/info/account_cancelled.dart';
+import 'screens/consumer/mypage/order/order_detail_refund.dart';
 import 'services/notifiaction_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:khu_farm/services/storage_service.dart';
@@ -33,13 +38,13 @@ import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/manage_inquiry_det
 import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/manage_product_inquiry.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/manage_inquiry.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/inquiry/reply_success.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_number.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/order/delivery_status.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/order/manage_order.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/order/order_detail.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_accept.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_detail.dart';
-import 'package:khu_farm/screens/farmer/mypage/manage/order/refund_reject.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/card/delivery_number_edit_screen.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/card/delivery_detail_status.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/new_order_screen.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/card/order_detail_status.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/card/refund_accept.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/card/refund_detail.dart';
+import 'package:khu_farm/screens/farmer/mypage/manage/order/card/refund_reject.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/add_product_success.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/delete_product.dart';
 import 'package:khu_farm/screens/farmer/mypage/manage/product/delete_product_success.dart';
@@ -315,8 +320,7 @@ class _MyAppState extends State<MyApp> {
         '/consumer/mypage/info/cancel/success':
             (context) => const ConsumerAccountCancelledScreen(),
         '/consumer/mypage/order': (context) => const ConsumerOrderListScreen(),
-        '/consumer/mypage/order/review/add':
-            (context) => const ConsumerAddReviewScreen(),
+        '/consumer/mypage/order/review/add': (context) => const ConsumerAddReviewScreen(),
         '/consumer/mypage/review': (context) => const ConsumerReviewListScreen(),
         '/consumer/mypage/inquiry/personal':
             (context) => const ConsumerPersonalInquiryListScreen(),
@@ -352,9 +356,6 @@ class _MyAppState extends State<MyApp> {
         '/retailer/mypage/info/cancel/success':
             (context) => const RetailerAccountCancelledScreen(),
         '/retailer/mypage/order': (context) => const RetailerOrderListScreen(),
-        '/retailer/mypage/order/refund': (context) => const RetailerRefundScreen(),
-        '/retailer/mypage/order/refund/success':
-            (context) => const RetailerRefundSuccessScreen(),
         '/retailer/mypage/inquiry/personal':
             (context) => const RetailerPersonalInquiryListScreen(),
         '/retailer/mypage/inquiry/personal/add':
@@ -407,13 +408,17 @@ class _MyAppState extends State<MyApp> {
         '/farmer/mypage/manage/inquiry/product': (context) => const FarmerManageProductInquiryScreen(),
         '/farmer/mypage/manage/inquiry/detail': (context) => const FarmerManageInquiryDetailScreen(),
         '/farmer/mypage/manage/inquiry/reply/success': (context) => const FarmerAddInquiryReplySuccessScreen(),
-        '/farmer/mypage/manage/order': (context) => const FarmerManageOrderListScreen(),
-        '/farmer/mypage/manage/order/detail': (context) => const FarmerManageOrderDetailScreen(),
-        '/farmer/mypage/manage/order/delnum': (context) => const FarmerManageOrderDeliveryNumberScreen(),
-        '/farmer/mypage/manage/order/delstat': (context) => const FarmerManageOrderDeliveryStatusScreen(),
+        '/farmer/mypage/manage/order': (context) => NewOrderScreen(),
+        '/farmer/mypage/manage/deliverystatus': (context) => const DeliveryStatusScreen(),
+        '/farmer/mypage/manage/refundprocess': (context) => const RefundProcessScreen(),
+        '/farmer/mypage/manage/paymentcancel': (context) => const PaymentCancelScreen(),
+        '/farmer/mypage/manage/order/detail': (context) => const OrderDetailStatusScreen(),
+        '/farmer/mypage/manage/order/delnum': (context) => const DeliveryNumberEditScreen(),
+        '/farmer/mypage/manage/order/delstat': (context) => const DeliveryDetailStatusScreen(),
         '/farmer/mypage/manage/order/refund': (context) => const FarmerManageOrderRefundScreen(),
         '/farmer/mypage/manage/order/refund/accept': (context) => const FarmerAcceptRefundSuccessScreen(),
         '/farmer/mypage/manage/order/refund/reject': (context) => const FarmerRejectRefundSuccessScreen(),
+        '/farmer/mypage/manage/neworder': (context) => const OrderHandleListPage(),
         '/farmer/mypage/order': (context) => FarmerOrderListScreen(),
         '/farmer/mypage/order/review/add':
             (context) => const FarmerAddReviewScreen(),

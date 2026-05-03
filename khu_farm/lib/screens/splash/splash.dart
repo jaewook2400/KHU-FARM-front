@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:khu_farm/services/notifiaction_service.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/model/user_info.dart';
 import 'package:http/http.dart' as http;
@@ -48,6 +49,7 @@ class _SplashScreenState extends State<SplashScreen> {
           final data = jsonDecode(utf8.decode(response.bodyBytes));
           if (data['isSuccess'] == true) {
             final newAccessToken = data['result']['accessToken'];
+            print('access token is: $newAccessToken');
 
             String? newRefreshToken;
             final String? rawCookie = response.headers['set-cookie'];
@@ -66,6 +68,7 @@ class _SplashScreenState extends State<SplashScreen> {
             // 2. 토큰 저장
             await StorageService.saveTokens(newAccessToken, newRefreshToken);
             print('Access Token 재발급 성공');
+            await saveFcmTokenToServer(); // 로그인 후 다시 저장
             _navigateToMainPage(userInfo); // 메인 페이지로 이동
             return;
           }

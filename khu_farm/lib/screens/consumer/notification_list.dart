@@ -8,6 +8,8 @@ import 'package:khu_farm/services/storage_service.dart'; // JWT 토큰을 위해
 import 'package:khu_farm/screens/consumer/notification_detail.dart';
 import 'package:khu_farm/constants.dart';
 
+import '../../shared/widgets/top_norch_header.dart';
+
 class ConsumerNotificationListScreen extends StatefulWidget {
   const ConsumerNotificationListScreen({super.key});
 
@@ -114,102 +116,7 @@ class _ConsumerNotificationListScreenState
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // 노치 배경
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight + screenHeight * 0.06,
-            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
-          ),
-
-          // 우상단 이미지
-          Positioned(
-            top: 0,
-            right: 0,
-            height: statusBarHeight * 1.2,
-            child: Image.asset(
-              'assets/notch/morning_right_up_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          // 좌하단 이미지
-          Positioned(
-            top: statusBarHeight,
-            left: 0,
-            height: screenHeight * 0.06,
-            child: Image.asset(
-              'assets/notch/morning_left_down_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          Positioned(
-            top: statusBarHeight,
-            height: statusBarHeight + screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/consumer/main',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'KHU:FARM',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'LogoFont',
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {},
-                      child: Image.asset(
-                        'assets/top_icons/notice_selected_morning.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/consumer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/consumer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          ConsumerTopNotchHeader(),
 
           Padding(
             padding: EdgeInsets.only(
@@ -258,10 +165,10 @@ class _ConsumerNotificationListScreenState
                                 child: _NotificationCard(
                                   title: notification.title,
                                   content: notification.content,
+                                  id: notification.notificationId.toString(),
                                 ),
                               );
                             } else {
-                              // 마지막 아이템 이후에는 로딩 인디케이터 표시
                               return const Padding(
                                 padding: EdgeInsets.symmetric(vertical: 16.0),
                                 child: Center(child: CircularProgressIndicator()),
@@ -282,7 +189,71 @@ class _ConsumerNotificationListScreenState
 class _NotificationCard extends StatelessWidget {
   final String title;
   final String content;
-  const _NotificationCard({required this.title, required this.content});
+  final String id;
+  const _NotificationCard({required this.title, required this.content, required this.id});
+
+  _readNotification(BuildContext context) async {
+    try {
+      final accessToken = await StorageService.getAccessToken();
+      if (accessToken == null) throw Exception('Token is missing.');
+      final headers = {'Authorization': 'Bearer $accessToken'};
+      // 2. API 요청 준비 (GET 쿼리 파라미터 구성)
+      final url = '$baseUrl/notification/$id';
+
+      // 3. API 호출
+      final response = await http.get(Uri.parse(url), headers: headers);
+
+      // 5. 결과 처리
+      if (response.statusCode == 200) {
+        // 한글 깨짐 방지를 위해 utf8로 디코딩
+        print('nofification API 성공!: ${response.statusCode}');
+        final decodedBody = jsonDecode(utf8.decode(response.bodyBytes));
+        // 서버에서 내려주는 기본 구조 확인
+        if (decodedBody['isSuccess'] == true &&
+            decodedBody['result'] != null) {
+          final result = decodedBody['result'];
+
+          // 4. result 값 점검
+          final notificationId = result['notificationId'];
+          final title = result['title'];
+          final content = result['content'];
+
+          if (notificationId != null && title != null && content != null) {
+            // 5. 정상 → 상세 화면 이동
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ConsumerNotificationDetailScreen(
+                  title: title,
+                  content: content,
+                ),
+              ),
+            );
+          } else {
+            print('API 응답에 필수 값이 없습니다.');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('알림 데이터를 불러올 수 없습니다.')),
+            );
+          }
+        } else {
+          print('API 응답이 실패 상태입니다.');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('알림 요청이 실패했습니다.')),
+          );
+        }
+      } else {
+        print('Notification API Error: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('서버 오류: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      print('Notification Error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('네트워크 오류가 발생했습니다.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -309,17 +280,20 @@ class _NotificationCard extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => ConsumerNotificationDetailScreen(
-                            title: title,
-                            content: content,
-                          ),
-                    ),
-                  );
+                onPressed: () async {
+
+                  _readNotification(context);
+
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(
+                  //     builder:
+                  //         (_) => ConsumerNotificationDetailScreen(
+                  //           title: title,
+                  //           content: content,
+                  //         ),
+                  //   ),
+                  // );
                 },
                 style: TextButton.styleFrom(
                   padding: EdgeInsets.zero,

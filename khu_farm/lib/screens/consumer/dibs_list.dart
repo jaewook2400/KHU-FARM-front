@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/shared/app_colors.dart';
+import 'package:khu_farm/shared/widgets/top_norch_header.dart';
 import '../product_detail.dart';
 import 'package:khu_farm/model/fruit.dart';
 import 'package:khu_farm/services/storage_service.dart';
@@ -147,100 +149,7 @@ class _ConsumerDibsScreenState extends State<ConsumerDibsScreen> {
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // 상단 UI (변경 없음)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight + screenHeight * 0.06,
-            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
-          ),
-          Positioned(
-            top: 0,
-            right: 0,
-            height: statusBarHeight * 1.2,
-            child: Image.asset(
-              'assets/notch/morning_right_up_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-          Positioned(
-            top: statusBarHeight,
-            left: 0,
-            height: screenHeight * 0.06,
-            child: Image.asset(
-              'assets/notch/morning_left_down_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-          Positioned(
-            top: statusBarHeight,
-            height: statusBarHeight + screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/consumer/main',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'KHU:FARM',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'LogoFont',
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/consumer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {},
-                      child: Image.asset(
-                        'assets/top_icons/dibs_selected_morning.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/consumer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          ConsumerTopNotchHeader(),
           Padding(
             padding: EdgeInsets.only(
               top: statusBarHeight + screenHeight * 0.06 + 20,
@@ -266,7 +175,7 @@ class _ConsumerDibsScreenState extends State<ConsumerDibsScreen> {
                       '찜 목록',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -300,7 +209,7 @@ class _ConsumerDibsScreenState extends State<ConsumerDibsScreen> {
                                       ),
                                     );
                                   },
-                                  child: _WishlistItem(
+                                  child: WishlistItem(
                                     fruit: fruit,
                                     onDelete: () => _deleteDibsItem(fruit.wishListId),
                                   ),
@@ -318,11 +227,11 @@ class _ConsumerDibsScreenState extends State<ConsumerDibsScreen> {
 }
 
 /// 찜 목록의 각 항목을 렌더링하는 별도의 위젯
-class _WishlistItem extends StatelessWidget {
+class WishlistItem extends StatelessWidget {
   final Fruit fruit;
   final VoidCallback onDelete;
 
-  const _WishlistItem({required this.fruit, required this.onDelete});
+  const WishlistItem({required this.fruit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -391,7 +300,7 @@ class _WishlistItem extends StatelessWidget {
                 ),
               ),
               Positioned(
-                top: 8,
+                bottom: 15,
                 right: 8,
                 child: GestureDetector(
                   onTap: onDelete,
@@ -403,7 +312,7 @@ class _WishlistItem extends StatelessWidget {
                     padding: const EdgeInsets.all(4),
                     child: const Icon(
                       Icons.favorite,
-                      color: Colors.red,
+                      color: AppColors.fav,
                       size: 20,
                     ),
                   ),
@@ -426,10 +335,18 @@ class _WishlistItem extends StatelessWidget {
                 ),
                 Text(
                   // 가격과 단위를 fruit 모델에서 가져와 포매팅
-                  '${formatter.format(fruit.price)}원 / ${fruit.weight}kg',
+                  '${formatter.format(fruit.price)}원 / ',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  // 가격과 단위를 fruit 모델에서 가져와 포매팅
+                  '${fruit.weight}kg',
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.normal,
                   ),
                 ),
               ],

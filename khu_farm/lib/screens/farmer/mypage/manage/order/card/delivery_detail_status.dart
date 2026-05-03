@@ -1,3 +1,4 @@
+///배송 상세 현황 확인 페이지
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,14 +11,16 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:http/http.dart' as http;
 
-class FarmerManageOrderDeliveryStatusScreen extends StatefulWidget {
-  const FarmerManageOrderDeliveryStatusScreen({super.key});
+import '../../../../../../shared/widgets/top_norch_header.dart';
+
+class DeliveryDetailStatusScreen extends StatefulWidget {
+  const DeliveryDetailStatusScreen({super.key});
 
   @override
-  State<FarmerManageOrderDeliveryStatusScreen> createState() => _FarmerManageOrderDeliveryStatusScreenState();
+  State<DeliveryDetailStatusScreen> createState() => _DeliveryDetailStatusScreenState();
 }
 
-class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrderDeliveryStatusScreen> {
+class _DeliveryDetailStatusScreenState extends State<DeliveryDetailStatusScreen> {
   DeliveryTrackingData? _trackingData;
   bool _isLoading = true;
 
@@ -88,107 +91,7 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
 
       body: Stack(
         children: [
-          // 노치 배경
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight + screenHeight * 0.06,
-            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
-          ),
-
-          // 우상단 이미지
-          Positioned(
-            top: 0,
-            right: 0,
-            height: statusBarHeight * 1.2,
-            child: Image.asset(
-              'assets/notch/morning_right_up_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          // 좌하단 이미지
-          Positioned(
-            top: statusBarHeight,
-            left: 0,
-            height: screenHeight * 0.06,
-            child: Image.asset(
-              'assets/notch/morning_left_down_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          Positioned(
-            top: statusBarHeight,
-            height: statusBarHeight + screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/farmer/main',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'KHU:FARM',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'LogoFont',
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          FarmerTopNotchHeader(),
 
           Padding(
             padding: EdgeInsets.only(
@@ -274,6 +177,7 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
           _buildInfoRow('주문일자', formattedDate),
           _buildInfoRow('주문번호', order.merchantUid),
           _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+          _buildInfoRow('주소', '${order.address} ${order.detailAddress} [${order.portCode}]'),
           _buildInfoRow('송장번호', order.deliveryNumber ?? '미등록'),
           _buildInfoRow('택배사', order.deliveryCompany ?? '미등록'),
           _buildInfoRow('주문자 요청사항', order.orderRequest ?? '없음'),
@@ -306,15 +210,44 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
     );
   }
 
-  // Helper widget for the delivery status stepper
-  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder sellerOrder) {
-    const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배달 완료'];
-    final currentStatusInfo =
-        statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
-    print(trackingData.currentStateText);
-    int currentStep = stepStatuses.indexOf(currentStatusInfo.stepName);
+  Widget _buildDeliveryStatus(DeliveryTrackingData trackingData, SellerOrder order) {
 
-    final invoiceFullText = '운송장 번호 : ${sellerOrder.deliveryCompany} ${sellerOrder.deliveryNumber} (눌러서 복사)';
+    //const stepStatuses = ['결제 완료', '배송 준비중', '배송중', '배송완료'];
+    // 상태 그룹 정의
+    const stepStatuses = {
+      0: ['결제 완료'],
+      1: ['배송 준비중'],
+      2: ['배송중'],
+      3: ['배송완료'],
+    };
+
+    //     PAYMENT_STANDBY("결제 대기", "1"),
+    //     ORDER_COMPLETED("주문 완료", "2"),
+    //     PREPARING_SHIPMENT("배송 준비중","3"),
+    //     SHIPPING("배송중", "4"),
+    //     SHIPMENT_COMPLETED("배달 완료", "5"),
+    //     ORDER_CANCELLED("주문 취소", "6"),
+    //     ORDER_FAILED("주문 실패", "7"),
+    //     REFUND_REQUESTED("환불 대기", "8"),
+    //     PAYMENT_PARTIALLY_REFUNDED("부분 환불", "9"),
+    //     REFUND_DENIED("환불 거부", "10")
+
+    final DeliveryStatus currentStatusInfo =
+        statusMap[trackingData.currentStateText] ?? statusMap['알 수 없음']!;
+    print('current statusssss: ${order.orderStatus}');
+    int currentStep = stepStatuses.entries
+        .firstWhere(
+          (entry) => entry.value.contains(statusMap[koreanToCode[order.deliveryStatus]]?.stepName),
+      //orElse: () => const MapEntry(0, []), // 없을 경우 0단계 처리
+    ).key;
+    print('currentStep: ${currentStep.toString()}');
+
+    debugPrint(trackingData.currentStateText);
+    debugPrint(currentStep.toString());
+
+    final companyName = getDeliveryCompanyName(order.deliveryCompany);
+
+    final invoiceFullText = '운송장 번호 : $companyName ${order.deliveryNumber ?? '미등록'} (눌러서 복사)';
 
     return Column(
       children: [
@@ -325,18 +258,27 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
         _buildStepConnector(),
 
         _buildStep(title: '배송중', isActive: currentStep == 2),
-        
+
         // '배송중' 단계 이거나 그 이후 단계일 때 운송장 번호 표시
         if (currentStep >= 2)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: GestureDetector(
               onTap: () {
-                Clipboard.setData(ClipboardData(text: sellerOrder.deliveryNumber!));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
-                );
+                final trackingNumber = order.deliveryNumber;
+
+                if (trackingNumber != null && trackingNumber.isNotEmpty) {
+                  Clipboard.setData(ClipboardData(text: trackingNumber));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('운송장 번호가 복사되었습니다.')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('운송장 번호가 등록되어 있지 않습니다.')),
+                  );
+                }
               },
+
               child: Text(
                 invoiceFullText,
                 textAlign: TextAlign.center,
@@ -350,7 +292,8 @@ class _FarmerManageOrderDeliveryStatusScreenState extends State<FarmerManageOrde
           ),
         _buildStepConnector(),
 
-        _buildStep(title: '배달 완료', isActive: currentStep == 3),
+        _buildStep(title: '배송완료', isActive: currentStep == 3),
+        SizedBox(height: 30,),
       ],
     );
   }

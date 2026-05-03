@@ -1,5 +1,18 @@
 import 'package:khu_farm/model/delivery_tracking.dart'; // deliveryStatus를 위해 import
 
+// enum OrderStatus {
+//   PAYMENT_STANDBY,
+//   ORDER_COMPLETED,
+//   PREPARING_SHIPMENT,
+//   SHIPPING,
+//   SHIPMENT_COMPLETED,
+//   ORDER_CANCELLED,
+//   ORDER_FAILED,
+//   REFUND_REQUESTED,
+//   REFUND_DENIED,
+//   PAYMENT_PARTIALLY_REFUNDED,
+// }
+
 class Order {
   final int id;
   final String title;
@@ -22,6 +35,7 @@ class Order {
   final int orderDetailId;
   final String createdAt;
   final DeliveryTrackingData? deliveryStatus; // ✨ deliveryStatus 필드 추가
+  final String orderStatus;
 
   Order({
     required this.id,
@@ -45,6 +59,7 @@ class Order {
     required this.orderDetailId,
     required this.createdAt,
     this.deliveryStatus, // ✨ 생성자에 추가
+    required this.orderStatus,
   });
 
   factory Order.fromJson(Map<String, dynamic> json) {
@@ -73,6 +88,7 @@ class Order {
       deliveryStatus: json['deliveryStatus'] != null
           ? DeliveryTrackingData.fromJson(json['deliveryStatus'])
           : null,
+      orderStatus: json['orderStatus'],
     );
   }
 

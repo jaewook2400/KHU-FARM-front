@@ -8,6 +8,9 @@ import 'package:khu_farm/constants.dart';
 import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/model/fruit.dart';
 import 'package:khu_farm/model/farm.dart';
+import 'package:khu_farm/shared/widgets/daily/category_icon.dart';
+
+import '../../../shared/widgets/top_norch_header.dart';
 
 class RetailerStockScreen extends StatefulWidget {
   const RetailerStockScreen({super.key});
@@ -447,116 +450,7 @@ class _RetailerStockScreenState extends State<RetailerStockScreen> {
 
       body: Stack(
         children: [
-          // 노치 배경
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight + screenHeight * 0.06,
-            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
-          ),
-
-          // 우상단 이미지
-          Positioned(
-            top: 0,
-            right: 0,
-            height: statusBarHeight * 1.2,
-            child: Image.asset(
-              'assets/notch/morning_right_up_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          // 좌하단 이미지
-          Positioned(
-            top: statusBarHeight,
-            left: 0,
-            height: screenHeight * 0.06,
-            child: Image.asset(
-              'assets/notch/morning_left_down_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          Positioned(
-            top: statusBarHeight,
-            height: statusBarHeight + screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/retailer/main',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'KHU:FARM',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'LogoFont',
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () async {
-                        // 찜 화면으로 이동하고, 돌아올 때까지 기다립니다.
-                        await Navigator.pushNamed(
-                          context,
-                          '/retailer/dib/list',
-                        );
-                        // 찜 화면에서 돌아온 후 목록을 새로고침합니다.
-                        _fetchFruits();
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/retailer/cart/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          RetailerTopNotchHeader(),
 
           Positioned(
             top: statusBarHeight + screenHeight * 0.06 + 16,
@@ -584,34 +478,44 @@ class _RetailerStockScreenState extends State<RetailerStockScreen> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            GridView.count(
-                              crossAxisCount: 4, // 한 줄에 4개
-                              childAspectRatio: 2, // 가로 : 세로 = 2 : 1 → 세로 얇아짐
-                              mainAxisSpacing: 8,  // 세로 간격 (원하는 대로 조절 가능)
-                              //crossAxisSpacing: 8, // 가로 간격
-                              shrinkWrap: true,
-                              physics: NeverScrollableScrollPhysics(),
-                              children: [
-                                for (var category in fruitsCategory)
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/retailer/stock/fruit',
-                                        arguments: {
-                                          'fruitId': category['fruitId'],
-                                          // wholesale 값은 1로 고정합니다.
-                                          'wholesale': 1,
-                                        },
-                                      );
-                                    },
-                                    child: _CategoryIcon(
-                                      iconPath: category['fruitIcon'] as String,
-                                    ),
+                            SizedBox(height: 8,),
+                            LayoutBuilder(
+                              builder: (context, constraints) {
+                                int crossAxisCount = 4;
+
+                                return GridView.builder(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  padding: EdgeInsets.all(0), // 전체 padding 줄임
+                                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    crossAxisSpacing: 2, // 여백 최소화
+                                    mainAxisSpacing: 0,
+                                    childAspectRatio: 1.8, // 거의 정사각형
                                   ),
-                              ],
+                                  itemCount: fruitsCategory.length,
+                                  itemBuilder: (context, index) {
+                                    final category = fruitsCategory[index];
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/retailer/daily/fruit',
+                                          arguments: {
+                                            'fruitId': category['fruitId'],
+                                            'wholesale': 1,
+                                          },
+                                        );
+                                      },
+                                      child: CategoryIcon(
+                                        iconPath: category['fruitIcon'] as String,
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -822,16 +726,6 @@ class _NavItem extends StatelessWidget {
         children: [Image.asset(iconPath, width: size, height: size)],
       ),
     );
-  }
-}
-
-class _CategoryIcon extends StatelessWidget {
-  final String iconPath;
-  const _CategoryIcon({required this.iconPath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(children: [Image.asset(iconPath, width: 48, height: 48)]);
   }
 }
 

@@ -244,10 +244,13 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
         "address": _shippingAddress!.address,
         "detailAddress": _shippingAddress!.detailAddress,
         "recipient": _shippingAddress!.recipient,
-        "phoneNumber": _shippingAddress!.phoneNumber
-      },
-      "orderRequest": _orderRequestController.text,
+        "phoneNumber": _shippingAddress!.phoneNumber,
+        "orderRequest": _orderRequestController.text
+      }
     });
+
+    final prettyBody = const JsonEncoder.withIndent('  ').convert(jsonDecode(body));
+    debugPrint('📦 Request body:\n$prettyBody');
 
     try {
       final preOrderResponse = await http.post(preOrderUri, headers: headers, body: body);
@@ -505,9 +508,10 @@ class _DirectOrderScreenState extends State<DirectOrderScreen> {
                         const SizedBox(height: 12),
                         const Text('주문 요청사항', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 12),
-                        const TextField(
+                        TextField(
+                          controller: _orderRequestController,
                           maxLines: 4,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: '내용을 입력해주세요.',
                             border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
                           ),

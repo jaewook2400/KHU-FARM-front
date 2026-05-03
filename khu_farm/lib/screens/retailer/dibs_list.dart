@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:khu_farm/constants.dart';
+import 'package:khu_farm/screens/consumer/dibs_list.dart';
+import 'package:khu_farm/shared/app_colors.dart';
 import '../product_detail.dart';
 import 'package:khu_farm/model/fruit.dart';
 import 'package:khu_farm/services/storage_service.dart';
@@ -188,7 +190,7 @@ class _RetailerDibsScreenState extends State<RetailerDibsScreen> {
                     Navigator.pushNamedAndRemoveUntil(
                       context,
                       '/retailer/main',
-                      (route) => false,
+                          (route) => false,
                     );
                   },
                   child: const Text(
@@ -266,7 +268,7 @@ class _RetailerDibsScreenState extends State<RetailerDibsScreen> {
                       '찜 목록',
                       style: TextStyle(
                         fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ],
@@ -276,160 +278,36 @@ class _RetailerDibsScreenState extends State<RetailerDibsScreen> {
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _fruits.isEmpty
-                          ? const Center(child: Text('찜한 상품이 없습니다.'))
-                          // ✨ 6. ListView.builder 수정
-                          : ListView.builder(
-                              controller: _scrollController, // 컨트롤러 연결
-                              itemCount: _fruits.length + (_hasMore ? 1 : 0), // 로딩 인디케이터 공간 추가
-                              itemBuilder: (context, index) {
-                                if (index == _fruits.length) {
-                                  return _hasMore
-                                      ? const Padding(
-                                          padding: EdgeInsets.symmetric(vertical: 16.0),
-                                          child: Center(child: CircularProgressIndicator()),
-                                        )
-                                      : const SizedBox.shrink();
-                                }
-                                final fruit = _fruits[index];
-                                return GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => ProductDetailScreen(fruit: fruit),
-                                      ),
-                                    );
-                                  },
-                                  child: _WishlistItem(
-                                    fruit: fruit,
-                                    onDelete: () => _deleteDibsItem(fruit.wishListId),
-                                  ),
-                                );
-                              },
+                      ? const Center(child: Text('찜한 상품이 없습니다.'))
+                  // ✨ 6. ListView.builder 수정
+                      : ListView.builder(
+                    controller: _scrollController, // 컨트롤러 연결
+                    itemCount: _fruits.length + (_hasMore ? 1 : 0), // 로딩 인디케이터 공간 추가
+                    itemBuilder: (context, index) {
+                      if (index == _fruits.length) {
+                        return _hasMore
+                            ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                            : const SizedBox.shrink();
+                      }
+                      final fruit = _fruits[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ProductDetailScreen(fruit: fruit),
                             ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 찜 목록의 각 항목을 렌더링하는 별도의 위젯
-class _WishlistItem extends StatelessWidget {
-  final Fruit fruit;
-  final VoidCallback onDelete;
-
-  const _WishlistItem({required this.fruit, required this.onDelete});
-
-  @override
-  Widget build(BuildContext context) {
-    // 가격 포매팅
-    final formatter = NumberFormat('#,###');
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-                child: Image.network(
-                  fruit.widthImageUrl, // fruit 모델의 이미지 URL 사용
-                  height: 140,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return const SizedBox(
-                      height: 140,
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return const SizedBox(
-                      height: 140,
-                      child: Icon(Icons.error, color: Colors.grey),
-                    );
-                  },
-                ),
-              ),
-              Positioned(
-                bottom: 8,
-                left: 12,
-                child: Text(
-                  fruit.brandName ?? '알 수 없음', // fruit 모델의 brandName 사용
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(0, 1),
-                        blurRadius: 2,
-                        color: Colors.black54,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: GestureDetector(
-                  onTap: onDelete,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    padding: const EdgeInsets.all(4),
-                    child: const Icon(
-                      Icons.favorite,
-                      color: Colors.red,
-                      size: 20,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    fruit.title, // fruit 모델의 title 사용
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Text(
-                  // 가격과 단위를 fruit 모델에서 가져와 포매팅
-                  '${formatter.format(fruit.price)}원 / ${fruit.weight}kg',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                          );
+                        },
+                        child: WishlistItem(
+                          fruit: fruit,
+                          onDelete: () => _deleteDibsItem(fruit.wishListId),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

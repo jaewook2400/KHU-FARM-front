@@ -1,3 +1,4 @@
+///송장번호 수정 페이지
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,14 +11,16 @@ import 'package:khu_farm/services/storage_service.dart';
 import 'package:khu_farm/screens/farmer/mypage/order/order_detail.dart';
 import 'package:http/http.dart' as http;
 
-class FarmerManageOrderDeliveryNumberScreen extends StatefulWidget {
-  const FarmerManageOrderDeliveryNumberScreen({super.key});
+import '../../../../../../shared/widgets/top_norch_header.dart';
+
+class DeliveryNumberEditScreen extends StatefulWidget {
+  const DeliveryNumberEditScreen({super.key});
 
   @override
-  State<FarmerManageOrderDeliveryNumberScreen> createState() => _FarmerManageOrderDeliveryNumberScreenState();
+  State<DeliveryNumberEditScreen> createState() => _DeliveryNumberEditScreenState();
 }
 
-class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrderDeliveryNumberScreen> {
+class _DeliveryNumberEditScreenState extends State<DeliveryNumberEditScreen> {
   final _trackingNumberController = TextEditingController();
   String? _selectedCourierName;
   SellerOrder? _order;
@@ -113,107 +116,7 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
 
       body: Stack(
         children: [
-          // 노치 배경
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: statusBarHeight + screenHeight * 0.06,
-            child: Image.asset('assets/notch/morning.png', fit: BoxFit.cover),
-          ),
-
-          // 우상단 이미지
-          Positioned(
-            top: 0,
-            right: 0,
-            height: statusBarHeight * 1.2,
-            child: Image.asset(
-              'assets/notch/morning_right_up_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          // 좌하단 이미지
-          Positioned(
-            top: statusBarHeight,
-            left: 0,
-            height: screenHeight * 0.06,
-            child: Image.asset(
-              'assets/notch/morning_left_down_cloud.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-            ),
-          ),
-
-          Positioned(
-            top: statusBarHeight,
-            height: statusBarHeight + screenHeight * 0.02,
-            left: screenWidth * 0.05,
-            right: screenWidth * 0.05,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/farmer/main',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text(
-                    'KHU:FARM',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontFamily: 'LogoFont',
-                      fontSize: 22,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/farmer/notification/list',
-                        );
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/notice.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/dib/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/dibs.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/farmer/cart/list');
-                      },
-                      child: Image.asset(
-                        'assets/top_icons/cart.png',
-                        width: 24,
-                        height: 24,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          FarmerTopNotchHeader(),
 
           Padding(
             padding: EdgeInsets.only(
@@ -324,6 +227,8 @@ class _FarmerManageOrderDeliveryNumberScreenState extends State<FarmerManageOrde
           _buildInfoRow('주문일자', formattedDate),
           _buildInfoRow('주문번호', order.merchantUid),
           _buildInfoRow('상품', '${order.fruitTitle} (${order.orderCount}개)'),
+          _buildInfoRow('주소', '${order.address} ${order.detailAddress ?? ''} [${order.portCode}]'),
+          _buildInfoRow('요청사항', order.orderRequest ?? '없음'),
         ],
       ),
     );

@@ -13,21 +13,11 @@ const fruitsCategory = [
   },
   {
     "fruitId": 3,
-    "fruitName": "참외",
-    "fruitIcon": "assets/icons/korean_melon.png",
-  },
-  {
-    "fruitId": 4,
-    "fruitName": "만감류",
-    "fruitIcon": "assets/icons/tangor.png",
-  },
-  {
-    "fruitId": 5,
     "fruitName": "배",
     "fruitIcon": "assets/icons/pear.png",
   },
   {
-    "fruitId": 6,
+    "fruitId": 4,
     "fruitName": "선물",
     "fruitIcon": "assets/icons/gift.png",
   },

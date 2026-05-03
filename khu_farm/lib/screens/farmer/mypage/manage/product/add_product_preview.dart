@@ -22,6 +22,7 @@ class _FarmerAddProductPreviewScreen
   late quill.QuillController _previewController;
   bool _initialized = false;
   bool _isUploading = false;
+  Map<String, dynamic>? selectedOption;
 
   Future<String> _uploadImage(String imagePath) async {
     final String? token = await StorageService.getAccessToken();
@@ -50,6 +51,24 @@ class _FarmerAddProductPreviewScreen
     }
   }
 
+  List<Map<String, String>> flattenOptions(List<Map<String, dynamic>> options) {
+    final List<Map<String, String>> result = [];
+
+    for (final opt in options) {
+      final title = opt['title'] as String;
+      final weightList = opt['weight'] as List<dynamic>;
+
+      for (final w in weightList) {
+        result.add({
+          "optionTitle": title,
+          "weight": w['weight'],
+        });
+      }
+    }
+
+    return result;
+  }
+
   Future<void> _addFruit() async {
     setState(() => _isUploading = true);
     _showLoadingDialog();
@@ -60,11 +79,12 @@ class _FarmerAddProductPreviewScreen
     final String hPath = args['horizontalImagePath'] as String;
     final String sPath = args['squareImagePath']     as String;
     final String title = args['title']     as String;
-    final int    price = int.parse(args['price'] as String);
-    final int weight = int.parse(args['weight'] as String);
+    // final int    price = int.parse(args['price'] as String);
+    // final int weight = int.parse(args['weight'] as String);
     final String deliveryCompany = args['courier']   as String;
     final int    deliveryDay = int.parse(args['maxDelivery'] as String);
-    final int    stock = int.parse(args['stock'] as String);
+    // final int    stock = int.parse(args['stock'] as String);
+    final List<Map<String, dynamic>> options = args['options'] as List<Map<String, dynamic>>;
     final dynamic contentArg = args['content'];
     final String description = contentArg is String
         ? contentArg
@@ -86,13 +106,17 @@ class _FarmerAddProductPreviewScreen
         'widthImage':                  horizontalUrl,
         'squareImage':                 squareUrl,
         'title':                       title,
-        'price':                       price,
-        'weight':                      weight,
+        'options':                     options,
+        // 'price':                       price,
+        // 'weight':                      weight,
         'deliveryCompany':             deliveryCompany,
         'deliveryDay':                 deliveryDay,
         'description':                 description,
-        'stock':                       stock,
+        //'stock':                       stock,
       };
+      const encoder = JsonEncoder.withIndent('  ');
+      final pretty = encoder.convert(payload);
+      debugPrint("📦 API Request Payload:\n$pretty");
 
 // 1) print it
       final response = await http.post(
@@ -176,12 +200,15 @@ class _FarmerAddProductPreviewScreen
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+    print('🧩 args: $args');
+
     final String hPath = args['horizontalImagePath'] as String;
     final String sPath = args['squareImagePath'] as String;
     final String title = args['title'] as String;
-    final String price = args['price'] as String;
-    final String weight = args['weight'] as String;
-    final String stock = args['stock'] as String;
+    // final String price = args['price'] as String;
+    // final String weight = args['weight'] as String;
+    // final String stock = args['stock'] as String;
+    final List<Map<String, dynamic>> options = args['options'] as List<Map<String, dynamic>>;
     final String courier = args['courier'] as String;
 
     final int maxDelivery = int.parse(args['maxDelivery'] as String);
@@ -361,39 +388,110 @@ class _FarmerAddProductPreviewScreen
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Text('$price원 / ${weight}kg', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(color: Colors.grey.shade300),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Text('한우리영농조합', style: TextStyle(fontSize: 12)),
+                        // ListView.builder(
+                        //     shrinkWrap: true,
+                        //     physics: const NeverScrollableScrollPhysics(),
+                        //     itemCount: options.length,
+                        //     itemBuilder: (context, index) {
+                        //       final option = options[index];
+                        //       return Container(
+                        //         child: Column(
+                        //           children: [
+                        //             Row(
+                        //               children: [
+                        //                 Text('${option['price']}원 / ${option['weight']}kg', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        //                 const Spacer(),
+                        //                 Container(
+                        //                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        //                   decoration: BoxDecoration(
+                        //                     color: Colors.white,
+                        //                     border: Border.all(color: Colors.grey.shade300),
+                        //                     borderRadius: BorderRadius.circular(16),
+                        //                   ),
+                        //                   child: const Text('한우리영농조합', style: TextStyle(fontSize: 12)),
+                        //                 ),
+                        //               ],
+                        //             ),
+                        //             const SizedBox(height: 12),
+                        //             Row(
+                        //               children: [
+                        //                 const Text('택배배송', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        //                 const SizedBox(width: 4),
+                        //                 const Text('무료배송', style: TextStyle(fontSize: 12, color: Colors.red)),
+                        //                 const SizedBox(width: 4),
+                        //                 Text(courier, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        //               ],
+                        //             ),
+                        //             const SizedBox(height: 4),
+                        //             Row(
+                        //               children: [
+                        //                 Text('$formattedDate 이내 판매자 발송 예정', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        //                 const Spacer(),
+                        //                 Text('남은 재고 : ${option['stock']} 박스', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        //               ],
+                        //             ),
+                        //           ],
+                        //         ),
+                        //       );
+                        //     }
+                        // ),
+                        //buildFlattenedOptionList(options),
+                        OptionDropdown(
+                          options: options,
+                          onSelect: (opt) {
+                              setState(() {
+                                selectedOption = opt;  // ← price/stock/weight 저장됨
+                              });
+                          },
+                        ),
+                        SizedBox(height: 10,),
+                        if (selectedOption != null)
+                          Container(
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${selectedOption!['price']}원 / ${selectedOption!['weight']}kg',
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        border: Border.all(color: Colors.grey.shade300),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: const Text('한우리영농조합', style: TextStyle(fontSize: 12)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    const Text('택배배송', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                    const SizedBox(width: 4),
+                                    const Text('무료배송', style: TextStyle(fontSize: 12, color: Colors.red)),
+                                    const SizedBox(width: 4),
+                                    Text(courier, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Text('$formattedDate 이내 판매자 발송 예정',
+                                        style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                                    const Spacer(),
+                                    Text(
+                                      '남은 재고 : ${selectedOption!['stock']} 박스',
+                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            const Text('택배배송', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            const SizedBox(width: 4),
-                            const Text('무료배송', style: TextStyle(fontSize: 12, color: Colors.red)),
-                            const SizedBox(width: 4),
-                            Text(courier, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text('$formattedDate 이내 판매자 발송 예정', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                            const Spacer(),
-                            Text('남은 재고 : $stock 박스', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                          ],
-                        ),
+                          ),
                         const Divider(height: 32),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -466,6 +564,187 @@ class _FarmerAddProductPreviewScreen
           ),
         ],
       ),
+    );
+  }
+
+  Widget buildFlattenedOptionList(List<Map<String, dynamic>> options) {
+    final flatList = flattenOptions(options); // ✅ 평탄화
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: flatList.length,
+      separatorBuilder: (_, __) => const Divider(color: Colors.grey, height: 16),
+      itemBuilder: (context, index) {
+        final item = flatList[index];
+        final optionTitle = item["title"]!;
+        final weight = item["weight"]!;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              /// 🔴 왼쪽: 옵션 이름 (빨간색)
+              Text(
+                optionTitle,
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              /// ✅ 오른쪽: “weight kg”
+              Text(
+                '${weight}kg',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+}
+
+
+class OptionDropdown extends StatefulWidget {
+  final List<Map<String, dynamic>> options;
+  final Function(Map<String, dynamic>) onSelect;
+
+  const OptionDropdown({
+    super.key,
+    required this.options,
+    required this.onSelect,
+  });
+
+  @override
+  State<OptionDropdown> createState() => _OptionDropdownState();
+}
+
+class _OptionDropdownState extends State<OptionDropdown> {
+  bool isOpen = false;
+  late final List<Map<String, dynamic>> flatList;
+
+  // ✅ 헤더에 표시할 선택된 텍스트
+  String selectedLabel = "상품 옵션 전체 보기";
+
+  List<Map<String, dynamic>> flattenOptions(List<Map<String, dynamic>> options) {
+    final List<Map<String, dynamic>> result = [];
+
+    for (final opt in options) {
+      final title = opt['title'] as String;
+      final weightList = opt['weight'] as List<dynamic>;
+
+      for (final w in weightList) {
+        result.add({
+          "title": title,
+          "weight": w['weight'],
+          "price": w['price'],
+          "stock": w['stock'],
+        });
+      }
+    }
+
+    return result;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    flatList = flattenOptions(widget.options);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        /// ✅ 드롭다운 헤더
+        GestureDetector(
+          onTap: () => setState(() => isOpen = !isOpen),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade400),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                /// ✅ 선택된 옵션을 보여주는 부분
+                Text(
+                  selectedLabel,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Icon(
+                  isOpen ? Icons.expand_less : Icons.expand_more,
+                  size: 24,
+                )
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        /// ✅ 펼쳐진 리스트
+        if (isOpen)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade300),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: flatList.length,
+              separatorBuilder: (_, __) => const Divider(height: 16),
+              itemBuilder: (context, index) {
+                final item = flatList[index];
+                final title = item['title'];
+                final weight = item['weight'];
+
+                return InkWell(
+                  onTap: () {
+                    // ✅ 헤더 텍스트 업데이트
+                    setState(() {
+                      selectedLabel = "$title ${weight}kg";
+                      isOpen = false;
+                    });
+
+                    // ✅ 선택값을 부모로 전달
+                    widget.onSelect(item);
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text("$title ${weight}kg"),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+      ],
     );
   }
 }
